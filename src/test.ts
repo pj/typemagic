@@ -30,7 +30,6 @@ async function test(args: Args): Promise<Test> {
 }
 
 query({
-  name: "test",
   resolve: test,
   args: {
     stringField: () => String,
@@ -52,7 +51,15 @@ query({
         testField: () => String
       }
     }),
-    arrayRelatedField: () => ArrayRelatedClass[]
+    arrayRelatedField: () => ({
+      resolve: (): ArrayRelatedClass[] => {
+        return [new ArrayRelatedClass()];
+      },
+      output: {
+
+
+      }
+    })
   }
 });
 
