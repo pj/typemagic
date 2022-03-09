@@ -14,12 +14,12 @@ export type ScalarRuntimeType<Scalar> =
   : Scalar extends boolean ? typeof Boolean 
   : never;
 
-export type ObjectRuntimeType<A, O> = RegisteredOutputObject<O>;
+export type ObjectRuntimeType<R, C, O> = RegisteredOutputObject<R, C, O>;
 
-export type Scalars<Obj> = {
+export type GetRuntimeTypes<R, C, Obj> = {
   [Key in keyof Obj]: 
     ScalarRuntimeType<Obj[Key]> extends never 
-      ? <A>() => ObjectRuntimeType<A, Obj[Key]> 
+      ? () => ObjectRuntimeType<R, C, Obj[Key]> 
       : () => ScalarRuntimeType<Obj[Key]>;
 };
 
@@ -29,47 +29,52 @@ type Exact<A, B> = A extends B
     : never
   : never
 
-type Constructor<T> = Function & {prototype: T};
 
-export type NoArgsQuery<R, O> = {
+export type NoArgsQuery<R, C, O> = {
   name?: string,
-  resolve: (() => Promise<O>) | (() => O)
-  output: RegisteredOutputObject<R, O>,
+  resolve: ((root?: R, context?: C) => Promise<O>) | ((root?: R, context?: C) => O)
+  output: RegisteredOutputObject<R, C, O>,
   args?: never
 }
 
-export type BothQuery<R, A, O> = {
+export type BothQuery<R, C, A, O> = {
   name?: string,
-  resolve: ((args: A) => Promise<O>) | ((args: A) => O)
-  output: RegisteredOutputObject<R, O>
+  resolve: ((args: A, root?: R, context?: C) => Promise<O>) | ((args: A, root: R, context: C) => O)
+  output: RegisteredOutputObject<R, C, O>
   args: RegisteredArgsObject<A>
 }
 
-export type Query<R, A, O> = NoArgsQuery<O> | BothQuery<A, O>
-export type RootQuery<A, O> = (NoArgsQuery<O> & {name: string}) | (BothQuery<A, O> & {name: string})
+export type Query<R, A, O, C = any> = NoArgsQuery<R, C, O> | BothQuery<R, C, A, O>
+export type RootQuery<R, A, O, C = any> = (NoArgsQuery<R, C, O> & {name: string}) | (BothQuery<R, C, A, O> & {name: string})
 
-export function query<A, O>(query: RootQuery<A, O>): void {
+export function query<R, A, O, C = any>(query: RootQuery<R, A, O, C>): void {
 
 }
 
-export type ObjectResolver<R, O> = ((root: R) => Promise<O>) | ((args: R) => O);
-export type OutputObject<R, O> = {
+type Constructor<T> = Function & {prototype: T};
+type ConstructorOrArray<T> = T extends Array<infer C> ? [Constructor<C>] : Constructor<T>;
+
+type ArrayItem<I> = I extends Array<infer T> ? T : I; 
+
+export type ObjectResolver<R, C, O> = ((root: R, context?: C) => Promise<O>) | ((root: R, context?: C) => O);
+
+export type OutputObject<R, C, O> = {
   name?: string,
-  object: Constructor<O>,
-  fieldTypes: Scalars<O>,
-  resolve?: ObjectResolver<R, O>
+  object: ConstructorOrArray<O>,
+  fieldTypes: GetRuntimeTypes<O, C, ArrayItem<O>>,
+  resolve?: ObjectResolver<R, C, O>
 };
 
-class RegisteredOutputObject<R, O> {
+class RegisteredOutputObject<R, C, O> {
   name?: string;
-  object: Constructor<O>;
-  fieldTypes: Scalars<O>;
-  resolve?: ObjectResolver<R, O>
+  object: ConstructorOrArray<O>;
+  fieldTypes: GetRuntimeTypes<O, C, ArrayItem<O>>;
+  resolve?: ObjectResolver<R, C, O>
 
   constructor(
-    object: Constructor<O>, 
-    fieldTypes: Scalars<O>, 
-    resolve?: ObjectResolver<R, O>,
+    object: ConstructorOrArray<O>, 
+    fieldTypes: GetRuntimeTypes<O, C, ArrayItem<O>>,
+    resolve?: ObjectResolver<R, C, O>,
     name?: string,
   ) {
     this.name = name;
@@ -79,23 +84,27 @@ class RegisteredOutputObject<R, O> {
   }
 }
 
-export function object<R, O>(object: OutputObject<R, O>): RegisteredOutputObject<R, O> {
-  const registeredObj = new RegisteredOutputObject<R, O>(object.object, object.fieldTypes, object.resolve, object.name);
+export function object<R, C, O>(object: OutputObject<R, C, O>): RegisteredOutputObject<R, C, O> {
+  const registeredObj = new RegisteredOutputObject<R, C, O>(object.object, object.fieldTypes, object.resolve, object.name);
   return registeredObj;
 }
 
 export type ArgsObject<O> = {
   name?: string,
-  object: Constructor<O>,
-  fieldTypes: Scalars<O>,
+  object: ConstructorOrArray<O>,
+  fieldTypes: GetRuntimeTypes<unknown, unknown, ArrayItem<O>>,
 };
 
 class RegisteredArgsObject<O> {
   name?: string;
-  object: Constructor<O>;
-  fieldTypes: Scalars<O>;
+  object: ConstructorOrArray<O>;
+  fieldTypes: GetRuntimeTypes<unknown, unknown, ArrayItem<O>>;
 
-  constructor(object: Constructor<O>, fieldTypes: Scalars<O>, name?: string) {
+  constructor(
+    object: ConstructorOrArray<O>, 
+    fieldTypes: GetRuntimeTypes<unknown, unknown, ArrayItem<O>>,
+    name?: string
+  ) {
     this.name = name;
     this.object = object;
     this.fieldTypes = fieldTypes;
@@ -112,16 +121,20 @@ export function args<A>(object: ArgsObject<A>): RegisteredArgsObject<A> {
 
 export type InputObject<O> = {
   name?: string,
-  object: Constructor<O>,
-  fieldTypes: Scalars<O>,
+  object: ConstructorOrArray<O>,
+  fieldTypes: GetRuntimeTypes<unknown, unknown, ArrayItem<O>>,
 };
 
 class RegisteredInputObject<O> {
   name?: string;
-  object: Constructor<O>;
-  fieldTypes: Scalars<O>;
+  object: ConstructorOrArray<O>;
+  fieldTypes: GetRuntimeTypes<unknown, unknown, ArrayItem<O>>;
 
-  constructor(object: Constructor<O>, fieldTypes: Scalars<O>, name?: string) {
+  constructor(
+    object: ConstructorOrArray<O>, 
+    fieldTypes: GetRuntimeTypes<unknown, unknown, ArrayItem<O>>,
+    name?: string
+  ) {
     this.name = name;
     this.object = object;
     this.fieldTypes = fieldTypes;

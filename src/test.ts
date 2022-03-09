@@ -94,21 +94,22 @@ query({
       floatField: () => Float,
       relatedField: () => object({
         object: RelatedClass,
-        resolve: (): RelatedClass => {
-          return new RelatedClass();
+        resolve: (root: Test, context: any): RelatedClass => {
+          return new RelatedClass(`${root.intField} times`);
         },
         fieldTypes: {
           testField: () => String
         }
+      }),
+      arrayRelatedField: () => object({
+        object: [ArrayRelatedClass],
+        resolve: (): ArrayRelatedClass[] => {
+          return [new ArrayRelatedClass("array related")];
+        },
+        fieldTypes: {
+          asdfField: () => String
+        }
       })
-      // arrayRelatedField: () => ({
-      //   resolve: (): ArrayRelatedClass[] => {
-      //     return [new ArrayRelatedClass()];
-      //   },
-      //   output: {
-
-
-      //   }
     }
   })
 });
