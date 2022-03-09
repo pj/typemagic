@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "lib": [
+      "es2018",
+      "esnext.asynciterable",
+      "DOM"
+    ],
+    "target": "es2018",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "sourceMap": true,
+    "esModuleInterop": true,
+    "declaration": true,
+    "declarationDir": "./typings",
+    // "types": [
+    //   "reflect-metadata"
+    // ]
+    // "paths": {
+    //   "@common": ["../common"]
+    // }
+  },
+  "include": [
+    "./src"
+  ],
+}
