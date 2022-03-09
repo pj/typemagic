@@ -1,5 +1,5 @@
 import { Float, Int } from "type-graphql";
-import { query } from ".";
+import { args, object, query } from ".";
 
 export class Test {
   stringField: string;
@@ -9,60 +9,106 @@ export class Test {
   floatField: number;
   relatedField: RelatedClass;
   arrayRelatedField: ArrayRelatedClass[]; 
+
+  constructor(
+    stringField: string,
+    booleanField: boolean,
+    dateField: Date,
+    intField: number,
+    floatField: number,
+    relatedField: RelatedClass,
+    arrayRelatedField: ArrayRelatedClass[], 
+  ) {
+    this.stringField = stringField; 
+    this.booleanField = booleanField; 
+    this.dateField = dateField; 
+    this.intField = intField; 
+    this.floatField = floatField; 
+    this.relatedField = relatedField; 
+    this.arrayRelatedField = arrayRelatedField; 
+  }
 }
 
 export class RelatedClass {
   testField: string;
+
+  constructor(testField: string) {
+    this.testField = testField;
+  }
 }
 
 export class ArrayRelatedClass {
   asdfField: string;
+
+  constructor(asdfField: string) {
+    this.asdfField = asdfField;
+  }
 }
 
 export class Args {
   stringField: string;
   booleanField: boolean;
   dateField: Date;
+
+  constructor(
+    stringField: string,
+    booleanField: boolean,
+    dateField: Date,
+  ) {
+    this.stringField = stringField; 
+    this.booleanField = booleanField; 
+    this.dateField = dateField; 
+  }
 }
 
 async function test(args: Args): Promise<Test> {
-  return new Test();
+  return new Test(
+    "asdf",
+    false,
+    new Date(),
+    1,
+    1.0,
+    new RelatedClass("qwer"),
+    [new ArrayRelatedClass("test")]
+  );
 }
 
 query({
+  name: "test",
   resolve: test,
-  args: {
-    stringField: () => String,
-    booleanField: () => Boolean,
-    dateField: () => Date
-  },
-  output: {
-    stringField: () => String,
-    booleanField: () => Boolean,
-    dateField: () => Date,
-    intField: () => Int,
-    floatField: () => Float,
-    relatedField: () => ({
-      name: "relatedField",
-      resolve: (): RelatedClass => {
-        return new RelatedClass();
-      },
-      output: {
-        testField: () => String
-      }
-    }),
-    arrayRelatedField: () => ({
-      resolve: (): ArrayRelatedClass[] => {
-        return [new ArrayRelatedClass()];
-      },
-      output: {
+  args: args({
+    object: Args,
+    fieldTypes: {
+      stringField: () => String,
+      booleanField: () => Boolean,
+      dateField: () => Date
+    }
+  }),
+  output: object({
+    object: Test,
+    fieldTypes: {
+      stringField: () => String,
+      booleanField: () => Boolean,
+      dateField: () => Date,
+      intField: () => Int,
+      floatField: () => Float,
+      relatedField: () => object({
+        object: RelatedClass,
+        resolve: (): RelatedClass => {
+          return new RelatedClass();
+        },
+        fieldTypes: {
+          testField: () => String
+        }
+      })
+      // arrayRelatedField: () => ({
+      //   resolve: (): ArrayRelatedClass[] => {
+      //     return [new ArrayRelatedClass()];
+      //   },
+      //   output: {
 
 
-      }
-    })
-  }
+      //   }
+    }
+  })
 });
-
-function noAsync(args: Args): Test {
-  return new Test();
-}

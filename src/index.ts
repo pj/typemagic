@@ -14,7 +14,7 @@ export type ScalarRuntimeType<Scalar> =
   : Scalar extends boolean ? typeof Boolean 
   : never;
 
-export type ObjectRuntimeType<A, O> = Query<A, O>;
+export type ObjectRuntimeType<A, O> = RegisteredOutputObject<O>;
 
 export type Scalars<Obj> = {
   [Key in keyof Obj]: 
@@ -29,33 +29,109 @@ type Exact<A, B> = A extends B
     : never
   : never
 
-export type NoArgsQuery<O> = {
+type Constructor<T> = Function & {prototype: T};
+
+export type NoArgsQuery<R, O> = {
   name?: string,
   resolve: (() => Promise<O>) | (() => O)
-  output: Scalars<O>,
+  output: RegisteredOutputObject<R, O>,
   args?: never
 }
 
-export type BothQuery<A, O> = {
+export type BothQuery<R, A, O> = {
   name?: string,
   resolve: ((args: A) => Promise<O>) | ((args: A) => O)
-  output: Scalars<O>
-  args: Scalars<A>
+  output: RegisteredOutputObject<R, O>
+  args: RegisteredArgsObject<A>
 }
 
-export type Query<A, O> = NoArgsQuery<O> | BothQuery<A, O>
+export type Query<R, A, O> = NoArgsQuery<O> | BothQuery<A, O>
 export type RootQuery<A, O> = (NoArgsQuery<O> & {name: string}) | (BothQuery<A, O> & {name: string})
 
 export function query<A, O>(query: RootQuery<A, O>): void {
 
 }
 
-export type MagicObject<O> = {
+export type ObjectResolver<R, O> = ((root: R) => Promise<O>) | ((args: R) => O);
+export type OutputObject<R, O> = {
   name?: string,
-  object: O,
+  object: Constructor<O>,
+  fieldTypes: Scalars<O>,
+  resolve?: ObjectResolver<R, O>
+};
+
+class RegisteredOutputObject<R, O> {
+  name?: string;
+  object: Constructor<O>;
+  fieldTypes: Scalars<O>;
+  resolve?: ObjectResolver<R, O>
+
+  constructor(
+    object: Constructor<O>, 
+    fieldTypes: Scalars<O>, 
+    resolve?: ObjectResolver<R, O>,
+    name?: string,
+  ) {
+    this.name = name;
+    this.object = object;
+    this.fieldTypes = fieldTypes;
+    this.resolve = resolve;
+  }
+}
+
+export function object<R, O>(object: OutputObject<R, O>): RegisteredOutputObject<R, O> {
+  const registeredObj = new RegisteredOutputObject<R, O>(object.object, object.fieldTypes, object.resolve, object.name);
+  return registeredObj;
+}
+
+export type ArgsObject<O> = {
+  name?: string,
+  object: Constructor<O>,
   fieldTypes: Scalars<O>,
 };
 
-export function object<O>(object: MagicObject<O>): O {
-  return object.object;
+class RegisteredArgsObject<O> {
+  name?: string;
+  object: Constructor<O>;
+  fieldTypes: Scalars<O>;
+
+  constructor(object: Constructor<O>, fieldTypes: Scalars<O>, name?: string) {
+    this.name = name;
+    this.object = object;
+    this.fieldTypes = fieldTypes;
+  }
+}
+
+export function args<A>(object: ArgsObject<A>): RegisteredArgsObject<A> {
+  const registeredObj = new RegisteredArgsObject<A>(object.object, object.fieldTypes, object.name);
+  registeredObj.name = object.name;
+  registeredObj.object = object.object;
+  registeredObj.fieldTypes = object.fieldTypes;
+  return registeredObj;
+}
+
+export type InputObject<O> = {
+  name?: string,
+  object: Constructor<O>,
+  fieldTypes: Scalars<O>,
+};
+
+class RegisteredInputObject<O> {
+  name?: string;
+  object: Constructor<O>;
+  fieldTypes: Scalars<O>;
+
+  constructor(object: Constructor<O>, fieldTypes: Scalars<O>, name?: string) {
+    this.name = name;
+    this.object = object;
+    this.fieldTypes = fieldTypes;
+  }
+}
+
+export function input<A>(object: InputObject<A>): RegisteredInputObject<A> {
+  const registeredObj = new RegisteredInputObject<A>(object.object, object.fieldTypes, object.name);
+  registeredObj.name = object.name;
+  registeredObj.object = object.object;
+  registeredObj.fieldTypes = object.fieldTypes;
+  return registeredObj;
 }
