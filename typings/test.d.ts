@@ -6,8 +6,9 @@ export declare class Test {
     floatField: number;
     relatedField: RelatedClass;
     arrayRelatedField: ArrayRelatedClass[];
-    enumField: ASDF;
-    constructor(stringField: string, booleanField: boolean, dateField: Date | null, intField: number, floatField: number, relatedField: RelatedClass, arrayRelatedField: ArrayRelatedClass[], enumField: ASDF);
+    stringEnumField: StringEnum;
+    numberEnumField: IntEnum;
+    constructor(stringField: string, booleanField: boolean, dateField: Date | null, intField: number, floatField: number, relatedField: RelatedClass, arrayRelatedField: ArrayRelatedClass[], stringEnumField: StringEnum, numberEnumField: IntEnum);
 }
 export declare class RelatedClass {
     testField: string;
@@ -23,8 +24,12 @@ export declare class Args {
     dateField: Date;
     constructor(stringField: string, booleanField: boolean, dateField: Date);
 }
-declare enum ASDF {
+declare enum StringEnum {
     erer = "erer",
     asdf = "asdf"
+}
+declare enum IntEnum {
+    first = 0,
+    second = 1
 }
 export {};

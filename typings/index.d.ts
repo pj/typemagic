@@ -6,25 +6,39 @@ declare class Nullable<T> {
 }
 export declare function nullable<V>(clazz: V): Nullable<V>;
 declare type IsEnum<T> = T extends {
-    prototype: any;
-} ? never : T;
+    [key: string]: string;
+} ? T : T extends {
+    [key: number]: string;
+} ? T : never;
 declare class RegisteredEnum<T> {
     name?: string;
-    clazz: IsEnum<T>;
-    constructor(clazz: IsEnum<T>, name?: string);
+    clazz: T;
+    constructor(clazz: T, name?: string);
 }
 export declare function registerEnum<T>(clazz: IsEnum<T>, name?: string): RegisteredEnum<T>;
 export declare type ScalarTypes = typeof String | (typeof Float | typeof Int) | typeof Date | typeof Boolean;
-export declare type StringOrEnum<Scalar> = string extends Scalar ? typeof String : RegisteredEnum<Scalar>;
-export declare type ScalarRuntimeType<Scalar> = Scalar extends string ? StringOrEnum<Scalar> : Scalar extends number ? typeof Float | typeof Int : Scalar extends Date ? typeof Date : Scalar extends boolean ? typeof Boolean : never;
+export declare type IntOrFloat = typeof Int | typeof Float;
+export declare type StringOrEnum<Scalar> = () => string extends Scalar ? null extends Scalar ? Nullable<typeof String> : typeof String : null extends Scalar ? Nullable<RegisteredEnum<{
+    [key: string]: string;
+}>> : RegisteredEnum<{
+    [key: string]: string;
+}>;
+export declare type NumberOrEnum<Scalar> = () => null extends Scalar ? Nullable<IntOrFloat | RegisteredEnum<{
+    [key: number]: string;
+}>> : IntOrFloat | RegisteredEnum<{
+    [key: number]: string;
+}>;
+export declare type OtherScalars<Scalar> = Scalar extends Date ? typeof Date : Scalar extends boolean ? typeof Boolean : never;
 export declare type ObjectRuntimeType<R, C, O> = RegisteredOutputObject<R, C, O>;
 export declare type NullOrNotNull<X, Y> = () => null extends X ? Nullable<Y> : Y;
 export declare type GetRuntimeTypes<R, C, Obj> = {
-    [Key in keyof Obj]: Obj[Key] extends string ? string extends Obj[Key] ? () => typeof String : () => RegisteredEnum<{
-        [X in keyof Obj[Key]]: X;
-    }> : ScalarRuntimeType<Obj[Key]> extends never ? () => null extends Obj[Key] ? Nullable<ObjectRuntimeType<R, C, Obj[Key]>> : ObjectRuntimeType<R, C, Obj[Key]> : () => null extends Obj[Key] ? Nullable<ScalarRuntimeType<Obj[Key]>> : ScalarRuntimeType<Obj[Key]>;
+    [FieldName in keyof Obj]: Obj[FieldName] extends string ? StringOrEnum<Obj[FieldName]> : Obj[FieldName] extends number ? NumberOrEnum<Obj[FieldName]> : OtherScalars<Obj[FieldName]> extends never ? () => null extends Obj[FieldName] ? Nullable<ObjectRuntimeType<R, C, Obj[FieldName]>> : ObjectRuntimeType<R, C, Obj[FieldName]> : () => null extends Obj[FieldName] ? Nullable<OtherScalars<Obj[FieldName]>> : OtherScalars<Obj[FieldName]>;
 } & {
-    [Key in string]: keyof Obj extends Key ? () => Nullable<ScalarTypes> | ScalarTypes | Nullable<RegisteredOutputObject<R, C, any>> | RegisteredOutputObject<R, C, any> | RegisteredEnum<any> : never;
+    [Key in string]: keyof Obj extends Key ? () => Nullable<ScalarTypes> | ScalarTypes | Nullable<RegisteredOutputObject<R, C, any>> | RegisteredOutputObject<R, C, any> | RegisteredEnum<{
+        [key: string]: string;
+    }> | RegisteredEnum<{
+        [key: number]: string;
+    }> : never;
 };
 export declare type NoArgsQuery<R, C, O> = {
     name?: string;

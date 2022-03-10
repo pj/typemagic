@@ -1,12 +1,4 @@
-import { GraphQLScalarType } from "graphql";
 import { Float, Int } from "type-graphql";
-
-enum SortOrder {
-  DESC = "DESC",
-  ASC = "ASC"
-}
-
-export type ResolveFunction<A, O> = (args: A) => Promise<O> | O;
 
 class Nullable<T> {
   clazz: T
@@ -20,17 +12,17 @@ export function nullable<V>(clazz: V): Nullable<V> {
 }
 
 
-// FIXME: prevent enum from taking values that aren't 
-type IsEnum<T> = T extends {[key: string]: string} ? T : never
-    // ? string extends T 
-    //   ? never 
-    //   : T
-    // : never;
+type IsEnum<T> = 
+  T extends {[key: string]: string} 
+    ? T
+    : T extends {[key: number]: string} 
+      ? T 
+      : never;
 
 class RegisteredEnum<T> {
   name?: string;
-  clazz: IsEnum<T>;
-  constructor(clazz: IsEnum<T>, name?: string) {
+  clazz: T;
+  constructor(clazz: T, name?: string) {
     this.clazz = clazz;
     this.name = name;
   }
@@ -44,51 +36,43 @@ export type ScalarTypes =
   typeof String | (typeof Float | typeof Int) | typeof Date | typeof Boolean;
 
 
-// export type EnumNoDistribute<Scalar> = Enum<Scalar>
-// type NoDistribute<T> = [T] extends [T] ? T : never;
-
-export type StringOrEnum<Scalar> =
-  string extends Scalar 
-    ? typeof String
-    : RegisteredEnum<Scalar>;
-
-export type ScalarRuntimeType<Scalar> = 
-  Scalar extends string 
-    ? StringOrEnum<Scalar>
-    : Scalar extends number 
-      ? typeof Float | typeof Int 
-      : Scalar extends Date 
-        ? typeof Date
-        : Scalar extends boolean 
-          ? typeof Boolean
-          : never;
-
-export type ObjectRuntimeType<R, C, O> = RegisteredOutputObject<R, C, O>;
-
 export type NullOrNotNull<X, Y> =
   () => null extends X
     ? Nullable<Y> 
     : Y;
 
+export type IntOrFloat = typeof Int | typeof Float;
+
+export type StringOrEnum<Scalar> =
+    // This is a trick to detect whether Scalar is an enum or not, typescript enums extend string, but string doesn't 
+    // extend Scalar;
+    string extends Scalar 
+      ? NullOrNotNull<Scalar, typeof String>
+      : NullOrNotNull<Scalar, RegisteredEnum<{[key: string]: string}>>
+
+// FIXME: The trick for string enums doesn't work for int enums, so we just have to use a union of number and enum here.
+export type NumberOrEnum<Scalar> =
+  NullOrNotNull<Scalar, IntOrFloat | RegisteredEnum<{[key: number]: string}>>
+
+export type OtherScalars<Scalar> = 
+  Scalar extends Date 
+    ? typeof Date
+    : Scalar extends boolean 
+      ? typeof Boolean
+      : never;
+
+// export type ObjectRuntimeType<R, C, O> = RegisteredOutputObject<R, C, O>;
+
 export type GetRuntimeTypes<R, C, Obj> = {
-  [Key in keyof Obj]: 
+  [FieldName in keyof Obj]: 
     // Detect String Enums by extend string but string doesn't extend an enum
-    Obj[Key] extends string
-      ? string extends Obj[Key]
-        ? () => typeof String
-        : () => RegisteredEnum<{[key: string]: string}>
-    : ScalarRuntimeType<Obj[Key]> extends never 
-      // // ? Obj[Key] extends Function & {prototype: Obj[Key]}
-      // ? NullOrNotNull<Obj[Key], ObjectRuntimeType<R, C, Obj[Key]>>
-      //   // : NullOrNotNull<Obj[Key], Enum<Obj[Key]>> 
-      // : NullOrNotNull<Obj[Key], ScalarRuntimeType<Obj[Key]>>
-      
-      ? () => null extends Obj[Key] 
-        ? Nullable<ObjectRuntimeType<R, C, Obj[Key]>> 
-        : ObjectRuntimeType<R, C, Obj[Key]>
-      : () => null extends Obj[Key] 
-        ? Nullable<ScalarRuntimeType<Obj[Key]>> 
-        : ScalarRuntimeType<Obj[Key]>
+    Obj[FieldName] extends string
+      ? StringOrEnum<Obj[FieldName]>
+      : Obj[FieldName] extends number
+        ? NumberOrEnum<Obj[FieldName]>
+        : OtherScalars<Obj[FieldName]> extends never 
+          ? NullOrNotNull<Obj[FieldName], RegisteredOutputObject<R, C, Obj[FieldName]>>
+          : NullOrNotNull<Obj[FieldName], OtherScalars<Obj[FieldName]>>
 } & {
   [Key in string]: 
     keyof Obj extends Key
@@ -97,17 +81,10 @@ export type GetRuntimeTypes<R, C, Obj> = {
         | ScalarTypes 
         | Nullable<RegisteredOutputObject<R, C, any>> 
         | RegisteredOutputObject<R, C, any>
-        | RegisteredEnum<any>
+        | RegisteredEnum<{[key: string]: string}>
+        | RegisteredEnum<{[key: number]: string}>
       : never
 };
-        // ? () => Nullable<ScalarTypes> | ScalarTypes
-
-type Exact<A, B> = A extends B
-  ? B extends A
-    ? A
-    : never
-  : never
-
 
 export type NoArgsQuery<R, C, O> = {
   name?: string,

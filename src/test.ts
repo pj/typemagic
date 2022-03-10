@@ -9,7 +9,8 @@ export class Test {
   floatField: number;
   relatedField: RelatedClass;
   arrayRelatedField: ArrayRelatedClass[]; 
-  enumField: ASDF;
+  stringEnumField: StringEnum;
+  numberEnumField: IntEnum;
 
   constructor(
     stringField: string,
@@ -19,7 +20,8 @@ export class Test {
     floatField: number,
     relatedField: RelatedClass,
     arrayRelatedField: ArrayRelatedClass[], 
-    enumField: ASDF
+    stringEnumField: StringEnum,
+    numberEnumField: IntEnum
   ) {
     this.stringField = stringField; 
     this.booleanField = booleanField; 
@@ -28,7 +30,8 @@ export class Test {
     this.floatField = floatField; 
     this.relatedField = relatedField; 
     this.arrayRelatedField = arrayRelatedField; 
-    this.enumField = enumField;
+    this.stringEnumField = stringEnumField;
+    this.numberEnumField = numberEnumField;
   }
 }
 
@@ -73,70 +76,20 @@ async function test(args: Args): Promise<Test> {
     1.0,
     new RelatedClass("qwer"),
     [new ArrayRelatedClass("test")],
-    ASDF.asdf
+    StringEnum.asdf,
+    IntEnum.second
   );
 }
 
-enum ASDF {
+enum StringEnum {
   erer = "erer",
   asdf = "asdf"
 }
 
-// type X = typeof ASDF extends {prototype: infer Y} ? "yes" : Y;
-// type Y = ASDF extends {prototype: infer X} ? "yes" : "no";
-
-// type X = string extends object ? "yes" : "no";
-
-// type X = string extends typeof ASDF ? "yes" : "no"
-// type Y = typeof String extends object ? "yes" : "no"
-
-// type X = typeof String extends typeof ASDF ? "yes" : "no"
-// type Y = typeof ASDF extends typeof String ? "yes" : "no"
-// type Z = typeof ASDF extends string ? "yes" : "no"
-
-// type X = {[Key in keyof typeof ASDF as `hello${string & Key}`]: never}
-// type Z = typeof ASDF extends {} ? "yes" : "no"
-// type X = Omit<typeof ASDF, 'asdf'> extends {} ? "yes" : "no"
-// type Z = typeof ASDF extends {prototype: any} ? "yes" : "no"
-
-// type X = Pick<{asdf: string}, keyof {asdf: string}> 
-
-// function ssss() {}
-
-// type Z = Pick<typeof ssss, keyof typeof ssss>
-
-// type Z = typeof String extends {prototype: infer X} ? "yes" : "no";
-// type A = String extends {prototype: infer X} ? "yes" : "no";
-// type B = typeof ASDF
-
-// const x = "asdf";
-// type T = string extends ASDF ? "yes" : "no";
-// type H = ASDF extends string ? "yes" : "no";
-
-// type Z<X> = string extends X ? "yes" : "no";
-// type Y = Z<ASDF>;
-// type A = Z<string>;
-
-// type X = typeof ASDF extends {[Key in keyof ASDF]: ASDF[Key]} ? "yes" : "no"
-
-type TypeOf = typeof ASDF
-type Keys = keyof TypeOf
-// type Picked = Pick<TypeOf, Keys>
-// type PickedKeys = keyof Picked
-// type Excluded = Exclude<Picked, PickedKeys>
-
-// type Z = Exclude<Keys, Keys>;
-// type X = Keys extends string ? "yes" : "no"
-
-// type ExtractedTypes = Extract<TypeOf, >
-
-type X = typeof ASDF extends {[key: string]: string} ? "yes" : "no"
-
-
-
-// type X = Exclude<Pick<typeof ASDF, keyof typeof ASDF>, keyof typeof ASDF>
-// type T = {} extends Exclude<Pick<typeof ASDF, keyof typeof ASDF>, keyof typeof ASDF> ? "yes" : "no";
-
+enum IntEnum {
+  first,
+  second
+}
 
 query({
   name: "test",
@@ -155,7 +108,8 @@ query({
       stringField: () => String,
       booleanField: () => Boolean,
       dateField: () => nullable(Date),
-      enumField: () => registerEnum(ASDF),
+      stringEnumField: () => registerEnum(StringEnum),
+      numberEnumField: () => registerEnum(IntEnum),
       intField: () => Int,
       floatField: () => Float,
       // extra: () => object({
