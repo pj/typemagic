@@ -19,30 +19,38 @@ export function nullable<V>(clazz: V): Nullable<V> {
   return new Nullable(clazz);
 }
 
-class Enum<T> {
+
+// FIXME: prevent enum from taking values that aren't 
+type IsEnum<T> = T extends {[key: string]: string} ? T : never
+    // ? string extends T 
+    //   ? never 
+    //   : T
+    // : never;
+
+class RegisteredEnum<T> {
   name?: string;
-  clazz: T;
-  constructor(clazz: T, name?: string) {
+  clazz: IsEnum<T>;
+  constructor(clazz: IsEnum<T>, name?: string) {
     this.clazz = clazz;
     this.name = name;
   }
 }
 
-export function _enum<V>(clazz: V, name?: string): Enum<V> {
-  return new Enum(clazz, name);
+export function registerEnum<T>(clazz: IsEnum<T>, name?: string): RegisteredEnum<T> {
+  return new RegisteredEnum(clazz, name);
 }
 
 export type ScalarTypes = 
   typeof String | (typeof Float | typeof Int) | typeof Date | typeof Boolean;
 
 
-export type EnumNoDistribute<Scalar> = Enum<Scalar>
-type NoDistribute<T> = [T] extends [T] ? T : never;
+// export type EnumNoDistribute<Scalar> = Enum<Scalar>
+// type NoDistribute<T> = [T] extends [T] ? T : never;
 
 export type StringOrEnum<Scalar> =
   string extends Scalar 
     ? typeof String
-    : Enum<Scalar>;
+    : RegisteredEnum<Scalar>;
 
 export type ScalarRuntimeType<Scalar> = 
   Scalar extends string 
@@ -64,7 +72,12 @@ export type NullOrNotNull<X, Y> =
 
 export type GetRuntimeTypes<R, C, Obj> = {
   [Key in keyof Obj]: 
-    ScalarRuntimeType<Obj[Key]> extends never 
+    // Detect String Enums by extend string but string doesn't extend an enum
+    Obj[Key] extends string
+      ? string extends Obj[Key]
+        ? () => typeof String
+        : () => RegisteredEnum<{[key: string]: string}>
+    : ScalarRuntimeType<Obj[Key]> extends never 
       // // ? Obj[Key] extends Function & {prototype: Obj[Key]}
       // ? NullOrNotNull<Obj[Key], ObjectRuntimeType<R, C, Obj[Key]>>
       //   // : NullOrNotNull<Obj[Key], Enum<Obj[Key]>> 
@@ -84,7 +97,7 @@ export type GetRuntimeTypes<R, C, Obj> = {
         | ScalarTypes 
         | Nullable<RegisteredOutputObject<R, C, any>> 
         | RegisteredOutputObject<R, C, any>
-        | Enum<any>
+        | RegisteredEnum<any>
       : never
 };
         // ? () => Nullable<ScalarTypes> | ScalarTypes
