@@ -1,5 +1,9 @@
 import { Float, Int } from "type-graphql";
-import { args, object, query, nullable, registerEnum } from ".";
+import { schema } from ".";
+import { args } from "./input";
+import { object } from "./output";
+import { query, resolver } from "./query";
+import { ConstructorFromArray, nullable, registerEnum } from "./types";
 
 export class Test {
   stringField: string;
@@ -91,8 +95,7 @@ enum IntEnum {
   second
 }
 
-query({
-  name: "test",
+const testQuery = query({
   resolve: test,
   args: args({
     object: Args,
@@ -103,9 +106,14 @@ query({
     }
   }),
   output: object({
-    object: Test,
+    source: Test,
     fieldTypes: {
-      stringField: () => String,
+      stringField: () => resolver({
+        output: String,
+        resolve: async (root: Test) => {
+          return `${root.stringField} is being resolved`;
+        }
+      }),
       booleanField: () => Boolean,
       dateField: () => nullable(Date),
       stringEnumField: () => registerEnum(StringEnum),
@@ -118,24 +126,60 @@ query({
       //     return ASDF.asdf;
       //   },
       // }),
-      relatedField: () => object({
-        object: RelatedClass,
-        resolve: (root: Test, context: any): RelatedClass => {
+      relatedField: () => resolver({
+        output: object({
+          source: RelatedClass,
+          fieldTypes: {
+            testField: () => String
+          },
+        }),
+        resolve: async (root: Test) => {
           return new RelatedClass(`${root.intField} times`);
         },
-        fieldTypes: {
-          testField: () => String
-        }
       }),
-      arrayRelatedField: () => object({
-        object: [ArrayRelatedClass],
-        resolve: (): ArrayRelatedClass[] => {
+      arrayRelatedField: () => resolver({
+        output: object({
+          source: ArrayRelatedClass,
+          fieldTypes: {
+            asdfField: () => String
+          }
+        }),
+        resolve: async () => {
           return [new ArrayRelatedClass("array related")];
         },
-        fieldTypes: {
-          asdfField: () => String
-        }
       })
     }
   })
+});
+
+const Z = {
+  x: ArrayRelatedClass,
+  y: [ArrayRelatedClass]
+}
+type X = (typeof Z)["y"] extends Array<infer I> ? I : "no"
+
+type Y = X extends {new (): any} ? "yes" : "no"
+
+type A = [ArrayRelatedClass] extends Array<infer I> ? I : "no"
+
+// type B = () => [ArrayRelatedClass] 
+
+
+resolver({
+  output: object({
+    source: ArrayRelatedClass,
+    fieldTypes: {
+      asdfField: () => String
+    }
+  }),
+  resolve: async () => {
+    return [new ArrayRelatedClass("array related")];
+  },
+})
+
+
+schema({
+  queries: {
+    testQuery
+  }
 });
