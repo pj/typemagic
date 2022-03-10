@@ -46,10 +46,10 @@ export type Resolver<R, C, O> = {
 
 export class RegisteredResolver<R, C, O> {
   name?: string;
-  resolve: Resolve<R, C, O>
+  resolve: Resolve<R, C, O> | ArrayResolve<R, C, O>
   output: RegisteredOutputWithScalars<C, O>
 
-  constructor(resolve: Resolve<R, C, O>, output: RegisteredOutputWithScalars<C, O>, name?: string) {
+  constructor(resolve: Resolve<R, C, O> | ArrayResolve<R, C, O>, output: RegisteredOutputWithScalars<C, O>, name?: string) {
     this.resolve = resolve;
     this.output = output;
     this.name = name;
@@ -60,4 +60,16 @@ export class RegisteredResolver<R, C, O> {
 // resolve function
 export function resolver<R, O, C = any>(query: Resolver<R, C, O>): RegisteredResolver<R, C, O> {
   return new RegisteredResolver(query.resolve, query.output, query.name);
+}
+
+export type ArrayResolve<R, C, O> = (root: R, context: C) => Promise<O[]>;
+
+export type ArrayResolver<R, C, O> = {
+  name?: string,
+  resolve: ArrayResolve<R, C, O>
+  output: RegisteredOutputWithScalars<C, O>
+}
+
+export function array<R, O, C = any>(array: ArrayResolver<R, C, O>): RegisteredResolver<R, C, O> {
+  return new RegisteredResolver(array.resolve, array.output, array.name);
 }

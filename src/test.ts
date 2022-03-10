@@ -1,8 +1,8 @@
 import { Float, Int } from "type-graphql";
 import { schema } from ".";
 import { args } from "./input";
-import { object } from "./output";
-import { query, resolver } from "./query";
+import { object, OutputRuntimeTypes } from "./output";
+import { array, query, resolver } from "./query";
 import { ConstructorFromArray, nullable, registerEnum } from "./types";
 
 export class Test {
@@ -15,6 +15,7 @@ export class Test {
   arrayRelatedField: ArrayRelatedClass[]; 
   stringEnumField: StringEnum;
   numberEnumField: IntEnum;
+  arrayField: string[] | null;
 
   constructor(
     stringField: string,
@@ -25,7 +26,8 @@ export class Test {
     relatedField: RelatedClass,
     arrayRelatedField: ArrayRelatedClass[], 
     stringEnumField: StringEnum,
-    numberEnumField: IntEnum
+    numberEnumField: IntEnum,
+    arrayField: string[] | null
   ) {
     this.stringField = stringField; 
     this.booleanField = booleanField; 
@@ -36,6 +38,7 @@ export class Test {
     this.arrayRelatedField = arrayRelatedField; 
     this.stringEnumField = stringEnumField;
     this.numberEnumField = numberEnumField;
+    this.arrayField = arrayField;
   }
 }
 
@@ -81,7 +84,8 @@ async function test(args: Args): Promise<Test> {
     new RelatedClass("qwer"),
     [new ArrayRelatedClass("test")],
     StringEnum.asdf,
-    IntEnum.second
+    IntEnum.second,
+    ["hello", "world"]
   );
 }
 
@@ -137,7 +141,7 @@ const testQuery = query({
           return new RelatedClass(`${root.intField} times`);
         },
       }),
-      arrayRelatedField: () => resolver({
+      arrayRelatedField: () => array({
         output: object({
           source: ArrayRelatedClass,
           fieldTypes: {
@@ -147,25 +151,20 @@ const testQuery = query({
         resolve: async () => {
           return [new ArrayRelatedClass("array related")];
         },
-      })
+      }),
+      arrayField: () => nullable(array({
+        output: String,
+        resolve: async (root: Test) => {
+          return root.arrayField
+        }
+      }))
     }
   })
 });
 
-const Z = {
-  x: ArrayRelatedClass,
-  y: [ArrayRelatedClass]
-}
-type X = (typeof Z)["y"] extends Array<infer I> ? I : "no"
+type X = OutputRuntimeTypes<any, any, string[]>
 
-type Y = X extends {new (): any} ? "yes" : "no"
-
-type A = [ArrayRelatedClass] extends Array<infer I> ? I : "no"
-
-// type B = () => [ArrayRelatedClass] 
-
-
-resolver({
+array({
   output: object({
     source: ArrayRelatedClass,
     fieldTypes: {
