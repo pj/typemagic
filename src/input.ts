@@ -25,8 +25,8 @@ export type InputRuntimeTypes<Obj> = {
 
 export type InputObject<O, N extends BooleanWithUndefined, A extends ArrayTrilean> = {
   name?: string,
-  object: Constructor<O> | ScalarTypes
-  fieldTypes: InputRuntimeTypes<ArrayItem<O>>,
+  type: Constructor<O> | ScalarTypes
+  runtimeTypes: InputRuntimeTypes<ArrayItem<O>>,
   nullable?: N,
   array?: A
 };

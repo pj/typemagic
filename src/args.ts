@@ -12,8 +12,8 @@ export type ArgsRuntimeSchema<Obj> = {
 
 export type ArgsObject<O> = {
   name?: string,
-  object: Constructor<O>,
-  fieldTypes: ArgsRuntimeSchema<ArrayItem<O>>,
+  type: Constructor<O>,
+  runtimeTypes: ArgsRuntimeSchema<ArrayItem<O>>,
 };
 
 export type RegisteredArgsObject<O> = RegisteredObject<ArgsObject<O>>;

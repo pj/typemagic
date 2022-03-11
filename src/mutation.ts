@@ -1,23 +1,20 @@
-import { RegisteredArgsObject } from "./input";
+import { RegisteredArgsObject } from "./args";
 import { RegisteredOutputObject } from "./output";
+import { ArrayTrilean, BooleanWithUndefined, makeRegistered, RegisteredObject } from "./types";
 
 export type MutationFunction<C, A, O> = (args: A, context: C) => Promise<O>;
 
-export type Mutation<C, A, O> = {
+export type Mutation<C, A, O, N extends BooleanWithUndefined, Arr extends ArrayTrilean> = {
   args: RegisteredArgsObject<A>,
-  output: RegisteredOutputObject<C, O>,
+  output: RegisteredOutputObject<C, O, N, Arr>,
   mutate: MutationFunction<C, A, O>
 }
 
-export class RegisteredMutation<C, A, O> {
-  constructor(
-    public args: RegisteredArgsObject<A>,
-    public output: RegisteredOutputObject<C, O>,
-    public mutate: MutationFunction<C, A, O>,
-  ) {
-  }
-}
+export type RegisteredMutation<C, A, O, N extends BooleanWithUndefined, Arr extends ArrayTrilean>
+  = RegisteredObject<Mutation<C, A, O, N, Arr>>
 
-export function mutation<C, A, O>(input: Mutation<C, A, O>): RegisteredMutation<C, A, O> {
-  return new RegisteredMutation(input.args, input.output, input.mutate);
+export function mutation<C, A, O, N extends BooleanWithUndefined, Arr extends ArrayTrilean>(
+  input: Mutation<C, A, O, N, Arr>
+): RegisteredMutation<C, A, O, N, Arr> {
+  return makeRegistered(input);
 }

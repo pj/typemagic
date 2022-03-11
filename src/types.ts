@@ -1,7 +1,6 @@
 import { Float, Int } from "type-graphql";
 import { RegisteredInputObject } from "./input";
 import { RegisteredOutputObject } from "./output";
-import { RegisteredResolver } from "./query";
 
 // export class Nullable<T> {
 //   clazz: T
@@ -166,7 +165,7 @@ export function string<C, N extends boolean, A extends ArrayTrilean>(
     nullable: options?.nullable,
     array: options?.array,
     type: String,
-    fieldTypes: {}
+    runtimeTypes: {}
   });
 }
 
@@ -178,7 +177,43 @@ export function date<C, N extends boolean, A extends ArrayTrilean>(
     nullable: options?.nullable,
     array: options?.array,
     type: Date,
-    fieldTypes: {}
+    runtimeTypes: {}
+  });
+}
+
+export function int<C, N extends boolean, A extends ArrayTrilean>(
+  options?: ScalarOptions<N, A>
+): RegisteredOutputObject<C, GenerateScalarReturnType<number, N, A>, N, A> | RegisteredInputObject<number, N, A> {
+  return ({
+    registered: true,
+    nullable: options?.nullable,
+    array: options?.array,
+    type: Int,
+    runtimeTypes: {}
+  });
+}
+
+export function float<C, N extends boolean, A extends ArrayTrilean>(
+  options?: ScalarOptions<N, A>
+): RegisteredOutputObject<C, GenerateScalarReturnType<number, N, A>, N, A> | RegisteredInputObject<number, N, A> {
+  return ({
+    registered: true,
+    nullable: options?.nullable,
+    array: options?.array,
+    type: Float,
+    runtimeTypes: {}
+  });
+}
+
+export function boolean<C, N extends boolean, A extends ArrayTrilean>(
+  options?: ScalarOptions<N, A>
+): RegisteredOutputObject<C, GenerateScalarReturnType<boolean, N, A>, N, A> | RegisteredInputObject<boolean, N, A> {
+  return ({
+    registered: true,
+    nullable: options?.nullable,
+    array: options?.array,
+    type: Boolean,
+    runtimeTypes: {}
   });
 }
 

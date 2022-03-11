@@ -44,7 +44,7 @@ export type OutputRuntimeTypes<R, C, Obj> = {
 export type OutputObject<C, O, N extends BooleanWithUndefined, A extends ArrayTrilean> = {
   name?: string,
   type: Constructor<O> | ScalarTypes,
-  fieldTypes: OutputRuntimeTypes<O, C, O>,
+  runtimeTypes: OutputRuntimeTypes<O, C, O>,
   nullable?: N,
   array?: A,
 };

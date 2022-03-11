@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "lib": [
+      "es2018",
+      "esnext.asynciterable",
+      "DOM"
+    ],
+    "target": "es2018",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "sourceMap": true,
+    "esModuleInterop": true,
+    "declaration": true,
+    "strict": true,
+    "composite": true,
+    // "disableSourceOfProjectReferenceRedirect": true,
+    // "declaration": true,
+    // "target": "es5",
+    // "module": "commonjs",
+    // "strict": true,
+    // "noUnusedLocals": true,
+    // "noUnusedParameters": true,
+    // "noImplicitReturns": true,
+    // "noFallthroughCasesInSwitch": true,
+    // "composite": true
+  },
+}

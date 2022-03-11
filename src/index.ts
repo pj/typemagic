@@ -2,8 +2,7 @@ import { GraphQLBoolean, GraphQLFieldConfigMap, GraphQLFloat, GraphQLInt, GraphQ
 import { Float, GraphQLISODateTime, Int } from "type-graphql";
 import { RegisteredMutation } from "./mutation";
 import { RegisteredOutputObject } from "./output";
-import { RegisteredOutputWithScalars, RegisteredQuery } from "./query";
-import { Nullable } from "./types";
+import { RegisteredResolver } from "./query";
 
 // function mapToGraphQLType(type: RegisteredOutputWithScalars<any, any>): GraphQLScalarType | GraphQLObjectType {
 //   switch (type) {
@@ -49,10 +48,10 @@ import { Nullable } from "./types";
 export function schema<C = any>(
   schema: {
     queries?: {
-      [key: string]: RegisteredQuery<any, C, any, any>
+      [key: string]: RegisteredResolver<any, C, any, any, any, any>
     },
     mutations?: {
-      [key: string]: RegisteredMutation<C, any, any>
+      [key: string]: RegisteredMutation<C, any, any, any, any>
     }
   }
 ) {
