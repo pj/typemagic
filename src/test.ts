@@ -1,10 +1,9 @@
 import { Float, Int } from "type-graphql";
 import { schema } from ".";
-import { args } from "./input";
 import { mutation } from "./mutation";
-import { HandleArray, object, OutputRuntimeTypes } from "./output";
-import { array, query, resolver } from "./query";
-import { ConstructorFromArray, nullable, registerEnum } from "./types";
+import { object, OutputRuntimeTypes } from "./output";
+import { query } from "./query";
+import { ConstructorFromArray, date, GenerateScalarReturnType, registerEnum } from "./types";
 
 export class Test {
   constructor(
@@ -93,14 +92,14 @@ const testQuery = query({
   output: object({
     type: Test,
     fieldTypes: {
-      stringField: resolver({
-        type: String,
+      stringField: query({
+        output: String,
         resolve: async (root: Test) => {
           return `${root.stringField} is being resolved`;
         }
       }),
       booleanField: Boolean,
-      dateField: nullable(Date),
+      dateField: date(),
       stringEnumField: registerEnum(StringEnum),
       numberEnumField: registerEnum(IntEnum),
       intField: Int,
@@ -112,7 +111,7 @@ const testQuery = query({
       //   },
       // }),
       relatedField: resolver({
-        type: object({
+        output: object({
           type: RelatedClass,
           fieldTypes: {
             testField: String
@@ -161,7 +160,7 @@ const testQuery = query({
       }),
       nullableRelatedField: nullable(
         resolver({
-          type: object({
+          output: object({
             type: RelatedClass,
             fieldTypes: {
               testField: String
@@ -176,8 +175,16 @@ const testQuery = query({
   })
 });
 
-type X = OutputRuntimeTypes<any, any, {asdf: string[] | null}>
-type Y = HandleArray<any, any, string[], RelatedClass | null>
+// type X = OutputRuntimeTypes<any, any, {asdf: string[] | null}>
+// type Y = HandleArray<any, any, string[], RelatedClass | null>
+type X = GenerateScalarReturnType<string, false, true>;
+type Y = GenerateScalarReturnType<string, true, "nullable_items">;
+type Z = GenerateScalarReturnType<RelatedClass, undefined, undefined>;
+type A = GenerateScalarReturnType<RelatedClass, true, undefined>;
+
+type B = OutputRuntimeTypes<any, any, {x: RelatedClass | null}>
+
+type C = never
 
 schema({
   queries: {

@@ -1,0 +1,427 @@
+
+import { Float, Int } from "type-graphql";
+import { RegisteredResolver } from "./query";
+import { AddNull, Constructor, GenerateScalarReturnType, HandleItem, IntOrFloat, RegisteredEnum, ScalarTypes } from "./types";
+
+export type IsNull<O> = null extends O ? true : false;
+export type IncludeNull<O> = null extends O ? null : never;
+
+export type ArrayNullType<Arr> = 
+  Arr extends Array<infer Item> 
+    ? (null extends Item ? "nullable_items" : true) 
+    : false
+
+export type ResolverTypes<R, C, Item, Original> =
+  null extends Item
+    ?  (
+        RegisteredResolver<R, C, any, Item, true, ArrayNullType<Original>> 
+          & {
+            nullable: true, 
+            array: ArrayNullType<Original>
+            //  Original extends Array<infer Z> 
+            //   ? (null extends Item ? "nullable_items" : true) 
+            //   : false,
+            resolve: (args: any, root: R, context: C) => Promise<GenerateScalarReturnType<Item, true, ArrayNullType<Original>>>
+          }
+        ) | (
+          RegisteredOutputObject<C, Item | IncludeNull<Item>>
+            & {nullable: true, array: false}
+        ) | IncludeNull<Original>
+    : (
+    RegisteredResolver<R, C, any, Item, false, ArrayNullType<Item>> 
+      & {
+        nullable: false, 
+        array: ArrayNullType<Original>
+        // Original extends Array<infer Z> 
+        //   ? (null extends Item ? "nullable_items" : true) 
+        //   : false,
+        resolve: (args: any, root: R, context: C) => Promise<GenerateScalarReturnType<Item, false, ArrayNullType<Item>>>
+      }
+    ) | (
+      RegisteredOutputObject<C, Item | IncludeNull<Item>>
+        & {nullable: false | undefined, array: false}
+    ) | IncludeNull<Original>
+
+export type HandleArray<R, C, Arr> =
+  Arr extends Array<infer X> 
+    // ? HandleItem<X> extends never
+    //   ? ResolverTypes<R, C, Array<X> | AddNull<Original>>
+    //   : (
+    //       Array<
+    //         HandleItem<X>
+    //       > | AddNull<Original>
+    //     )
+    //     | ResolverTypes<R, C, Array<X> | AddNull<Original>>
+    //ResolverTypes<R, C, HandleItem<X> extends never ? HandleItem<X> : X, Arr>
+    ?  (RegisteredResolver<
+        R, 
+        C, 
+        any, 
+        HandleItem<X> extends never ? X : HandleItem<X>, 
+        IsNull<Arr>, ArrayNullType<Arr>
+      > & {
+          nullable: IsNull<Arr>, 
+          array: ArrayNullType<Arr>,
+          resolve: (args: any, root: R, context: C) => Promise<GenerateScalarReturnType<X, IsNull<Arr>, ArrayNullType<Arr>>>
+        }
+      ) | (
+        RegisteredOutputObject<C, HandleItem<X> extends never ? HandleItem<X> : X>
+          & {nullable: IsNull<Arr>, array: ArrayNullType<Arr>}
+      )
+    : null extends Arr
+      ?  (
+          RegisteredResolver<
+            R, 
+            C, 
+            any, 
+            HandleItem<Arr> extends never ? Arr : HandleItem<Arr>, 
+            IsNull<Arr>, 
+            ArrayNullType<Arr>
+          > & {
+              nullable: IsNull<Arr>, 
+              array: ArrayNullType<Arr>,
+              resolve: (args: any, root: R, context: C) => Promise<GenerateScalarReturnType<Arr, IsNull<Arr>, ArrayNullType<Arr>>>
+            }
+        ) | (
+          RegisteredOutputObject<C, HandleItem<Arr> extends never ? HandleItem<Arr> : Arr>
+            & {nullable: IsNull<Arr>, array: ArrayNullType<Arr>}
+        )
+      : (
+          RegisteredResolver<
+            R, 
+            C, 
+            any, 
+            HandleItem<Arr> extends never ? Arr : HandleItem<Arr>, 
+            IsNull<Arr>, 
+            ArrayNullType<Arr>
+          > & {
+              nullable: IsNull<Arr>, 
+              array: ArrayNullType<Arr>,
+              resolve: (args: any, root: R, context: C) => Promise<GenerateScalarReturnType<Arr, IsNull<Arr>, ArrayNullType<Arr>>>
+            }
+        ) | (
+          RegisteredOutputObject<C, HandleItem<Arr> extends never ? HandleItem<Arr> : Arr>
+            & {nullable: IsNull<Arr>, array: ArrayNullType<Arr>}
+        ) | HandleItem<Arr>
+      
+      
+      // ResolverTypes<R, C, HandleItem<Arr> extends never ? HandleItem<Arr> : Arr, Arr>
+      // : ResolverTypes<R, C, HandleItem<Arr> extends never ? HandleItem<Arr> : Arr, Arr> | HandleItem<Arr>
+    
+    // null extends X
+    //   ? HandleItem<X> extends never
+    //     ? RegisteredResolver<
+    //         R, 
+    //         C, 
+    //         any, 
+    //         Arr
+    //       > & {nullable: true, array: "nullable_items", resolve: (args: any, root: R, context: C) => Promise<Array<X | null> | null>}
+    //       | (RegisteredOutputObject<C, Arr | null> & {nullable: true, array: false})
+    //     : RegisteredResolver<
+    //         R, 
+    //         C, 
+    //         any, 
+    //         Arr
+    //       > & {nullable: true, array: "nullable_items", resolve: (args: any, root: R, context: C) => Promise<HandleItem<Arr> | null>}
+    //       | (RegisteredOutputObject<C, HandleItem<Arr> | null> & {nullable: true, array: false})
+    //   : HandleItem<Arr> extends never
+    //     ? RegisteredResolver<
+    //         R, 
+    //         C, 
+    //         any, 
+    //         Arr
+    //       > & {nullable: false, array: false, resolve: (args: any, root: R, context: C) => Promise<Arr>}
+    //       | (RegisteredOutputObject<C, Arr | null> & {nullable: false, array: false})
+    //     : HandleItem<Arr> 
+    //       | RegisteredResolver<
+    //           R, 
+    //           C, 
+    //           any, 
+    //           Arr
+    //         > & {nullable: false, array: false, resolve: (args: any, root: R, context: C) => Promise<HandleItem<Arr>>}
+    //       | (RegisteredOutputObject<C, HandleItem<Arr> | null> & {nullable: false, array: false})
+    // : HandleItem<Arr> extends never
+    //   ? (
+    //       RegisteredResolver<R, C, any, Arr> 
+    //       & {
+    //         nullable: null extends Arr ? true : false, 
+    //         array: false,
+    //         resolve: (args: any, root: R, context: C) => Promise<Arr | (null extends Arr ? null : never)>
+    //       }
+    //     ) | (
+    //       RegisteredOutputObject<C, Arr | (null extends Arr ? null : never)> 
+    //       & {nullable: null extends Arr ? true : false, array: false}
+    //     )
+      
+      // RegisteredResolver<
+      //       R, 
+      //       C, 
+      //       any, 
+      //       Arr
+      //     > & {nullable: true, array: false, resolve: (args: any, root: R, context: C) => Promise<Arr | null>}
+      //     | (RegisteredOutputObject<C, Arr | null> & {nullable: true, array: false})
+      //   : RegisteredResolver<
+      //       R, 
+      //       C, 
+      //       any, 
+      //       Arr
+      //     > & {nullable: true, array: false, resolve: (args: any, root: R, context: C) => Promise<HandleItem<Arr> | null>}
+      //     | (RegisteredOutputObject<C, HandleItem<Arr> | null> & {nullable: true, array: false})
+      // : HandleItem<Arr> extends never
+      //   ? RegisteredResolver<
+      //       R, 
+      //       C, 
+      //       any, 
+      //       Arr
+      //     > & {nullable: false, array: false, resolve: (args: any, root: R, context: C) => Promise<Arr>}
+      //     | (RegisteredOutputObject<C, Arr | null> & {nullable: false, array: false})
+      //   : HandleItem<Arr> 
+      //     | RegisteredResolver<
+      //         R, 
+      //         C, 
+      //         any, 
+      //         Arr
+      //       > & {nullable: false, array: false, resolve: (args: any, root: R, context: C) => Promise<HandleItem<Arr>>}
+      //     | (RegisteredOutputObject<C, HandleItem<Arr> | null> & {nullable: false, array: false})
+
+export type OutputRuntimeTypes<R, C, Obj> = {
+  // Treat a field being undefined as meaning "Not present in output".
+  [FieldName in keyof Obj]?: 
+    // Detect String Enums by extend string but string doesn't extend an enum
+    Obj[FieldName] extends Array<infer X> 
+      ?  (RegisteredResolver<
+          R, 
+          C, 
+          any, 
+          HandleItem<X> extends never ? X : HandleItem<X>, 
+          IsNull<Obj[FieldName]>, ArrayNullType<Obj[FieldName]>
+        > & {
+            nullable: IsNull<Obj[FieldName]>, 
+            array: ArrayNullType<Obj[FieldName]>,
+            resolve: (args: any, root: R, context: C) => Promise<GenerateScalarReturnType<X, IsNull<Obj[FieldName]>, ArrayNullType<Obj[FieldName]>>>
+          }
+        ) | (
+          RegisteredOutputObject<C, HandleItem<X> extends never ? HandleItem<X> : X>
+            & {nullable: IsNull<Obj[FieldName]>, array: ArrayNullType<Obj[FieldName]>}
+        )
+      : null extends Obj[FieldName]
+        ?  (
+            RegisteredResolver<
+              R, 
+              C, 
+              any, 
+              HandleItem<Obj[FieldName]> extends never ? Obj[FieldName] : HandleItem<Obj[FieldName]>, 
+              IsNull<Obj[FieldName]>, 
+              ArrayNullType<Obj[FieldName]>
+            > & {
+                nullable: IsNull<Obj[FieldName]>, 
+                array: ArrayNullType<Obj[FieldName]>,
+                resolve: (args: any, root: R, context: C) => Promise<GenerateScalarReturnType<Obj[FieldName], IsNull<Obj[FieldName]>, ArrayNullType<Obj[FieldName]>>>
+              }
+          ) | (
+            RegisteredOutputObject<C, HandleItem<Obj[FieldName]> extends never ? HandleItem<Obj[FieldName]> : Obj[FieldName]>
+              & {nullable: IsNull<Obj[FieldName]>, array: ArrayNullType<Obj[FieldName]>}
+          )
+        : (
+            RegisteredResolver<
+              R, 
+              C, 
+              any, 
+              HandleItem<Obj[FieldName]> extends never ? Obj[FieldName] : HandleItem<Obj[FieldName]>, 
+              IsNull<Obj[FieldName]>, 
+              ArrayNullType<Obj[FieldName]>
+            > & {
+                nullable: IsNull<Obj[FieldName]>, 
+                array: ArrayNullType<Obj[FieldName]>,
+                resolve: (args: any, root: R, context: C) => Promise<GenerateScalarReturnType<Obj[FieldName], IsNull<Obj[FieldName]>, ArrayNullType<Obj[FieldName]>>>
+              }
+          ) | (
+            RegisteredOutputObject<C, HandleItem<Obj[FieldName]> extends never ? HandleItem<Obj[FieldName]> : Obj[FieldName]>
+              & {nullable: IsNull<Obj[FieldName]>, array: ArrayNullType<Obj[FieldName]>}
+          ) | HandleItem<Obj[FieldName]>
+} 
+// & 
+// // Arbitrary properties are allowed.
+// {
+//   [Key in string]: 
+//     keyof Obj extends Key
+//       ? () => 
+//         Nullable<ScalarTypes> 
+//         | ScalarTypes 
+//         | Nullable<RegisteredOutputObject<C, any>> 
+//         | RegisteredOutputObject<C, any>
+//         | RegisteredEnum<{[key: string]: string}>
+//         | RegisteredEnum<{[key: number]: string}>
+//         | RegisteredQuery<R, C, any, any>
+//         | RegisteredResolver<R, C, any>
+//       : never
+// };
+
+export type OutputObject<C, O> = {
+  name?: string,
+  type: Constructor<O> | ScalarTypes,
+  fieldTypes: OutputRuntimeTypes<O, C, O>,
+  nullable?: boolean,
+  array?: boolean | "nullable_items",
+};
+
+export type RegisteredOutputObject<C, O> = OutputObject<C, O> & {registered: true};
+
+// export class RegisteredOutputObject<C, O> {
+//   name?: string;
+//   source: Constructor<O>;
+//   fieldTypes: OutputRuntimeTypes<O, C, O>;
+
+//   constructor(
+//     source: Constructor<O>,
+//     fieldTypes: OutputRuntimeTypes<O, C, O>,
+//     name?: string,
+//   ) {
+//     this.name = name;
+//     this.source = source;
+//     this.fieldTypes = fieldTypes;
+//   }
+// }
+
+export function object<C, O>(object: OutputObject<C, O>): RegisteredOutputObject<C, O> {
+  return {...object, registered: true};
+}
+
+// export function nullable<O, C = any>(
+//   type: ScalarTypes | Constructor<O> | OutputObject<C, O>
+// ): RegisteredOutputObject<C, Constructor<O> | ScalarTypes | null> {
+//   if (type === Date || type === Int || type === Float || type === String) {
+//     return (
+//       {
+//         registered: true,
+//         type: type,
+//         fieldTypes: {},
+//         nullable: true
+//       }
+//     );
+//   } else {
+//     return ({
+//       ...type,
+//       nullable: true,
+//       registered: true
+//     })
+//   }
+// }
+
+import { RegisteredArgsObject } from "./args";
+import { RegisteredOutputObject } from "./output"
+import { GenerateScalarReturnType, ScalarTypes } from "./types";
+
+export type RegisteredOutputWithScalars<C, O>  = RegisteredOutputObject<C, O> | ScalarTypes;
+
+// export type Query<R, C, A, O> = {
+//   name?: string,
+//   resolve: ObjectQuery<R, C, A, O>
+//   output: RegisteredOutputWithScalars<C, O>
+//   args: RegisteredArgsObject<A>
+// }
+
+// export type ObjectQuery<R, C, A, O> = (args: A, root: R, context: C) => Promise<O>;
+
+// export class RegisteredQuery<R, C, A, O> {
+//   name?: string;
+//   resolve: ObjectQuery<R, C, A, O>;
+//   output: RegisteredOutputWithScalars<C, O>;
+//   args: RegisteredArgsObject<A>;
+
+//   constructor(
+//     resolve: ObjectQuery<R, C, A, O>, 
+//     output: RegisteredOutputWithScalars<C, O>, 
+//     args: RegisteredArgsObject<A>, 
+//     name?: string
+//   ) {
+//     this.resolve = resolve;
+//     this.output = output;
+//     this.args = args;
+//     this.name = name;
+//   }
+// }
+
+// export function query<R, A, O, C = any>(query: Query<R, C, A, O>): RegisteredQuery<R, C, A, O> {
+//   return new RegisteredQuery(query.resolve, query.output, query.args, query.name);
+// }
+
+// FIXME: O | null isn't really correct, but I can't think of how to handle this right now.
+export type Resolve<R, C, O> = (root: R, context: C) => Promise<O | null>;
+
+export type Resolver<R, C, A, O, N extends boolean, Arr extends boolean | "nullable_items"> = {
+  args?: RegisteredArgsObject<A>
+  type: RegisteredOutputWithScalars<C, O>,
+  nullable?: N,
+  array?: Arr,
+  name?: string,
+  description?: string,
+  deprecationReason?: string,
+  resolve: (args: A, root: R, context: C) => Promise<GenerateScalarReturnType<O, N, Arr>>
+}
+
+export type RegisteredResolver<R, C, A, O, N extends boolean, Arr extends boolean | "nullable_items"> = 
+  Resolver<R, C, A, O, N, Arr> & {registered: true};
+
+// FIXME: resolver is separate from query because I couldn't find a way to make args dependant on the type of the 
+// resolve function
+export function query<R, A, O, N extends boolean, Arr extends boolean | "nullable_items", C = any>(
+  query: Resolver<R, C, A, O, N, Arr>
+): RegisteredResolver<R, C, A, O, N, Arr> {
+  return {...query, registered: true};
+}
+
+// FIXME: O[] | null isn't really correct, but I can't think of how to handle this right now.
+// export type ArrayResolveFunction<R, C, O> = (root: R, context: C) => Promise<O[] | null>;
+
+// export type ArrayResolver<R, C, O> = {
+//   name?: string,
+//   resolve: ArrayResolveFunction<R, C, O>
+//   output: RegisteredOutputWithScalars<C, O>
+// }
+
+// export type ArrayResolver<C, O> = {
+//   nullable?: boolean,
+//   type: RegisteredOutputWithScalars<C, O>
+// }
+
+// export function array<R, O, C = any>(array: ScalarTypes | ArrayResolver<C, O>): RegisteredOutputObject<R, C, O> {
+//   return {...array, array: true}
+// }
+
+// export class RegisteredResolver<R, C, O> {
+//   name?: string;
+//   resolve: Resolve<R, C, O> | ArrayResolveFunction<R, C, O>
+//   output: RegisteredOutputWithScalars<C, O>
+
+//   constructor(resolve: Resolve<R, C, O> | ArrayResolveFunction<R, C, O>, output: RegisteredOutputWithScalars<C, O>, name?: string) {
+//     this.resolve = resolve;
+//     this.output = output;
+//     this.name = name;
+//   }
+// 
+
+// export type Resolver<R, C, A, O> = 
+//   ResolverCommon<C, A, O> 
+//     & {
+//       resolve: (args: A, root: R, context: C) => O | null
+//     } 
+  // | ResolverCommon<C, A, O> 
+  //   & {
+  //     nullable: false, 
+  //     array: undefined,
+  //     resolve: (args: A, root: R, context: C) => O
+  //   } 
+  // | ResolverCommon<C, A, O> 
+  //   & {
+  //     nullable: true, 
+  //     array: true
+  //     resolve: (args: A, root: R, context: C) => O[] | null
+  //   } 
+  // | ResolverCommon<C, A, O> 
+  //   & {
+  //     nullable: false, 
+  //     array: true
+  //     resolve: (args: A, root: R, context: C) => O[]
+  //   } 
+
