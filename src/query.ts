@@ -36,7 +36,8 @@ export function query<R, A, O, C = any>(query: Query<R, C, A, O>): RegisteredQue
   return new RegisteredQuery(query.resolve, query.output, query.args, query.name);
 }
 
-export type Resolve<R, C, O> = (root: R, context: C) => Promise<O>;
+// FIXME: O | null isn't really correct, but I can't think of how to handle this right now.
+export type Resolve<R, C, O> = (root: R, context: C) => Promise<O | null>;
 
 export type Resolver<R, C, O> = {
   name?: string,
@@ -46,10 +47,10 @@ export type Resolver<R, C, O> = {
 
 export class RegisteredResolver<R, C, O> {
   name?: string;
-  resolve: Resolve<R, C, O> | ArrayResolve<R, C, O>
+  resolve: Resolve<R, C, O> | ArrayResolveFunction<R, C, O>
   output: RegisteredOutputWithScalars<C, O>
 
-  constructor(resolve: Resolve<R, C, O> | ArrayResolve<R, C, O>, output: RegisteredOutputWithScalars<C, O>, name?: string) {
+  constructor(resolve: Resolve<R, C, O> | ArrayResolveFunction<R, C, O>, output: RegisteredOutputWithScalars<C, O>, name?: string) {
     this.resolve = resolve;
     this.output = output;
     this.name = name;
@@ -62,11 +63,12 @@ export function resolver<R, O, C = any>(query: Resolver<R, C, O>): RegisteredRes
   return new RegisteredResolver(query.resolve, query.output, query.name);
 }
 
-export type ArrayResolve<R, C, O> = (root: R, context: C) => Promise<O[]>;
+// FIXME: O[] | null isn't really correct, but I can't think of how to handle this right now.
+export type ArrayResolveFunction<R, C, O> = (root: R, context: C) => Promise<O[] | null>;
 
 export type ArrayResolver<R, C, O> = {
   name?: string,
-  resolve: ArrayResolve<R, C, O>
+  resolve: ArrayResolveFunction<R, C, O>
   output: RegisteredOutputWithScalars<C, O>
 }
 

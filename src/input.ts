@@ -17,7 +17,7 @@ export type InputRuntimeTypes<Obj> = {
 {
   [Key in string]: 
     keyof Obj extends Key
-      ? () => 
+      ?  
         Nullable<ScalarTypes> 
         | ScalarTypes 
         | Nullable<RegisteredInputObject<any>> 

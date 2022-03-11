@@ -1,33 +1,44 @@
 import { RegisteredQuery, RegisteredResolver } from "./query";
-import { StringOrEnum, NumberOrEnum, OtherScalars, NullOrNotNull, Nullable, ScalarTypes, RegisteredEnum, ConstructorFromArray, ArrayItem, Constructor } from "./types";
+import { ArrayItem, Constructor, IntOrFloat, NullOrNotNull, RegisteredEnum } from "./types";
+
+export type ResolverTypes<R, C, O> =
+  RegisteredOutputObject<C, O>
+  | RegisteredQuery<R, C, any, O>
+  | RegisteredResolver<R, C, O>
+
+export type HandleItem<Item> =
+  Item extends Date 
+    ? typeof Date
+    : Item extends boolean 
+      ? typeof Boolean
+      : Item extends string
+        ? string extends Item 
+          ? typeof String
+          : RegisteredEnum<{[key: string]: string}>
+        : Item extends number
+          ? IntOrFloat | RegisteredEnum<{[key: number]: string}>
+          : never
+
+export type HandleArray<R, C, Arr, Orginal> =
+  Arr extends Array<infer X> 
+    ? HandleItem<X> extends never
+      ? ResolverTypes<R, C, X>
+      : Array<
+          NullOrNotNull<
+            X, 
+            HandleItem<Exclude<X, null>>
+          >
+        > | ResolverTypes<R, C, X | (null extends Orginal ? null : never)>
+    : HandleItem<Arr> | ResolverTypes<R, C, Arr | (null extends Orginal ? null : never)>
 
 export type OutputRuntimeTypes<R, C, Obj> = {
   // Treat a field being undefined as meaning "Not present in output".
   [FieldName in keyof Obj]?: 
     // Detect String Enums by extend string but string doesn't extend an enum
-    Obj[FieldName] extends string
-      ? StringOrEnum<R, C, Obj[FieldName]>
-      : Obj[FieldName] extends number
-        ? NumberOrEnum<R, C, Obj[FieldName]>
-        : Obj[FieldName] extends Array<infer X> 
-          ? OtherScalars<X> extends never 
-              ? NullOrNotNull<X, RegisteredOutputObject<C, X>> 
-                | NullOrNotNull<X, RegisteredQuery<R, C, any, X>> 
-                | NullOrNotNull<X, RegisteredResolver<R, C, X>>
-              : NullOrNotNull<
-                  X, 
-                  OtherScalars<X> 
-                > 
-                | NullOrNotNull<X, RegisteredResolver<R, C, X>>
-          : OtherScalars<Obj[FieldName]> extends never 
-            ? NullOrNotNull<Obj[FieldName], RegisteredOutputObject<C, Obj[FieldName]>> 
-              | NullOrNotNull<Obj[FieldName], RegisteredQuery<R, C, any, Obj[FieldName]>> 
-              | NullOrNotNull<Obj[FieldName], RegisteredResolver<R, C, Obj[FieldName]>>
-            : NullOrNotNull<
-                Obj[FieldName], 
-                OtherScalars<Obj[FieldName]> 
-              > 
-              | NullOrNotNull<Obj[FieldName], RegisteredResolver<R, C, Obj[FieldName]>>
+    NullOrNotNull<
+      Obj[FieldName], 
+      HandleArray<R, C, Exclude<Obj[FieldName], null>, Obj[FieldName]>
+    >
 } 
 // & 
 // // Arbitrary properties are allowed.
@@ -46,35 +57,20 @@ export type OutputRuntimeTypes<R, C, Obj> = {
 //       : never
 // };
 
-// export class OutputArray<O> {
-//   source: O
-
-//   constructor(source: O) {
-//     this.source = source;
-//   }
-// }
-
-
-// export function array<O>(source: O): OutputArray<O> {
-//   return new OutputArray(source);
-// }
-
-// type ConstructorOrArray<O> = ConstructorFromArray<O> | OutputArray<ConstructorFromArray<O>>;
-
 export type OutputObject<C, O> = {
   name?: string,
   source: Constructor<O>,
-  fieldTypes: OutputRuntimeTypes<O, C, ArrayItem<O>>,
+  fieldTypes: OutputRuntimeTypes<O, C, O>,
 };
 
 export class RegisteredOutputObject<C, O> {
   name?: string;
   source: Constructor<O>;
-  fieldTypes: OutputRuntimeTypes<O, C, ArrayItem<O>>;
+  fieldTypes: OutputRuntimeTypes<O, C, O>;
 
   constructor(
     source: Constructor<O>,
-    fieldTypes: OutputRuntimeTypes<O, C, ArrayItem<O>>,
+    fieldTypes: OutputRuntimeTypes<O, C, O>,
     name?: string,
   ) {
     this.name = name;
@@ -84,36 +80,5 @@ export class RegisteredOutputObject<C, O> {
 }
 
 export function object<C, O>(object: OutputObject<C, O>): RegisteredOutputObject<C, O> {
-  // if (object.source instanceof OutputArray) {
-  //   return new RegisteredArrayObject(object.source, object.fieldTypes, object.name);
-  // } else {
-    return new RegisteredOutputObject(object.source, object.fieldTypes, object.name);
-  // }
+  return new RegisteredOutputObject(object.source, object.fieldTypes, object.name);
 }
-
-// export type ArrayObject<C, O> = {
-//   name?: string,
-//   source: Constructor<O>,
-//   fieldTypes: OutputRuntimeTypes<O, C, ArrayItem<O>>,
-// }
-
-// export class RegisteredArrayObject<C, O> {
-//   name?: string;
-//   source: Constructor<O>;
-//   fieldTypes: OutputRuntimeTypes<O, C, ArrayItem<O>>;
-
-//   constructor(
-//     source: Constructor<O>,
-//     fieldTypes: OutputRuntimeTypes<O, C, ArrayItem<O>>,
-//     name?: string,
-//   ) {
-//     this.name = name;
-//     this.source = source;
-//     this.fieldTypes = fieldTypes;
-//   }
-// }
-
-
-// export function array<C, O>(array: ArrayObject<C, O>) {
-//   return new RegisteredArrayObject(array.source, array.fieldTypes, array.name);
-// }

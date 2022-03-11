@@ -13,7 +13,6 @@ export function nullable<V>(clazz: V): Nullable<V> {
   return new Nullable(clazz);
 }
 
-
 type IsEnum<T> = 
   T extends {[key: string]: string} 
     ? T
@@ -39,7 +38,7 @@ export type ScalarTypes =
 
 
 export type NullOrNotNull<X, Y> =
-  () => null extends X
+  null extends X
     ? Nullable<Y> 
     : Y;
 

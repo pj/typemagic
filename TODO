@@ -1,0 +1,7 @@
+- Generation code
+- Replace registed with field that says registed.
+- Interfaces
+- Unions
+- Better handling of nullability
+- Input objects
+- description and deprecation reason

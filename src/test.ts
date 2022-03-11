@@ -1,44 +1,27 @@
 import { Float, Int } from "type-graphql";
 import { schema } from ".";
 import { args } from "./input";
-import { object, OutputRuntimeTypes } from "./output";
+import { mutation } from "./mutation";
+import { HandleArray, object, OutputRuntimeTypes } from "./output";
 import { array, query, resolver } from "./query";
 import { ConstructorFromArray, nullable, registerEnum } from "./types";
 
 export class Test {
-  stringField: string;
-  booleanField: boolean;
-  dateField: Date | null;
-  intField: number;
-  floatField: number;
-  relatedField: RelatedClass;
-  arrayRelatedField: ArrayRelatedClass[]; 
-  stringEnumField: StringEnum;
-  numberEnumField: IntEnum;
-  arrayField: string[] | null;
-
   constructor(
-    stringField: string,
-    booleanField: boolean,
-    dateField: Date | null,
-    intField: number,
-    floatField: number,
-    relatedField: RelatedClass,
-    arrayRelatedField: ArrayRelatedClass[], 
-    stringEnumField: StringEnum,
-    numberEnumField: IntEnum,
-    arrayField: string[] | null
+    public stringField: string,
+    public booleanField: boolean,
+    public dateField: Date | null,
+    public intField: number,
+    public floatField: number,
+    public relatedField: RelatedClass,
+    public arrayRelatedField: ArrayRelatedClass[], 
+    public stringEnumField: StringEnum,
+    public numberEnumField: IntEnum,
+    public arrayField: string[],
+    public nullableArrayField: string[] | null,
+    public queriedField: RelatedClass,
+    public nullableRelatedField: RelatedClass | null
   ) {
-    this.stringField = stringField; 
-    this.booleanField = booleanField; 
-    this.dateField = dateField; 
-    this.intField = intField; 
-    this.floatField = floatField; 
-    this.relatedField = relatedField; 
-    this.arrayRelatedField = arrayRelatedField; 
-    this.stringEnumField = stringEnumField;
-    this.numberEnumField = numberEnumField;
-    this.arrayField = arrayField;
   }
 }
 
@@ -59,18 +42,11 @@ export class ArrayRelatedClass {
 }
 
 export class Args {
-  stringField: string;
-  booleanField: boolean;
-  dateField: Date;
-
   constructor(
-    stringField: string,
-    booleanField: boolean,
-    dateField: Date,
+    public stringField: string,
+    public booleanField: boolean,
+    public dateField: Date,
   ) {
-    this.stringField = stringField; 
-    this.booleanField = booleanField; 
-    this.dateField = dateField; 
   }
 }
 
@@ -85,7 +61,10 @@ async function test(args: Args): Promise<Test> {
     [new ArrayRelatedClass("test")],
     StringEnum.asdf,
     IntEnum.second,
-    ["hello", "world"]
+    ["goodbye"],
+    ["hello", "world"],
+    new RelatedClass("hello"),
+    null
   );
 }
 
@@ -99,86 +78,123 @@ enum IntEnum {
   second
 }
 
-const testQuery = query({
-  resolve: test,
-  args: args({
+const registedArgs = args({
     object: Args,
     fieldTypes: {
-      stringField: () => String,
-      booleanField: () => Boolean,
-      dateField: () => Date,
+      stringField: String,
+      booleanField: Boolean,
+      dateField: Date,
     }
-  }),
+  });
+
+const testQuery = query({
+  resolve: test,
+  args: registedArgs,
   output: object({
     source: Test,
     fieldTypes: {
-      stringField: () => resolver({
+      stringField: resolver({
         output: String,
         resolve: async (root: Test) => {
           return `${root.stringField} is being resolved`;
         }
       }),
-      booleanField: () => Boolean,
-      dateField: () => nullable(Date),
-      stringEnumField: () => registerEnum(StringEnum),
-      numberEnumField: () => registerEnum(IntEnum),
-      intField: () => Int,
-      floatField: () => Float,
+      booleanField: Boolean,
+      dateField: nullable(Date),
+      stringEnumField: registerEnum(StringEnum),
+      numberEnumField: registerEnum(IntEnum),
+      intField: Int,
+      floatField: Float,
       // extra: () => object({
       //   object: ASDF,
       //   resolve: (root: Test): ASDF => {
       //     return ASDF.asdf;
       //   },
       // }),
-      relatedField: () => resolver({
+      relatedField: resolver({
         output: object({
           source: RelatedClass,
           fieldTypes: {
-            testField: () => String
+            testField: String
           },
         }),
         resolve: async (root: Test) => {
           return new RelatedClass(`${root.intField} times`);
         },
       }),
-      arrayRelatedField: () => array({
+      arrayRelatedField: array({
         output: object({
           source: ArrayRelatedClass,
           fieldTypes: {
-            asdfField: () => String
+            asdfField: String
           }
         }),
         resolve: async () => {
           return [new ArrayRelatedClass("array related")];
         },
       }),
-      arrayField: () => nullable(array({
+      arrayField: array({
         output: String,
         resolve: async (root: Test) => {
-          return root.arrayField
+          return root.arrayField;
         }
-      }))
+      }),
+      nullableArrayField: nullable(
+        array({
+          output: String,
+          resolve: async (root: Test): Promise<string[] | null> => {
+            return root.nullableArrayField
+          }
+        })
+      ),
+      queriedField: query({
+        output: object({
+          source: RelatedClass,
+          fieldTypes: {
+            testField: String
+          }
+        }),
+        args: registedArgs,
+        resolve: async (args: Args, root: Test): Promise<RelatedClass> => {
+          return root.queriedField;
+        }
+      }),
+      nullableRelatedField: nullable(
+        resolver({
+          output: object({
+            source: RelatedClass,
+            fieldTypes: {
+              testField: String
+            },
+          }),
+          resolve: async (root: Test) => {
+            return root.nullableRelatedField;
+          },
+        })
+      ),
     }
   })
 });
 
-type X = OutputRuntimeTypes<any, any, string[]>
-
-array({
-  output: object({
-    source: ArrayRelatedClass,
-    fieldTypes: {
-      asdfField: () => String
-    }
-  }),
-  resolve: async () => {
-    return [new ArrayRelatedClass("array related")];
-  },
-})
-
+type X = OutputRuntimeTypes<any, any, {asdf: string[] | null}>
+type Y = HandleArray<any, any, string[], RelatedClass | null>
 
 schema({
   queries: {
     testQuery
+  }, 
+  mutations: {
+    testMutation: mutation({
+      args: registedArgs,
+      mutate: async (args: Args, context: any) => {
+        return new RelatedClass("asdf");
+      },
+      output: object({
+        source: RelatedClass,
+        fieldTypes: {
+          testField: String
+        }
+      })
+    })
   }
 });
