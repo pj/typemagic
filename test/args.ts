@@ -13,19 +13,12 @@ type RT4 = GenerateScalarReturnType<Date, false, false>
 type RT5 = GenerateScalarReturnType<Date, true, "nullable_items">
 type RT6 = GenerateScalarReturnType<Date, false, "nullable_items">
 
-const D = date();
-type TD = typeof D
+// const D = date();
+// type TD = typeof D
 
-// type DateType = {dateField: Date | null}
-// type Y = InputRuntimeTypes<DateType>
-// type Z = OutputRuntimeTypes<any, any, DateType>
+const S = string();
 
 type StringArrayOrNull = string[] | null | undefined;
-type X = [Exclude<StringArrayOrNull, null | undefined>] extends [Array<infer X>] ? (null extends X ? "nullable_items" : true) : false
-
-type GAT = GenerateArrayTrilean<StringArrayOrNull>
-type GATS = GenerateArrayTrilean<(string | null)[]>
-
 type StringType = {stringField: StringArrayOrNull};
 
 type RIO = RegisteredInputObject<

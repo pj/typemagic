@@ -1,6 +1,6 @@
 import { Float, Int } from "type-graphql";
-import { RegisteredInputObject } from "./input";
-import { RegisteredOutputObject } from "./output";
+import { InputRuntimeTypes, RegisteredInputObject } from "./input";
+import { OutputRuntimeTypes, RegisteredOutputObject } from "./output";
 
 // export class Nullable<T> {
 //   clazz: T
@@ -99,7 +99,7 @@ export type GenerateScalarReturnType<RT, N, A> =
         : RT | null
 
 
-export type ScalarOptions<N extends BooleanWithUndefined, A extends ArrayTrilean> = {
+export type ScalarOptions<N extends BooleanOrUndefined, A extends ArrayTrilean> = {
   nullable?: N, 
   array?: A
 };
@@ -124,7 +124,7 @@ export function makeRegistered<A>(a: A): RegisteredObject<A> {
 }
 
 export type ArrayTrilean = boolean | "nullable_items" | undefined;
-export type BooleanWithUndefined = boolean | undefined;
+export type BooleanOrUndefined = boolean | undefined;
 
 export type GenerateArrayTrilean<A> = 
   [Exclude<A, null | undefined>] extends [Array<infer I>] 
@@ -133,68 +133,81 @@ export type GenerateArrayTrilean<A> =
       : true
     : false
 
-export function string<C, N extends boolean, A extends ArrayTrilean>(
+export function string<C, N extends BooleanOrUndefined, A extends ArrayTrilean>(
   options?: ScalarOptions<N, A>
-): RegisteredOutputObject<C, GenerateScalarReturnType<string, N, A>, N, A> | RegisteredInputObject<string, N, A> {
+// ): RegisteredOutputObject<C, GenerateScalarReturnType<string, N, A>, N, A> | RegisteredInputObject<string, N, A> {
+): RegisteredInputObject<string, N, A> {
   return ({
     registered: true,
     nullable: options?.nullable,
     array: options?.array,
     type: String,
-    runtimeTypes: {}
+    // runtimeTypes: {} as OutputRuntimeTypes<any, C, string> | InputRuntimeTypes<string>
+    runtimeTypes: {} as InputRuntimeTypes<string>
   });
 }
 
 export function date<C, N extends boolean, A extends ArrayTrilean>(
   options?: ScalarOptions<N, A>
-): RegisteredOutputObject<C, GenerateScalarReturnType<Date, N, A>, N, A> | RegisteredInputObject<Date, N, A> {
+// ): RegisteredOutputObject<C, GenerateScalarReturnType<Date, N, A>, N, A> | RegisteredInputObject<Date, N, A> {
+): RegisteredInputObject<Date, N, A> {
   return ({
     registered: true,
     nullable: options?.nullable,
     array: options?.array,
     type: Date,
-    runtimeTypes: {}
+    // runtimeTypes: {} as OutputRuntimeTypes<any, C, Date> | InputRuntimeTypes<Date>
+    runtimeTypes: {} as InputRuntimeTypes<Date>
   });
 }
 
 export function int<C, N extends boolean, A extends ArrayTrilean>(
   options?: ScalarOptions<N, A>
-): RegisteredOutputObject<C, GenerateScalarReturnType<number, N, A>, N, A> | RegisteredInputObject<number, N, A> {
+// ): RegisteredOutputObject<C, GenerateScalarReturnType<number, N, A>, N, A> | RegisteredInputObject<number, N, A> {
+): RegisteredInputObject<number, N, A> {
   return ({
     registered: true,
     nullable: options?.nullable,
     array: options?.array,
     type: Int,
-    runtimeTypes: {}
+    // runtimeTypes: {} as OutputRuntimeTypes<any, C, number> | InputRuntimeTypes<number>
+    runtimeTypes: {} as InputRuntimeTypes<number>
   });
 }
 
 export function float<C, N extends boolean, A extends ArrayTrilean>(
   options?: ScalarOptions<N, A>
-): RegisteredOutputObject<C, GenerateScalarReturnType<number, N, A>, N, A> | RegisteredInputObject<number, N, A> {
+): RegisteredInputObject<number, N, A> {
   return ({
     registered: true,
     nullable: options?.nullable,
     array: options?.array,
     type: Float,
-    runtimeTypes: {}
+    // runtimeTypes: {} as OutputRuntimeTypes<any, C, number> | InputRuntimeTypes<number>
+    runtimeTypes: {} as InputRuntimeTypes<number>
   });
 }
 
 export function boolean<C, N extends boolean, A extends ArrayTrilean>(
   options?: ScalarOptions<N, A>
-): RegisteredOutputObject<C, GenerateScalarReturnType<boolean, N, A>, N, A> | RegisteredInputObject<boolean, N, A> {
+): RegisteredInputObject<boolean, N, A> {
   return ({
     registered: true,
     nullable: options?.nullable,
     array: options?.array,
     type: Boolean,
-    runtimeTypes: {}
+    // runtimeTypes: {} as OutputRuntimeTypes<any, C, boolean> | InputRuntimeTypes<boolean>
+    runtimeTypes: {} as InputRuntimeTypes<boolean>
   });
 }
 
-export type IsNull<O> = [null] extends [O] ? true : false;
+export type IsNull<O> = 
+  [null] extends [O] 
+    ? true : false;
 export type IncludeNull<O> = [null] extends [O] ? null : never;
 
 export type ArrayType<A> =
   [A] extends [Array<infer T>] ? T : A
+
+export type HandleScalarOr<Item> =
+  [HandleItem<ArrayType<Item>>] extends [never] ? ArrayType<Item> : HandleItem<ArrayType<Item>>

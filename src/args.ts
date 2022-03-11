@@ -1,10 +1,11 @@
 import { RegisteredInputObject } from "./input";
-import { OtherScalars, ScalarTypes, RegisteredEnum, ConstructorFromArray, ArrayItem, RegisteredObject, makeRegistered, Constructor, GenerateArrayTrilean, IsNull } from "./types";
+import { OtherScalars, ScalarTypes, RegisteredEnum, ConstructorFromArray, ArrayItem, RegisteredObject, makeRegistered, Constructor, GenerateArrayTrilean, IsNull, HandleScalarOr } from "./types";
 
 export type ArgsRuntimeSchema<Obj> = {
   [FieldName in keyof Obj]: 
     RegisteredInputObject<
-      Obj[FieldName],
+      // Obj[FieldName],
+      HandleScalarOr<Obj[FieldName]>,
       IsNull<Obj[FieldName]>,
       GenerateArrayTrilean<Obj[FieldName]>
     >
@@ -13,7 +14,7 @@ export type ArgsRuntimeSchema<Obj> = {
 export type ArgsObject<O> = {
   name?: string,
   type: Constructor<O>,
-  runtimeTypes: ArgsRuntimeSchema<ArrayItem<O>>,
+  runtimeTypes: ArgsRuntimeSchema<O>,
 };
 
 export type RegisteredArgsObject<O> = RegisteredObject<ArgsObject<O>>;
