@@ -1,24 +1,23 @@
-import { Float, Int } from "type-graphql";
-import { RegisteredResolver } from "./query";
-import { AddNull, ArrayTrilean, ArrayType, BooleanOrUndefined, Constructor, GenerateArrayTrilean, GenerateScalarReturnType, HandleItem, HandleScalarOr, IntOrFloat, IsNull, RegisteredEnum, ScalarTypes } from "./types";
+import { Resolver } from "./query";
+import { ArrayTrilean, BooleanOrUndefined, Constructor, GenerateArrayTrilean, GenerateScalarReturnType, GetUnderlyingArrayType, GetUnderlyingRuntimeType, IsNull, ScalarTypes } from "./types";
 
 export type OutputRuntimeTypes<R, C, Obj> = {
   [FieldName in keyof Obj]?: 
       (
-        RegisteredResolver<
+        Resolver<
           R, 
           C, 
           any, 
-          HandleScalarOr<Obj[FieldName]>,
+          GetUnderlyingRuntimeType<Obj[FieldName]>,
           IsNull<Obj[FieldName]>, 
           GenerateArrayTrilean<Obj[FieldName]>
         > & {
-            resolve: (args: any, root: R, context: C) => Promise<GenerateScalarReturnType<ArrayType<Obj[FieldName]>, IsNull<Obj[FieldName]>, GenerateArrayTrilean<Obj[FieldName]>>>
+            resolve: (args: any, root: R, context: C) => Promise<GenerateScalarReturnType<GetUnderlyingArrayType<Obj[FieldName]>, IsNull<Obj[FieldName]>, GenerateArrayTrilean<Obj[FieldName]>>>
           }
       ) | (
-        RegisteredOutputObject<
+        OutputObject<
           C, 
-          HandleScalarOr<Obj[FieldName]>,
+          GetUnderlyingRuntimeType<Obj[FieldName]>,
           IsNull<Obj[FieldName]>, 
           GenerateArrayTrilean<Obj[FieldName]>
         >
@@ -49,11 +48,11 @@ export type OutputObject<C, O, N extends BooleanOrUndefined, A extends ArrayTril
   array?: A,
 };
 
-export type RegisteredOutputObject<C, O, N extends BooleanOrUndefined, A extends ArrayTrilean> = 
-  OutputObject<C, O, N, A> & {registered: true};
+// export type RegisteredOutputObject<C, O, N extends BooleanOrUndefined, A extends ArrayTrilean> = 
+//   OutputObject<C, O, N, A> & {registered: true};
 
-export function object<C, O, N extends BooleanOrUndefined, A extends ArrayTrilean>(
-  object: OutputObject<C, O, N, A>
-): RegisteredOutputObject<C, O, N, A> {
-  return {...object, registered: true};
-}
+// export function object<C, O, N extends BooleanOrUndefined, A extends ArrayTrilean>(
+//   object: OutputObject<C, O, N, A>
+// ): RegisteredOutputObject<C, O, N, A> {
+//   return {...object, registered: true};
+// }

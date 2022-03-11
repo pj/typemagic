@@ -1,6 +1,5 @@
 import { Float, Int } from "type-graphql";
-import { InputRuntimeTypes, RegisteredInputObject } from "./input";
-import { OutputRuntimeTypes, RegisteredOutputObject } from "./output";
+import { InputObject, InputRuntimeTypes } from "./input";
 
 // export class Nullable<T> {
 //   clazz: T
@@ -104,7 +103,7 @@ export type ScalarOptions<N extends BooleanOrUndefined, A extends ArrayTrilean> 
   array?: A
 };
 
-export type HandleItem<Item> =
+export type GetUnderlyingScalarType<Item> =
   [Item] extends [Date] 
     ? typeof Date
     : [Item] extends [boolean]
@@ -136,9 +135,8 @@ export type GenerateArrayTrilean<A> =
 export function string<C, N extends BooleanOrUndefined, A extends ArrayTrilean>(
   options?: ScalarOptions<N, A>
 // ): RegisteredOutputObject<C, GenerateScalarReturnType<string, N, A>, N, A> | RegisteredInputObject<string, N, A> {
-): RegisteredInputObject<string, N, A> {
+): InputObject<string, N, A> {
   return ({
-    registered: true,
     nullable: options?.nullable,
     array: options?.array,
     type: String,
@@ -150,9 +148,8 @@ export function string<C, N extends BooleanOrUndefined, A extends ArrayTrilean>(
 export function date<C, N extends boolean, A extends ArrayTrilean>(
   options?: ScalarOptions<N, A>
 // ): RegisteredOutputObject<C, GenerateScalarReturnType<Date, N, A>, N, A> | RegisteredInputObject<Date, N, A> {
-): RegisteredInputObject<Date, N, A> {
+): InputObject<Date, N, A> {
   return ({
-    registered: true,
     nullable: options?.nullable,
     array: options?.array,
     type: Date,
@@ -164,9 +161,8 @@ export function date<C, N extends boolean, A extends ArrayTrilean>(
 export function int<C, N extends boolean, A extends ArrayTrilean>(
   options?: ScalarOptions<N, A>
 // ): RegisteredOutputObject<C, GenerateScalarReturnType<number, N, A>, N, A> | RegisteredInputObject<number, N, A> {
-): RegisteredInputObject<number, N, A> {
+): InputObject<number, N, A> {
   return ({
-    registered: true,
     nullable: options?.nullable,
     array: options?.array,
     type: Int,
@@ -177,9 +173,8 @@ export function int<C, N extends boolean, A extends ArrayTrilean>(
 
 export function float<C, N extends boolean, A extends ArrayTrilean>(
   options?: ScalarOptions<N, A>
-): RegisteredInputObject<number, N, A> {
+): InputObject<number, N, A> {
   return ({
-    registered: true,
     nullable: options?.nullable,
     array: options?.array,
     type: Float,
@@ -190,9 +185,8 @@ export function float<C, N extends boolean, A extends ArrayTrilean>(
 
 export function boolean<C, N extends boolean, A extends ArrayTrilean>(
   options?: ScalarOptions<N, A>
-): RegisteredInputObject<boolean, N, A> {
+): InputObject<boolean, N, A> {
   return ({
-    registered: true,
     nullable: options?.nullable,
     array: options?.array,
     type: Boolean,
@@ -206,8 +200,17 @@ export type IsNull<O> =
     ? true : false;
 export type IncludeNull<O> = [null] extends [O] ? null : never;
 
-export type ArrayType<A> =
-  [A] extends [Array<infer T>] ? T : A
+export type GetUnderlyingArrayType<A> =
+  [Exclude<A, null | undefined>] extends [Array<infer T>] ? T : A
 
-export type HandleScalarOr<Item> =
-  [HandleItem<ArrayType<Item>>] extends [never] ? ArrayType<Item> : HandleItem<ArrayType<Item>>
+export type GetUnderlyingRuntimeType<Item> =
+  [Exclude<Item, null | undefined>] extends [Array<infer ArrayType>] 
+    ? [GetUnderlyingScalarType<Exclude<ArrayType, null | undefined>>] extends [never] 
+      ? Constructor<Exclude<ArrayType, null | undefined>>
+      : GetUnderlyingScalarType<Exclude<ArrayType, null | undefined>>
+    : [GetUnderlyingScalarType<Exclude<Item, null | undefined>>] extends [never] 
+      ? Constructor<Exclude<Item, null | undefined>>
+      : GetUnderlyingScalarType<Exclude<Item, null | undefined>>
+  // [GetUnderlyingScalarType<GetUnderlyingArrayType<Exclude<Item, null | undefined>>>] extends [never] 
+  //   ? GetUnderlyingArrayType<Exclude<Item, null | undefined>>
+  //     : GetUnderlyingScalarType<GetUnderlyingArrayType<Exclude<Item, null | undefined>>>

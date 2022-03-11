@@ -1,13 +1,13 @@
-import { ArrayItem, ArrayTrilean, ArrayType, BooleanOrUndefined, Constructor, GenerateArrayTrilean, HandleItem, HandleScalarOr, IsNull, makeRegistered, RegisteredObject, ScalarTypes } from "./types";
+import { ArrayItem, ArrayTrilean, GetUnderlyingArrayType, BooleanOrUndefined, Constructor, GenerateArrayTrilean, GetUnderlyingScalarType, GetUnderlyingRuntimeType, IsNull, makeRegistered, RegisteredObject, ScalarTypes } from "./types";
 
 export type InputRuntimeTypes<Obj> = {
   [FieldName in keyof Obj]:
-  RegisteredInputObject<
-    HandleScalarOr<Obj[FieldName]>,
-    // [HandleItem<ArrayType<Obj[FieldName]>>] extends [never] ? ArrayType<Obj[FieldName]> : HandleItem<ArrayType<Obj[FieldName]>>,
-    IsNull<Obj[FieldName]>,
-    GenerateArrayTrilean<Obj[FieldName]>
-  >
+    InputObject<
+      GetUnderlyingRuntimeType<Obj[FieldName]>,
+      // [HandleItem<ArrayType<Obj[FieldName]>>] extends [never] ? ArrayType<Obj[FieldName]> : HandleItem<ArrayType<Obj[FieldName]>>,
+      IsNull<Obj[FieldName]>,
+      GenerateArrayTrilean<Obj[FieldName]>
+    >
 }
 // & 
 // Arbitrary properties are allowed.
@@ -26,14 +26,14 @@ export type InputRuntimeTypes<Obj> = {
 
 export type InputObject<O, N extends BooleanOrUndefined, A extends ArrayTrilean> = {
   name?: string,
-  type: Constructor<O> | ScalarTypes
+  type: O | ScalarTypes
   runtimeTypes: InputRuntimeTypes<O>,
   nullable?: N,
   array?: A
 };
 
-export type RegisteredInputObject<O, N extends BooleanOrUndefined, A extends ArrayTrilean> = RegisteredObject<InputObject<O, N, A>>
+// export type RegisteredInputObject<O, N extends BooleanOrUndefined, A extends ArrayTrilean> = RegisteredObject<InputObject<O, N, A>>
 
-export function input<I, N extends BooleanOrUndefined, A extends ArrayTrilean>(input: InputObject<I, N, A>): RegisteredInputObject<I, N, A> {
-  return makeRegistered(input);
-}
+// export function input<I, N extends BooleanOrUndefined, A extends ArrayTrilean>(input: InputObject<I, N, A>): RegisteredInputObject<I, N, A> {
+//   return makeRegistered(input);
+// }

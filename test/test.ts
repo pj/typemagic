@@ -1,8 +1,7 @@
 import { Float, Int } from "type-graphql";
 import { schema } from "../src";
 import { mutation } from "../src/mutation";
-import { object, OutputRuntimeTypes } from "../src/output";
-import { query } from "../src/query";
+import { OutputRuntimeTypes } from "../src/output";
 import { ConstructorFromArray, date, GenerateScalarReturnType, registerEnum } from "../src/types";
 
 export class Test {
@@ -40,7 +39,7 @@ export class ArrayRelatedClass {
   }
 }
 
-export class InputObject {
+export class TestInputObject {
   constructor(
     public stringField: string,
     public booleanField: boolean,
@@ -63,8 +62,11 @@ export class Args {
     public arrayField: string[],
     public nullableArrayField: string[] | null,
     public nullableItemsField: (string | null)[],
-    public inputObjectField: InputObject,
-    public nullableInputObjectField: InputObject | null
+    public inputObjectField: TestInputObject,
+    public nullableInputObjectField: TestInputObject | null,
+    public inputObjectArray: TestInputObject[],
+    public inputObjectNullableItems: (TestInputObject | null)[],
+    public nullableInputObjectNullableItems: (TestInputObject | null)[] | null,
   ) {
   }
 }
