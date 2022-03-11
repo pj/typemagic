@@ -1,10 +1,10 @@
-import { RegisteredQuery, RegisteredResolver } from "./query";
-import { ArrayItem, Constructor, IntOrFloat, NullOrNotNull, RegisteredEnum } from "./types";
+import { RegisteredResolver } from "./query";
+import { AddNull, Constructor, IntOrFloat, RegisteredEnum, ScalarTypes } from "./types";
 
 export type ResolverTypes<R, C, O> =
   RegisteredOutputObject<C, O>
-  | RegisteredQuery<R, C, any, O>
-  | RegisteredResolver<R, C, O>
+  // | RegisteredQuery<R, C, any, O>
+  | RegisteredResolver<R, C, any, O>
 
 export type HandleItem<Item> =
   Item extends Date 
@@ -19,26 +19,86 @@ export type HandleItem<Item> =
           ? IntOrFloat | RegisteredEnum<{[key: number]: string}>
           : never
 
-export type HandleArray<R, C, Arr, Orginal> =
+export type HandleArray<R, C, Arr> =
   Arr extends Array<infer X> 
-    ? HandleItem<X> extends never
-      ? ResolverTypes<R, C, X>
-      : Array<
-          NullOrNotNull<
-            X, 
-            HandleItem<Exclude<X, null>>
-          >
-        > | ResolverTypes<R, C, X | (null extends Orginal ? null : never)>
-    : HandleItem<Arr> | ResolverTypes<R, C, Arr | (null extends Orginal ? null : never)>
+    // ? HandleItem<X> extends never
+    //   ? ResolverTypes<R, C, Array<X> | AddNull<Original>>
+    //   : (
+    //       Array<
+    //         HandleItem<X>
+    //       > | AddNull<Original>
+    //     )
+    //     | ResolverTypes<R, C, Array<X> | AddNull<Original>>
+    ? null extends X
+      ? HandleItem<X> extends never
+        ? RegisteredResolver<
+            R, 
+            C, 
+            any, 
+            Arr
+          > & {nullable: true, array: "nullable_items", resolve: (args: any, root: R, context: C) => Promise<Array<X | null> | null>}
+          | (RegisteredOutputObject<C, Arr | null> & {nullable: true, array: false})
+        : RegisteredResolver<
+            R, 
+            C, 
+            any, 
+            Arr
+          > & {nullable: true, array: "nullable_items", resolve: (args: any, root: R, context: C) => Promise<HandleItem<Arr> | null>}
+          | (RegisteredOutputObject<C, HandleItem<Arr> | null> & {nullable: true, array: false})
+      : HandleItem<Arr> extends never
+        ? RegisteredResolver<
+            R, 
+            C, 
+            any, 
+            Arr
+          > & {nullable: false, array: false, resolve: (args: any, root: R, context: C) => Promise<Arr>}
+          | (RegisteredOutputObject<C, Arr | null> & {nullable: false, array: false})
+        : HandleItem<Arr> 
+          | RegisteredResolver<
+              R, 
+              C, 
+              any, 
+              Arr
+            > & {nullable: false, array: false, resolve: (args: any, root: R, context: C) => Promise<HandleItem<Arr>>}
+          | (RegisteredOutputObject<C, HandleItem<Arr> | null> & {nullable: false, array: false})
+    : null extends Arr
+      ? HandleItem<Arr> extends never
+        ? RegisteredResolver<
+            R, 
+            C, 
+            any, 
+            Arr
+          > & {nullable: true, array: false, resolve: (args: any, root: R, context: C) => Promise<Arr | null>}
+          | (RegisteredOutputObject<C, Arr | null> & {nullable: true, array: false})
+        : RegisteredResolver<
+            R, 
+            C, 
+            any, 
+            Arr
+          > & {nullable: true, array: false, resolve: (args: any, root: R, context: C) => Promise<HandleItem<Arr> | null>}
+          | (RegisteredOutputObject<C, HandleItem<Arr> | null> & {nullable: true, array: false})
+      : HandleItem<Arr> extends never
+        ? RegisteredResolver<
+            R, 
+            C, 
+            any, 
+            Arr
+          > & {nullable: false, array: false, resolve: (args: any, root: R, context: C) => Promise<Arr>}
+          | (RegisteredOutputObject<C, Arr | null> & {nullable: false, array: false})
+        : HandleItem<Arr> 
+          | RegisteredResolver<
+              R, 
+              C, 
+              any, 
+              Arr
+            > & {nullable: false, array: false, resolve: (args: any, root: R, context: C) => Promise<HandleItem<Arr>>}
+          | (RegisteredOutputObject<C, HandleItem<Arr> | null> & {nullable: false, array: false})
 
 export type OutputRuntimeTypes<R, C, Obj> = {
   // Treat a field being undefined as meaning "Not present in output".
   [FieldName in keyof Obj]?: 
     // Detect String Enums by extend string but string doesn't extend an enum
-    NullOrNotNull<
-      Obj[FieldName], 
-      HandleArray<R, C, Exclude<Obj[FieldName], null>, Obj[FieldName]>
-    >
+      HandleArray<R, C, Obj[FieldName]>
 } 
 // & 
 // // Arbitrary properties are allowed.
@@ -59,26 +119,43 @@ export type OutputRuntimeTypes<R, C, Obj> = {
 
 export type OutputObject<C, O> = {
   name?: string,
-  source: Constructor<O>,
+  type: Constructor<O> | ScalarTypes,
   fieldTypes: OutputRuntimeTypes<O, C, O>,
+  nullable?: boolean,
+  array?: boolean | "nullable_items",
 };
 
-export class RegisteredOutputObject<C, O> {
-  name?: string;
-  source: Constructor<O>;
-  fieldTypes: OutputRuntimeTypes<O, C, O>;
+export type RegisteredOutputObject<C, O> = OutputObject<C, O> & {registered: true};
 
-  constructor(
-    source: Constructor<O>,
-    fieldTypes: OutputRuntimeTypes<O, C, O>,
-    name?: string,
-  ) {
-    this.name = name;
-    this.source = source;
-    this.fieldTypes = fieldTypes;
-  }
-}
+// export class RegisteredOutputObject<C, O> {
+//   name?: string;
+//   source: Constructor<O>;
+//   fieldTypes: OutputRuntimeTypes<O, C, O>;
+
+//   constructor(
+//     source: Constructor<O>,
+//     fieldTypes: OutputRuntimeTypes<O, C, O>,
+//     name?: string,
+//   ) {
+//     this.name = name;
+//     this.source = source;
+//     this.fieldTypes = fieldTypes;
+//   }
+// }
 
 export function object<C, O>(object: OutputObject<C, O>): RegisteredOutputObject<C, O> {
-  return new RegisteredOutputObject(object.source, object.fieldTypes, object.name);
+  return {...object, registered: true};
+}
+
+export function nullable<O, C = any>(
+  type: ScalarTypes | Constructor<O>
+): RegisteredOutputObject<C, Constructor<O> | ScalarTypes | null> {
+  return (
+    {
+      registered: true,
+      type: type,
+      fieldTypes: {},
+      nullable: true
+    }
+  );
 }

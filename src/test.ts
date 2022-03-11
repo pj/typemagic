@@ -91,10 +91,10 @@ const testQuery = query({
   resolve: test,
   args: registedArgs,
   output: object({
-    source: Test,
+    type: Test,
     fieldTypes: {
       stringField: resolver({
-        output: String,
+        type: String,
         resolve: async (root: Test) => {
           return `${root.stringField} is being resolved`;
         }
@@ -112,8 +112,8 @@ const testQuery = query({
       //   },
       // }),
       relatedField: resolver({
-        output: object({
-          source: RelatedClass,
+        type: object({
+          type: RelatedClass,
           fieldTypes: {
             testField: String
           },
@@ -124,7 +124,7 @@ const testQuery = query({
       }),
       arrayRelatedField: array({
         output: object({
-          source: ArrayRelatedClass,
+          type: ArrayRelatedClass,
           fieldTypes: {
             asdfField: String
           }
@@ -149,7 +149,7 @@ const testQuery = query({
       ),
       queriedField: query({
         output: object({
-          source: RelatedClass,
+          type: RelatedClass,
           fieldTypes: {
             testField: String
           }
@@ -161,8 +161,8 @@ const testQuery = query({
       }),
       nullableRelatedField: nullable(
         resolver({
-          output: object({
-            source: RelatedClass,
+          type: object({
+            type: RelatedClass,
             fieldTypes: {
               testField: String
             },
@@ -190,7 +190,7 @@ schema({
         return new RelatedClass("asdf");
       },
       output: object({
-        source: RelatedClass,
+        type: RelatedClass,
         fieldTypes: {
           testField: String
         }
