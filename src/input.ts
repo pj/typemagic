@@ -1,9 +1,9 @@
-import { OtherScalars, ScalarTypes, RegisteredEnum, ConstructorFromArray, ArrayItem, RegisteredObject, Constructor, makeRegistered, ArrayTrilean, HandleItem, GenerateArrayTrilean, IsNull, BooleanWithUndefined } from "./types";
+import { OtherScalars, ScalarTypes, RegisteredEnum, ConstructorFromArray, ArrayItem, RegisteredObject, Constructor, makeRegistered, ArrayTrilean, HandleItem, GenerateArrayTrilean, IsNull, BooleanWithUndefined, ArrayType } from "./types";
 
 export type InputRuntimeTypes<Obj> = {
   [FieldName in keyof Obj]: 
     RegisteredInputObject<
-      HandleItem<Obj[FieldName]> extends never ? Obj[FieldName] : HandleItem<Obj[FieldName]>, 
+      [HandleItem<ArrayType<Obj[FieldName]>>] extends [never] ? ArrayType<Obj[FieldName]> : HandleItem<ArrayType<Obj[FieldName]>>, 
       IsNull<Obj[FieldName]>, 
       GenerateArrayTrilean<Obj[FieldName]>
     >

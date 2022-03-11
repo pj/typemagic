@@ -86,15 +86,15 @@ export type ArrayItem<I> = I extends Array<infer T> ? T : I;
 // }
 
 export type GenerateScalarReturnType<RT, N, A> =
-  A extends true
-    ? N extends false | undefined
+  [A] extends [true]
+    ? [N] extends [false | undefined]
       ? Array<RT>
       : Array<RT> | null
-    : A extends "nullable_items" 
-      ? N extends false | undefined
+    : [A] extends ["nullable_items"] 
+      ? [N] extends [false | undefined]
         ? Array<RT | null>
         : Array<RT | null> | null
-      : N extends false | undefined
+      : [N] extends [false | undefined]
         ? RT
         : RT | null
 
@@ -104,40 +104,16 @@ export type ScalarOptions<N extends BooleanWithUndefined, A extends ArrayTrilean
   array?: A
 };
 
-// export function string<C, N extends boolean, A extends boolean | "nullable_items">(
-//   options?: ScalarOptions<N, A>
-// ): RegisteredOutputObject<C, GenerateScalarReturnType<string, N, A>>  {
-//   return ({
-//     registered: true,
-//     nullable: options?.nullable,
-//     array: options?.array,
-//     type: String,
-//     fieldTypes: {}
-//   });
-// }
-
-// export function date<C, N extends boolean, A extends boolean | "nullable_items">(
-//   options?: ScalarOptions<N, A>
-// ): RegisteredOutputObject<C, GenerateScalarReturnType<Date, N, A>>  {
-//   return ({
-//     registered: true,
-//     nullable: options?.nullable,
-//     array: options?.array,
-//     type: Date,
-//     fieldTypes: {}
-//   });
-// }
-
 export type HandleItem<Item> =
-  Item extends Date 
+  [Item] extends [Date] 
     ? typeof Date
-    : Item extends boolean 
+    : [Item] extends [boolean]
       ? typeof Boolean
-      : Item extends string
-        ? string extends Item 
+      : [Item] extends [string]
+        ? [string] extends [Item] 
           ? typeof String
           : RegisteredEnum<{[key: string]: string}>
-        : Item extends number
+        : [Item] extends [number]
           ? IntOrFloat | RegisteredEnum<{[key: number]: string}>
           : never
 
@@ -148,11 +124,11 @@ export function makeRegistered<A>(a: A): RegisteredObject<A> {
 }
 
 export type ArrayTrilean = boolean | "nullable_items" | undefined;
-export type BooleanWithUndefined = boolean | undefined
+export type BooleanWithUndefined = boolean | undefined;
 
 export type GenerateArrayTrilean<A> = 
-  A extends Array<infer I> 
-    ? null extends I 
+  [Exclude<A, null | undefined>] extends [Array<infer I>] 
+    ? [null] extends [I] 
       ? "nullable_items"
       : true
     : false
@@ -217,8 +193,8 @@ export function boolean<C, N extends boolean, A extends ArrayTrilean>(
   });
 }
 
-export type IsNull<O> = null extends O ? true : false;
-export type IncludeNull<O> = null extends O ? null : never;
+export type IsNull<O> = [null] extends [O] ? true : false;
+export type IncludeNull<O> = [null] extends [O] ? null : never;
 
 export type ArrayType<A> =
-  A extends Array<infer T> ? T : A
+  [A] extends [Array<infer T>] ? T : A
