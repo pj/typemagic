@@ -1,13 +1,8 @@
-import { ArrayItem, ArrayTrilean, GetUnderlyingArrayType, BooleanOrUndefined, Constructor, GenerateArrayTrilean, GetUnderlyingScalarType, GetUnderlyingRuntimeType, IsNull, makeRegistered, RegisteredObject, ScalarTypes } from "./types";
+import { ArrayItem, ArrayTrilean, GetUnderlyingArrayType, BooleanOrUndefined, Constructor, GenerateArrayTrilean, GetUnderlyingScalarType, GetUnderlyingRuntimeType, IsNull, makeRegistered, RegisteredObject, ScalarTypes, ScalarOrInput } from "./types";
 
 export type InputRuntimeTypes<Obj> = {
   [FieldName in keyof Obj]:
-    InputObject<
-      GetUnderlyingRuntimeType<Obj[FieldName]>,
-      // [HandleItem<ArrayType<Obj[FieldName]>>] extends [never] ? ArrayType<Obj[FieldName]> : HandleItem<ArrayType<Obj[FieldName]>>,
-      IsNull<Obj[FieldName]>,
-      GenerateArrayTrilean<Obj[FieldName]>
-    >
+    ScalarOrInput<Obj[FieldName]>
 }
 // & 
 // Arbitrary properties are allowed.
@@ -26,14 +21,8 @@ export type InputRuntimeTypes<Obj> = {
 
 export type InputObject<O, N extends BooleanOrUndefined, A extends ArrayTrilean> = {
   name?: string,
-  type: O | ScalarTypes
+  type: Constructor<O>,
   runtimeTypes: InputRuntimeTypes<O>,
   nullable?: N,
   array?: A
 };
-
-// export type RegisteredInputObject<O, N extends BooleanOrUndefined, A extends ArrayTrilean> = RegisteredObject<InputObject<O, N, A>>
-
-// export function input<I, N extends BooleanOrUndefined, A extends ArrayTrilean>(input: InputObject<I, N, A>): RegisteredInputObject<I, N, A> {
-//   return makeRegistered(input);
-// }

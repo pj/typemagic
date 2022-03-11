@@ -1,6 +1,6 @@
 import { ArgsObject } from "./args";
 import { OutputObject } from "./output"
-import { ArrayTrilean, BooleanOrUndefined, GenerateScalarReturnType, RegisteredObject, ScalarTypes } from "./types";
+import { ArrayTrilean, BooleanOrUndefined, GenerateReturnType, RegisteredObject, ScalarTypes } from "./types";
 
 export type Resolver<R, C, A, O, N extends BooleanOrUndefined, Arr extends ArrayTrilean> = {
   args?: ArgsObject<A>
@@ -10,7 +10,7 @@ export type Resolver<R, C, A, O, N extends BooleanOrUndefined, Arr extends Array
   name?: string,
   description?: string,
   deprecationReason?: string,
-  resolve: (args: A, root: R, context: C) => Promise<GenerateScalarReturnType<O, N, Arr>>
+  resolve: (args: A, root: R, context: C) => Promise<GenerateReturnType<O, N, Arr>>
 }
 
 // export type RegisteredResolver<R, C, A, O, N extends BooleanOrUndefined, Arr extends ArrayTrilean> = 

@@ -1,10 +1,11 @@
 import { InputObject } from "../src/input";
-import { GenerateArrayTrilean, GenerateScalarReturnType, GetUnderlyingRuntimeType, IsNull } from "../src/types";
+import { Scalar } from "../src/scalar";
+import { ArrayTrilean, BooleanOrUndefined, Constructor, GenerateArrayTrilean, GenerateReturnType, GenerateScalarReturnType, GetUnderlyingRuntimeType, IsNull, ScalarOptions, ScalarOrInput, string } from "../src/types";
 import { TestInputObject } from "./test";
 
 function test<X>(x: X): void { }
 
-type DTF = GenerateScalarReturnType<Date, true, false>
+type DTF = GenerateReturnType<Date, true, false>
 test<DTF>(new Date());
 // @ts-expect-error
 test<DTF>([new Date()]);
@@ -12,7 +13,7 @@ test<DTF>([new Date()]);
 test<DTF>([null]);
 test<DTF>(null);
 
-type DTT = GenerateScalarReturnType<Date, true, true>
+type DTT = GenerateReturnType<Date, true, true>
 // @ts-expect-error
 test<DTT>(new Date())
 test<DTT>([new Date()])
@@ -20,7 +21,7 @@ test<DTT>([new Date()])
 test<DTT>([null]);
 test<DTT>(null);
 
-type DFT = GenerateScalarReturnType<Date, false, true>
+type DFT = GenerateReturnType<Date, false, true>
 // @ts-expect-error
 test<DFT>(new Date())
 test<DFT>([new Date()]);
@@ -29,7 +30,7 @@ test<DFT>([null]);
 // @ts-expect-error
 test<DFT>(null);
 
-type DFF = GenerateScalarReturnType<Date, false, false>
+type DFF = GenerateReturnType<Date, false, false>
 test<DFF>(new Date())
 // @ts-expect-error
 test<DFF>([new Date()]);
@@ -38,14 +39,14 @@ test<DFF>([null]);
 // @ts-expect-error
 test<DFF>(null);
 
-type DTN = GenerateScalarReturnType<Date, true, "nullable_items">
+type DTN = GenerateReturnType<Date, true, "nullable_items">
 // @ts-expect-error
 test<DTN>(new Date())
 test<DTN>([new Date()]);
 test<DTN>([null]);
 test<DTN>(null);
 
-type DFN = GenerateScalarReturnType<Date, false, "nullable_items">
+type DFN = GenerateReturnType<Date, false, "nullable_items">
 // @ts-expect-error
 test<DFN>(new Date())
 test<DFN>([new Date()]);
@@ -53,25 +54,25 @@ test<DFN>([null]);
 // @ts-expect-error
 test<DFN>(null);
 
-type DUU = GenerateScalarReturnType<Date, undefined, undefined>
-type DFU = GenerateScalarReturnType<Date, false, undefined>
-type DTU = GenerateScalarReturnType<Date, true, undefined>
-type DUF = GenerateScalarReturnType<Date, undefined, false>
-type DUT = GenerateScalarReturnType<Date, undefined, true>
-type DUN = GenerateScalarReturnType<Date, undefined, "nullable_items">
+type DUU = GenerateReturnType<Date, undefined, undefined>
+type DFU = GenerateReturnType<Date, false, undefined>
+type DTU = GenerateReturnType<Date, true, undefined>
+type DUF = GenerateReturnType<Date, undefined, false>
+type DUT = GenerateReturnType<Date, undefined, true>
+type DUN = GenerateReturnType<Date, undefined, "nullable_items">
 
-type STF = GenerateScalarReturnType<string, true, false>
-type STT = GenerateScalarReturnType<string, true, true>
-type SFT = GenerateScalarReturnType<string, false, true>
-type SFF = GenerateScalarReturnType<string, false, false>
-type STN = GenerateScalarReturnType<string, true, "nullable_items">
-type SFN = GenerateScalarReturnType<string, false, "nullable_items">
-type SUU = GenerateScalarReturnType<string, undefined, undefined>
-type SFU = GenerateScalarReturnType<string, false, undefined>
-type STU = GenerateScalarReturnType<string, true, undefined>
-type SUF = GenerateScalarReturnType<string, undefined, false>
-type SUT = GenerateScalarReturnType<string, undefined, true>
-type SUN = GenerateScalarReturnType<string, undefined, "nullable_items">
+type STF = GenerateReturnType<string, true, false>
+type STT = GenerateReturnType<string, true, true>
+type SFT = GenerateReturnType<string, false, true>
+type SFF = GenerateReturnType<string, false, false>
+type STN = GenerateReturnType<string, true, "nullable_items">
+type SFN = GenerateReturnType<string, false, "nullable_items">
+type SUU = GenerateReturnType<string, undefined, undefined>
+type SFU = GenerateReturnType<string, false, undefined>
+type STU = GenerateReturnType<string, true, undefined>
+type SUF = GenerateReturnType<string, undefined, false>
+type SUT = GenerateReturnType<string, undefined, true>
+type SUN = GenerateReturnType<string, undefined, "nullable_items">
 
 type GSF = GenerateArrayTrilean<string>
 test<GSF>(false);
@@ -89,6 +90,8 @@ test<GSUN>("nullable_items");
 // Test underlying runtime type
 type SANU = GetUnderlyingRuntimeType<string[] | null | undefined>
 test<SANU>(String);
+type SAU = GetUnderlyingRuntimeType<string[] | undefined>
+test<SAU>(String);
 type SAN = GetUnderlyingRuntimeType<string[] | null>
 test<SAN>(String);
 type SA = GetUnderlyingRuntimeType<string[]>
@@ -103,37 +106,66 @@ type SINU = GetUnderlyingRuntimeType<(string | null)[] | null | undefined>
 test<SINU>(String);
 type SIN = GetUnderlyingRuntimeType<(string | null)[] | null>
 test<SIN>(String);
+type SIU = GetUnderlyingRuntimeType<(string | null)[] | undefined>
+test<SIU>(String);
 type SI = GetUnderlyingRuntimeType<(string | null)[]>
 test<SI>(String);
 
-type IANU = GetUnderlyingRuntimeType<TestInputObject[] | null | undefined>
+type IANU = Constructor<GetUnderlyingRuntimeType<TestInputObject[] | null | undefined>>
 test<IANU>(TestInputObject);
-type IAN = GetUnderlyingRuntimeType<TestInputObject[] | null>
+type IAU = Constructor<GetUnderlyingRuntimeType<TestInputObject[] | undefined>>
+test<IAU>(TestInputObject);
+type IAN = Constructor<GetUnderlyingRuntimeType<TestInputObject[] | null>>
 test<IAN>(TestInputObject);
-type IA = GetUnderlyingRuntimeType<TestInputObject[]>
+type IA = Constructor<GetUnderlyingRuntimeType<TestInputObject[]>>
 test<IA>(TestInputObject);
-type INU = GetUnderlyingRuntimeType<TestInputObject | null | undefined>
+type INU = Constructor<GetUnderlyingRuntimeType<TestInputObject | null | undefined>>
 test<INU>(TestInputObject);
-type IN = GetUnderlyingRuntimeType<TestInputObject | null>
+type IN = Constructor<GetUnderlyingRuntimeType<TestInputObject | null>>
 test<IN>(TestInputObject);
-type I = GetUnderlyingRuntimeType<TestInputObject>
+type I = Constructor<GetUnderlyingRuntimeType<TestInputObject>>
 test<I>(TestInputObject);
-type IINU = GetUnderlyingRuntimeType<(TestInputObject | null)[] | null | undefined>
+type IINU = Constructor<GetUnderlyingRuntimeType<(TestInputObject | null)[] | null | undefined>>
 test<IINU>(TestInputObject);
-type IIN = GetUnderlyingRuntimeType<(TestInputObject | null)[] | null>
+type IIU = Constructor<GetUnderlyingRuntimeType<(TestInputObject | null)[] | undefined>>
+test<IIU>(TestInputObject);
+type IIN = Constructor<GetUnderlyingRuntimeType<(TestInputObject | null)[] | null>>
 test<IIN>(TestInputObject);
-type II = GetUnderlyingRuntimeType<(TestInputObject | null)[]>
+type II = Constructor<GetUnderlyingRuntimeType<(TestInputObject | null)[]>>
 test<II>(TestInputObject);
 
-// Test Input Object
-type IOTSANU = string[] | null | undefined;
-type IOSANU = 
-  InputObject<
-    GetUnderlyingRuntimeType<IOTSANU>,
-    IsNull<IOTSANU>, 
-    GenerateArrayTrilean<IOTSANU>
-  >
+// Test Scalar / Input Object
+type StringArrayNullUndefined = string[] | null | undefined;
+type ScalarOrInputStringArrayNullUndefined = ScalarOrInput<StringArrayNullUndefined> extends Scalar<String, true, true> ? true : false
+test<ScalarOrInputStringArrayNullUndefined>(true);
 
-test<IOSANU>({
-  runtimeTypes
-});
+type StringArrayUndefined = string[] | undefined;
+type ScalarOrInputStringArrayUndefined = ScalarOrInput<StringArrayUndefined> extends Scalar<String, false, true> ? true : false
+test<ScalarOrInputStringArrayUndefined>(true);
+
+type TestInputObjectArrayNullUndefined = TestInputObject[] | null | undefined;
+type ScalarOrInputTestInputObjectArrayNullUndefined = 
+  ScalarOrInput<TestInputObjectArrayNullUndefined> extends InputObject<TestInputObject, true, true>
+    ? true : false
+test<ScalarOrInputTestInputObjectArrayNullUndefined>(true);
+
+type TestInputObjectNullItemsNullUndefined = (TestInputObject | null)[] | null | undefined;
+type ScalarOrInputTestInputObjectNullItemsNullUndefined = 
+  ScalarOrInput<TestInputObjectNullItemsNullUndefined> extends InputObject<TestInputObject, true, "nullable_items">
+    ? true : false
+test<ScalarOrInputTestInputObjectNullItemsNullUndefined>(true);
+
+// test scalar functions
+type ScalarReturnTypeString = GenerateScalarReturnType<String, ScalarOptions<false, false>>
+test<ScalarReturnTypeString>({type: String, nullable: false, array: false});
+const scalarString = string();
+test<ScalarReturnTypeString>(scalarString);
+
+type ScalarReturnTypeStringNull = GenerateScalarReturnType<String, ScalarOptions<true, false>>
+test<ScalarReturnTypeStringNull>({type: String, nullable: true, array: false});
+
+type ScalarReturnTypeStringArray = GenerateScalarReturnType<String, ScalarOptions<false, true>>
+test<ScalarReturnTypeStringArray>({type: String, nullable: false, array: true});
+
+type ScalarReturnTypeStringUndefined = GenerateScalarReturnType<String, undefined>
+test<ScalarReturnTypeStringUndefined>({type: String, nullable: false, array: false});

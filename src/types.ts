@@ -1,5 +1,6 @@
 import { Float, Int } from "type-graphql";
 import { InputObject, InputRuntimeTypes } from "./input";
+import { Scalar } from "./scalar";
 
 // export class Nullable<T> {
 //   clazz: T
@@ -84,7 +85,7 @@ export type ArrayItem<I> = I extends Array<infer T> ? T : I;
 //   );
 // }
 
-export type GenerateScalarReturnType<RT, N, A> =
+export type GenerateReturnType<RT, N, A> =
   [A] extends [true]
     ? [N] extends [false | undefined]
       ? Array<RT>
@@ -132,66 +133,82 @@ export type GenerateArrayTrilean<A> =
       : true
     : false
 
-export function string<C, N extends BooleanOrUndefined, A extends ArrayTrilean>(
-  options?: ScalarOptions<N, A>
-// ): RegisteredOutputObject<C, GenerateScalarReturnType<string, N, A>, N, A> | RegisteredInputObject<string, N, A> {
-): InputObject<string, N, A> {
+export type GenerateScalarReturnType<RT, O extends ScalarOptions<BooleanOrUndefined, ArrayTrilean> | undefined> =
+  [O] extends [undefined]
+    ? Scalar<RT, false, false>
+    : Scalar<
+        RT, 
+        [Exclude<O, undefined>['nullable']] extends [false | undefined]
+          ? false : true, 
+        [Exclude<O, undefined>['array']] extends [false | undefined] 
+          ? false 
+          : [Exclude<O, undefined>['array']] extends ["nullable_items"]
+            ? "nullable_items"
+            : true
+      >
+  // [O] extends [undefined]
+  //   ? Scalar<RT, false, false>
+  //   : [Exclude<O, undefined>['nullable']] extends [false | undefined]
+  //     ? [A] extends ["nullable_items"] 
+  //       ? [N] extends [false | undefined]
+  //         ? Scalar<RT, false, "nullable_items">
+  //         : Scalar<RT, true, "nullable_items">
+  //       : [N] extends [false | undefined]
+  //         ? Scalar<RT, false, false>
+  //         : Scalar<RT, true, false>
+  //     : [N] extends [false | undefined]
+  //       ? Scalar<RT, false, true>
+  //       : Scalar<RT, true, true>
+
+export function string<C, O extends ScalarOptions<BooleanOrUndefined, ArrayTrilean> | undefined>(
+  options?: O
+): GenerateScalarReturnType<String, O> {
   return ({
-    nullable: options?.nullable,
-    array: options?.array,
+    nullable: options === undefined ? false : options.nullable === true ? true : false,
+    array: options === undefined ? false: options.array === true ? true : options.array === "nullable_items" ? "nullable_items" : false,
     type: String,
-    // runtimeTypes: {} as OutputRuntimeTypes<any, C, string> | InputRuntimeTypes<string>
-    runtimeTypes: {} as InputRuntimeTypes<string>
   });
 }
 
-export function date<C, N extends boolean, A extends ArrayTrilean>(
-  options?: ScalarOptions<N, A>
+export function date<C, O extends ScalarOptions<BooleanOrUndefined, ArrayTrilean> | undefined>(
+  options?: O
 // ): RegisteredOutputObject<C, GenerateScalarReturnType<Date, N, A>, N, A> | RegisteredInputObject<Date, N, A> {
-): InputObject<Date, N, A> {
+): GenerateScalarReturnType<Date, O> {
   return ({
     nullable: options?.nullable,
     array: options?.array,
     type: Date,
-    // runtimeTypes: {} as OutputRuntimeTypes<any, C, Date> | InputRuntimeTypes<Date>
-    runtimeTypes: {} as InputRuntimeTypes<Date>
   });
 }
 
 export function int<C, N extends boolean, A extends ArrayTrilean>(
   options?: ScalarOptions<N, A>
 // ): RegisteredOutputObject<C, GenerateScalarReturnType<number, N, A>, N, A> | RegisteredInputObject<number, N, A> {
-): InputObject<number, N, A> {
+): Scalar<number, N, A> {
   return ({
     nullable: options?.nullable,
     array: options?.array,
     type: Int,
-    // runtimeTypes: {} as OutputRuntimeTypes<any, C, number> | InputRuntimeTypes<number>
-    runtimeTypes: {} as InputRuntimeTypes<number>
   });
 }
 
 export function float<C, N extends boolean, A extends ArrayTrilean>(
   options?: ScalarOptions<N, A>
-): InputObject<number, N, A> {
+): Scalar<number, N, A> {
   return ({
     nullable: options?.nullable,
     array: options?.array,
     type: Float,
-    // runtimeTypes: {} as OutputRuntimeTypes<any, C, number> | InputRuntimeTypes<number>
-    runtimeTypes: {} as InputRuntimeTypes<number>
   });
 }
 
 export function boolean<C, N extends boolean, A extends ArrayTrilean>(
   options?: ScalarOptions<N, A>
-): InputObject<boolean, N, A> {
+): Scalar<boolean, N, A> {
   return ({
     nullable: options?.nullable,
     array: options?.array,
     type: Boolean,
-    // runtimeTypes: {} as OutputRuntimeTypes<any, C, boolean> | InputRuntimeTypes<boolean>
-    runtimeTypes: {} as InputRuntimeTypes<boolean>
   });
 }
 
@@ -206,11 +223,30 @@ export type GetUnderlyingArrayType<A> =
 export type GetUnderlyingRuntimeType<Item> =
   [Exclude<Item, null | undefined>] extends [Array<infer ArrayType>] 
     ? [GetUnderlyingScalarType<Exclude<ArrayType, null | undefined>>] extends [never] 
-      ? Constructor<Exclude<ArrayType, null | undefined>>
+      ? Exclude<ArrayType, null | undefined>
       : GetUnderlyingScalarType<Exclude<ArrayType, null | undefined>>
     : [GetUnderlyingScalarType<Exclude<Item, null | undefined>>] extends [never] 
-      ? Constructor<Exclude<Item, null | undefined>>
+      ? Exclude<Item, null | undefined>
       : GetUnderlyingScalarType<Exclude<Item, null | undefined>>
-  // [GetUnderlyingScalarType<GetUnderlyingArrayType<Exclude<Item, null | undefined>>>] extends [never] 
-  //   ? GetUnderlyingArrayType<Exclude<Item, null | undefined>>
-  //     : GetUnderlyingScalarType<GetUnderlyingArrayType<Exclude<Item, null | undefined>>>
+
+export type UnderlyingIsScalar<Item> =
+  [Exclude<Item, null | undefined>] extends [Array<infer ArrayType>] 
+    ? [GetUnderlyingScalarType<Exclude<ArrayType, null | undefined>>] extends [never] 
+      ? false
+      : true
+    : [GetUnderlyingScalarType<Exclude<Item, null | undefined>>] extends [never] 
+      ? false
+      : true
+
+export type ScalarOrInput<Item> = 
+    [UnderlyingIsScalar<Item>] extends [true]
+      ? Scalar<
+          GetUnderlyingRuntimeType<Item>, 
+          IsNull<Item>, 
+          GenerateArrayTrilean<Item>
+        > 
+      : InputObject<
+          GetUnderlyingRuntimeType<Item>,
+          IsNull<Item>,
+          GenerateArrayTrilean<Item>
+        >

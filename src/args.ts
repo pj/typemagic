@@ -1,18 +1,15 @@
 import { InputObject } from "./input";
-import { OtherScalars, ScalarTypes, RegisteredEnum, ConstructorFromArray, ArrayItem, RegisteredObject, makeRegistered, Constructor, GenerateArrayTrilean, IsNull, GetUnderlyingRuntimeType } from "./types";
+import { Scalar } from "./scalar";
+import { OtherScalars, ScalarTypes, RegisteredEnum, ConstructorFromArray, ArrayItem, RegisteredObject, makeRegistered, Constructor, GenerateArrayTrilean, IsNull, GetUnderlyingRuntimeType, GetUnderlyingScalarType, UnderlyingIsScalar, ScalarOrInput } from "./types";
 
 export type ArgsRuntimeSchema<Obj> = {
   [FieldName in keyof Obj]: 
-    InputObject<
-      GetUnderlyingRuntimeType<Obj[FieldName]>,
-      IsNull<Obj[FieldName]>,
-      GenerateArrayTrilean<Obj[FieldName]>
-    >
+    ScalarOrInput<Obj[FieldName]>
 } 
 
 export type ArgsObject<O> = {
   name?: string,
-  type: O,
+  type: Constructor<O>,
   runtimeTypes: ArgsRuntimeSchema<O>,
 };
 

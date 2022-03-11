@@ -1,5 +1,5 @@
 import { Resolver } from "./query";
-import { ArrayTrilean, BooleanOrUndefined, Constructor, GenerateArrayTrilean, GenerateScalarReturnType, GetUnderlyingArrayType, GetUnderlyingRuntimeType, IsNull, ScalarTypes } from "./types";
+import { ArrayTrilean, BooleanOrUndefined, Constructor, GenerateArrayTrilean, GenerateReturnType, GetUnderlyingArrayType, GetUnderlyingRuntimeType, IsNull, ScalarTypes } from "./types";
 
 export type OutputRuntimeTypes<R, C, Obj> = {
   [FieldName in keyof Obj]?: 
@@ -12,7 +12,7 @@ export type OutputRuntimeTypes<R, C, Obj> = {
           IsNull<Obj[FieldName]>, 
           GenerateArrayTrilean<Obj[FieldName]>
         > & {
-            resolve: (args: any, root: R, context: C) => Promise<GenerateScalarReturnType<GetUnderlyingArrayType<Obj[FieldName]>, IsNull<Obj[FieldName]>, GenerateArrayTrilean<Obj[FieldName]>>>
+            resolve: (args: any, root: R, context: C) => Promise<GenerateReturnType<GetUnderlyingArrayType<Obj[FieldName]>, IsNull<Obj[FieldName]>, GenerateArrayTrilean<Obj[FieldName]>>>
           }
       ) | (
         OutputObject<
