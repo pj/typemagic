@@ -1,6 +1,6 @@
 import { InputObject } from "../src/input";
-import { Scalar } from "../src/scalar";
-import { ArrayTrilean, BooleanOrUndefined, Constructor, GenerateArrayTrilean, GenerateReturnType, GenerateScalarReturnType, GetUnderlyingRuntimeType, IsNull, ScalarOptions, ScalarOrInput, string } from "../src/types";
+import { Scalar} from "../src/scalar";
+import { ArrayTrilean, BooleanOrUndefined, Constructor, GenerateArrayTrilean, GenerateReturnType, GetUnderlyingRuntimeType, IsNull, ScalarOrInput, ScalarTypes } from "../src/types";
 import { TestInputObject } from "./test";
 
 function test<X>(x: X): void { }
@@ -136,11 +136,11 @@ test<II>(TestInputObject);
 
 // Test Scalar / Input Object
 type StringArrayNullUndefined = string[] | null | undefined;
-type ScalarOrInputStringArrayNullUndefined = ScalarOrInput<StringArrayNullUndefined> extends Scalar<String, true, true> ? true : false
+type ScalarOrInputStringArrayNullUndefined = ScalarOrInput<StringArrayNullUndefined> extends Scalar<true, true> ? true : false
 test<ScalarOrInputStringArrayNullUndefined>(true);
 
 type StringArrayUndefined = string[] | undefined;
-type ScalarOrInputStringArrayUndefined = ScalarOrInput<StringArrayUndefined> extends Scalar<String, false, true> ? true : false
+type ScalarOrInputStringArrayUndefined = ScalarOrInput<StringArrayUndefined> extends Scalar<false, true> ? true : false
 test<ScalarOrInputStringArrayUndefined>(true);
 
 type TestInputObjectArrayNullUndefined = TestInputObject[] | null | undefined;
@@ -154,18 +154,3 @@ type ScalarOrInputTestInputObjectNullItemsNullUndefined =
   ScalarOrInput<TestInputObjectNullItemsNullUndefined> extends InputObject<TestInputObject, true, "nullable_items">
     ? true : false
 test<ScalarOrInputTestInputObjectNullItemsNullUndefined>(true);
-
-// test scalar functions
-type ScalarReturnTypeString = GenerateScalarReturnType<String, ScalarOptions<false, false>>
-test<ScalarReturnTypeString>({type: String, nullable: false, array: false});
-const scalarString = string();
-test<ScalarReturnTypeString>(scalarString);
-
-type ScalarReturnTypeStringNull = GenerateScalarReturnType<String, ScalarOptions<true, false>>
-test<ScalarReturnTypeStringNull>({type: String, nullable: true, array: false});
-
-type ScalarReturnTypeStringArray = GenerateScalarReturnType<String, ScalarOptions<false, true>>
-test<ScalarReturnTypeStringArray>({type: String, nullable: false, array: true});
-
-type ScalarReturnTypeStringUndefined = GenerateScalarReturnType<String, undefined>
-test<ScalarReturnTypeStringUndefined>({type: String, nullable: false, array: false});

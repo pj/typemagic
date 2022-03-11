@@ -1,6 +1,6 @@
 import { ArgsObject } from "./args";
 import { OutputObject } from "./output"
-import { ArrayTrilean, BooleanOrUndefined, GenerateReturnType, RegisteredObject, ScalarTypes } from "./types";
+import { ArrayTrilean, BooleanOrUndefined, GenerateReturnType} from "./types";
 
 export type Resolver<R, C, A, O, N extends BooleanOrUndefined, Arr extends ArrayTrilean> = {
   args?: ArgsObject<A>
