@@ -1,4 +1,5 @@
-import { Constructor, ScalarOrInput } from "./types";
+import { ScalarOrInput } from "./input";
+import { Constructor } from "./types";
 
 export type ArgsRuntimeSchema<Obj> = {
   [FieldName in keyof Obj]: 
@@ -6,13 +7,6 @@ export type ArgsRuntimeSchema<Obj> = {
 } 
 
 export type ArgsObject<O> = {
-  name?: string,
   type: Constructor<O>,
   runtimeTypes: ArgsRuntimeSchema<O>,
 };
-
-// export type RegisteredArgsObject<O> = RegisteredObject<ArgsObject<O>>;
-
-// export function args<A>(object: ArgsObject<A>): RegisteredArgsObject<A> {
-//   return makeRegistered(object)
-// }

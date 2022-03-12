@@ -1,8 +1,9 @@
-import { InputRuntimeTypes } from "../src/input";
+import { Int } from "type-graphql";
+import { InputRuntimeTypes, ScalarOrInput } from "../src/input";
+import { OutputObject, Resolver } from "../src/output";
 // import { Scalar} from "../src/scalar";
-import { ArrayTrilean, BooleanOrUndefined, Constructor, GenerateArrayTrilean, GenerateOptions, GenerateReturnType, GetIfArray, GetUnderlyingRuntimeType, IsNull, ScalarOrInput, ScalarTypes } from "../src/types";
-import { TestInputObject } from "./test";
-import { Float, Int } from "type-graphql";
+import { Constructor, GenerateArrayTrilean, GenerateReturnType, GetIfArray, GetUnderlyingRuntimeType } from "../src/types";
+import { Args, RelatedClass, Test, TestInputObject } from "./test";
 
 type Extends<A, B> = A extends B ? true : false;
 
@@ -218,3 +219,28 @@ type ValidTestInputObjectNullableItemsNullUndefined =
 // type ScalarOrInputTestInputObject = ScalarOrInput<InputTestInputObject>;
 // type ValidTestInputObject = Extends<ScalarOrInputTestInputObject, { type: TestInputObject, nullable?: false, array?: false }>
 // test<ValidTestInputObject>(true);
+
+
+// Resolver
+type Context = {someContext: string};
+type ReturnType = RelatedClass | null
+type RelatedOutputObject = OutputObject<Context, ReturnType>
+type RelatedTypes = RelatedOutputObject["runtimeTypes"];
+
+type RelatedResolver = Resolver<Test, Context, Args, ReturnType>
+type ResolverFunction = RelatedResolver["resolve"]
+type ResolverArgs = RelatedResolver["args"]
+
+test<RelatedResolver>({
+  source: {
+    type: RelatedClass, 
+    nullable: true,
+    runtimeTypes: {
+      testField: {type: String}
+    }
+  },
+  resolve: async (args: Args, root: Test, context: Context): Promise<RelatedClass> => {
+    return new RelatedClass("Hello world");
+  }
+
+})

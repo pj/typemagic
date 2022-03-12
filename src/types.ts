@@ -106,28 +106,3 @@ export type GenerateOptions<Item> =
         ? {array: "nullable_items"}
         : {array: true}
   )
-
-export type ScalarOrInput<Item> = 
-  { type: GetUnderlyingRuntimeType<Item> } 
-    & GenerateOptions<Item> 
-    & (
-        [UnderlyingIsScalar<Item>] extends [false]
-        ? {
-            name?: string,
-            runtimeTypes: InputRuntimeTypes<Exclude<GetIfArray<Item>, null | undefined>>
-          }
-        : {}
-      )
-    
-
-    // [UnderlyingIsScalar<Item>] extends [true]
-    //   ? IsNull<Item> extends true
-    //     ? {
-    //         type: GetUnderlyingRuntimeType<Item>,
-    //         nullable: true,
-    //       }
-    //   : InputObject<
-    //       GetUnderlyingRuntimeType<Item>,
-    //       IsNull<Item>,
-    //       GenerateArrayTrilean<Item>
-    //     >

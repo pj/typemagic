@@ -1,4 +1,16 @@
-import { ArrayTrilean, BooleanOrUndefined, Constructor, ScalarOrInput } from "./types";
+import { ArrayTrilean, BooleanOrUndefined, Constructor, GenerateOptions, GetIfArray, GetUnderlyingRuntimeType, UnderlyingIsScalar } from "./types";
+
+export type ScalarOrInput<Item> = 
+  { type: GetUnderlyingRuntimeType<Item> } 
+    & GenerateOptions<Item> 
+    & (
+        [UnderlyingIsScalar<Item>] extends [false]
+        ? {
+            name?: string,
+            runtimeTypes: InputRuntimeTypes<Exclude<GetIfArray<Item>, null | undefined>>
+          }
+        : {}
+      )
 
 export type InputRuntimeTypes<Obj> = {
   [FieldName in keyof Obj]:
