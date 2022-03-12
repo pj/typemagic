@@ -19,10 +19,10 @@ export type InputRuntimeTypes<Obj> = {
 //       : never
 // };
 
-export type InputObject<O, N extends BooleanOrUndefined, A extends ArrayTrilean> = {
-  name?: string,
-  type: Constructor<O>,
-  runtimeTypes: InputRuntimeTypes<O>,
-  nullable?: N,
-  array?: A
-};
+// export type InputObject<O, N extends BooleanOrUndefined, A extends ArrayTrilean> = {
+//   name?: string,
+//   type: Constructor<O>,
+//   runtimeTypes: InputRuntimeTypes<O>,
+//   nullable?: N,
+//   array?: A
+// };

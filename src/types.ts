@@ -1,16 +1,5 @@
 import { Float, Int } from "type-graphql";
-import { InputObject, InputRuntimeTypes } from "./input";
-import { Scalar } from "./scalar";
-
-// export class Nullable<T> {
-//   clazz: T
-//   constructor(clazz: T) {
-//     this.clazz = clazz;
-//   }
-// }
-
-export type AddNull<X> = 
-  null extends X ? null : never;
+import { InputRuntimeTypes } from "./input";
 
 type IsEnum<T> = 
   T extends {[key: string]: string} 
@@ -35,20 +24,12 @@ export function registerEnum<T>(clazz: IsEnum<T>, name?: string): RegisteredEnum
 export type ScalarTypes = 
   typeof String | (typeof Float | typeof Int) | typeof Date | typeof Boolean;
 
-
 export type IntOrFloat = typeof Int | typeof Float;
-
-export type OtherScalars<Scalar> = 
-  Scalar extends Date 
-    ? typeof Date
-    : Scalar extends boolean 
-      ? typeof Boolean
-      : never;
 
 export type Constructor<T> = Function & { prototype: T };
 export type ConstructorFromArray<T> = T extends Array<infer C> ? Constructor<C> : Constructor<T>;
 
-export type ArrayItem<I> = I extends Array<infer T> ? T : I; 
+export type GetIfArray<I> = I extends Array<infer T> ? T : I; 
 
 export type GenerateReturnType<RT, N, A> =
   [A] extends [true]
@@ -97,10 +78,10 @@ export type GetUnderlyingArrayType<A> =
 export type GetUnderlyingRuntimeType<Item> =
   [Exclude<Item, null | undefined>] extends [Array<infer ArrayType>] 
     ? [GetUnderlyingScalarType<Exclude<ArrayType, null | undefined>>] extends [never] 
-      ? Exclude<ArrayType, null | undefined>
+      ? Constructor<Exclude<ArrayType, null | undefined>>
       : GetUnderlyingScalarType<Exclude<ArrayType, null | undefined>>
     : [GetUnderlyingScalarType<Exclude<Item, null | undefined>>] extends [never] 
-      ? Exclude<Item, null | undefined>
+      ? Constructor<Exclude<Item, null | undefined>>
       : GetUnderlyingScalarType<Exclude<Item, null | undefined>>
 
 export type UnderlyingIsScalar<Item> =
@@ -112,15 +93,41 @@ export type UnderlyingIsScalar<Item> =
       ? false
       : true
 
+export type GenerateOptions<Item> = 
+  (
+      [IsNull<Item>] extends [true]
+        ? { nullable: true }
+        : { nullable?: false }
+    )
+  & (
+    [GenerateArrayTrilean<Item>] extends [false]
+      ? { array?: false }
+      : [GenerateArrayTrilean<Item>] extends ["nullable_items"]
+        ? {array: "nullable_items"}
+        : {array: true}
+  )
+
 export type ScalarOrInput<Item> = 
-    [UnderlyingIsScalar<Item>] extends [true]
-      ? Scalar<
-          GetUnderlyingRuntimeType<Item>, 
-          IsNull<Item>, 
-          GenerateArrayTrilean<Item>
-        > 
-      : InputObject<
-          GetUnderlyingRuntimeType<Item>,
-          IsNull<Item>,
-          GenerateArrayTrilean<Item>
-        >
+  { type: GetUnderlyingRuntimeType<Item> } 
+    & GenerateOptions<Item> 
+    & (
+        [UnderlyingIsScalar<Item>] extends [false]
+        ? {
+            name?: string,
+            runtimeTypes: InputRuntimeTypes<Exclude<GetIfArray<Item>, null | undefined>>
+          }
+        : {}
+      )
+    
+
+    // [UnderlyingIsScalar<Item>] extends [true]
+    //   ? IsNull<Item> extends true
+    //     ? {
+    //         type: GetUnderlyingRuntimeType<Item>,
+    //         nullable: true,
+    //       }
+    //   : InputObject<
+    //       GetUnderlyingRuntimeType<Item>,
+    //       IsNull<Item>,
+    //       GenerateArrayTrilean<Item>
+    //     >

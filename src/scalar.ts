@@ -1,12 +1,11 @@
 import { Int } from "type-graphql";
 import { BooleanOrUndefined, ArrayTrilean, ScalarTypes } from "./types";
 
-export type Scalar<N extends BooleanOrUndefined, A extends ArrayTrilean> = {
-  name?: string,
-  type: ScalarTypes,
-  nullable?: N,
-  array?: A
-};
+// export type Scalar<RT, N extends BooleanOrUndefined, A extends ArrayTrilean> = {
+//   type: RT,
+//   nullable?: N,
+//   array?: A
+// };
 
 // export type ScalarOptions<N extends BooleanOrUndefined, A extends ArrayTrilean> = {
 //   nullable?: N, 

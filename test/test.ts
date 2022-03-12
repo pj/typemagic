@@ -1,6 +1,6 @@
 import { Float, Int } from "type-graphql";
-import { schema } from "../src";
-import { mutation } from "../src/mutation";
+// import { schema } from "../src";
+// import { mutation } from "../src/mutation";
 import { OutputRuntimeTypes } from "../src/output";
 import { ConstructorFromArray, GenerateReturnType, registerEnum } from "../src/types";
 
