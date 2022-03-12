@@ -48,10 +48,10 @@ class QueryRoot {
 
 }
 
-export function schema<ResolverArgs, ResolverOutput, Context = any>(
+export function schema<ResolverOutput, Context = any>(
   schema: {
     queries?: {
-      [key: string]: Resolver<QueryRoot, Context, ResolverArgs, ResolverOutput>
+      [key: string]: Resolver<QueryRoot, Context, ResolverOutput>
     },
     mutations?: {
       [key: string]: Mutation<Context, any, any, any, any>

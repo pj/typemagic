@@ -1,10 +1,11 @@
 import { Int } from "type-graphql";
 import { InputRuntimeTypes, ScalarOrInput } from "../src/input";
-import { Resolver } from "../src/output";
+import { resolver, Resolver } from "../src/output";
 // import { Scalar} from "../src/scalar";
 import { Constructor, GenerateArrayTrilean, GenerateReturnType, GetIfArray, GetUnderlyingRuntimeType, UnderlyingIsScalar } from "../src/types";
 import { registeredArgs } from "./args";
-import { Args, RelatedClass, Test, TestInputObject } from "./test";
+import { ChildArgs } from "./schema";
+import { Args, RelatedClass, Test, TestInputObject, test as testObject } from "./test";
 
 type Extends<A, B> = A extends B ? true : false;
 
@@ -223,26 +224,112 @@ type ValidTestInputObjectNullableItemsNullUndefined =
 
 
 // Resolver
-type Context = {someContext: string};
-type RelatedType = RelatedClass | null
+// type Context = {someContext: string};
+// type RelatedType = RelatedClass | null
 
-type X = [UnderlyingIsScalar<RelatedType>] extends [false] ? true : false
+// type X = [UnderlyingIsScalar<RelatedType>] extends [false] ? true : false
 
-type RelatedResolver = Resolver<Test, Context, Args, RelatedType, unknown>
-type ResolverFunction = RelatedResolver["resolve"]
-type RelatedRuntimeTypes = RelatedResolver["runtimeTypes"];
-type TestFieldResolver = RelatedRuntimeTypes["testField"]
-type ResolverArgs = RelatedResolver["args"]
+// type RelatedResolver = Resolver<Test, Context, Args, RelatedType>
+// type ResolverFunction = RelatedResolver["resolve"]
+// type RelatedRuntimeTypes = RelatedResolver["runtimeTypes"];
+// type TestFieldResolver = RelatedRuntimeTypes["testField"]
+// type ResolverArgs = RelatedResolver["args"]
 
-export type TestResolution<Context, ChildArgs, OutputType> = 
-  {
-    [FieldName in keyof OutputType]?: 
-      Resolver<OutputType, Context, ChildArgs, unknown, OutputType[FieldName]>
+// export type TestResolution<Context, OutputType> = 
+//   {
+//     [FieldName in keyof OutputType]?: 
+//       Resolver<OutputType, Context, OutputType[FieldName]>
+//   }
+
+// export type TestDiscrimant<Type> = Type extends any ? Type : Type
+
+// type A = TestDiscrimant<Test>
+
+// type Y = TestResolution<Context, Test>
+// type Z = Exclude<Y["dateField"], undefined>["resolve"]
+
+const resolved = resolver<{}, any, Args, Test>({
+  type: Test,
+  resolve: testObject,
+  args: registeredArgs,
+  runtimeTypes: {
+    stringField: resolver({
+      type: String,
+      args: {
+        type: ChildArgs,
+        runtimeTypes: {
+          field: {type: String}
+        }
+      },
+      resolve: async (args: ChildArgs, root: Test, context: any) => {
+        return `asdf`;
+      }
+    })
+  }
+})
+
+test<X>({
+  testField: (args: Args) => "hello"
+})
+
+// type TestType = {
+//   field: string,
+//   anotherField: boolean
+// };
+
+// type TestArgsInfer<Type, Args> = 
+//   { 
+//     resolve: (args: Args) => Type,
+//     args: Args
+//   }
+
+// type MapTest<Args> = {
+//   [Key in keyof TestType]:
+//     TestArgsInfer<TestType[Key], Args>
+// }
+
+// function map<Args>(mt: MapTest<Args>): void {
+
+// }
+
+// map({
+//   field: {
+//     resolve: (args: number) => "hello", 
+//     args: 1
+//   },
+//   anotherField: {
+//     resolve: (args: string) => true, 
+//     args: "world"
+//   }
+// }
+
+type TestType = {
+  field: string,
+  anotherField: boolean
+};
+
+type TestArgsInfer<Type, Args> = 
+  { 
+    resolve: (args: Args) => Type,
+    args: Args
   }
 
-export type TestDiscrimant<Type> = Type extends any ? Type : Type
+type MapTest = {
+  [Key in keyof TestType]:
+    <Args> () => TestArgsInfer<TestType[Key], Args>
+}
 
-type A = TestDiscrimant<Test>
+function map(mt: MapTest): void {
 
-type Y = TestResolution<Context, Args, Test>
-type Z = Exclude<Y["dateField"], undefined>["resolve"]
+}
+
+map({
+  field: () => ({
+    resolve: (args: number) => "hello", 
+    args: 1
+  }),
+  anotherField: () => ({
+    resolve: (args: string) => true, 
+    args: "world"
+  })
+})

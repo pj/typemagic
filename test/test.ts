@@ -18,10 +18,7 @@ export class Test {
 }
 
 export class RelatedClass {
-  testField: string;
-
-  constructor(testField: string) {
-    this.testField = testField;
+  constructor(public testField: string) {
   }
 }
 

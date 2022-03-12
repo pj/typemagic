@@ -1,8 +1,9 @@
+import { resolver } from '../src/output';
 import {schema} from '../src/schema'
 import { registeredArgs } from './args'
 import { Args, Test, test } from './test'
 
-class ChildArgs {
+export class ChildArgs {
   constructor(
     public field: string
   ) {
@@ -12,12 +13,12 @@ class ChildArgs {
 
 schema({
   queries: {
-    testQuery: {
+    testQuery: resolver({
       type: Test,
       resolve: test,
       args: registeredArgs,
       runtimeTypes: {
-        stringField: {
+        stringField: resolver({
           type: String,
           args: {
             type: ChildArgs,
@@ -28,9 +29,9 @@ schema({
           resolve: async (args: ChildArgs, root: Test, context: any) => {
             return `asdf`;
           }
-        }
+        })
       }
-    }
+    })
   }
 })
 
