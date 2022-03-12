@@ -1,9 +1,3 @@
-import { Float, Int } from "type-graphql";
-// import { schema } from "../src";
-// import { mutation } from "../src/mutation";
-import { OutputRuntimeTypes } from "../src/output";
-import { ConstructorFromArray, registerEnum } from "../src/types";
-
 export class Test {
   constructor(
     public stringField: string,

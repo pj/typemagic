@@ -1,8 +1,8 @@
 import { Int } from "type-graphql";
 import { InputRuntimeTypes, ScalarOrInput } from "../src/input";
-import { OutputObject, OutputRuntimeTypes, Resolver } from "../src/output";
+import { Resolver } from "../src/output";
 // import { Scalar} from "../src/scalar";
-import { Constructor, GenerateArrayTrilean, GenerateReturnType, GetIfArray, GetUnderlyingRuntimeType } from "../src/types";
+import { Constructor, GenerateArrayTrilean, GenerateReturnType, GetIfArray, GetUnderlyingRuntimeType, UnderlyingIsScalar } from "../src/types";
 import { registeredArgs } from "./args";
 import { Args, RelatedClass, Test, TestInputObject } from "./test";
 
@@ -225,37 +225,24 @@ type ValidTestInputObjectNullableItemsNullUndefined =
 // Resolver
 type Context = {someContext: string};
 type RelatedType = RelatedClass | null
-type RelatedOutputObject = OutputObject<Context, RelatedType>
-type RelatedTypes = RelatedOutputObject["runtimeTypes"];
 
-type RelatedResolver = Resolver<Test, Context, Args, RelatedType>
+type X = [UnderlyingIsScalar<RelatedType>] extends [false] ? true : false
+
+type RelatedResolver = Resolver<Test, Context, Args, RelatedType, unknown>
 type ResolverFunction = RelatedResolver["resolve"]
-type Return = ReturnType<ResolverFunction>
+type RelatedRuntimeTypes = RelatedResolver["runtimeTypes"];
+type TestFieldResolver = RelatedRuntimeTypes["testField"]
 type ResolverArgs = RelatedResolver["args"]
 
-test<RelatedResolver>({
-  args: registeredArgs,
-  source: {
-    type: RelatedClass, 
-    nullable: true,
-    runtimeTypes: {
-      testField: {type: String}
-    }
-  },
-  resolve: async (args: Args, root: Test, context: Context): Promise<RelatedType> => {
-    return new RelatedClass(`Hello World`);
+export type TestResolution<Context, ChildArgs, OutputType> = 
+  {
+    [FieldName in keyof OutputType]?: 
+      Resolver<OutputType, Context, ChildArgs, unknown, OutputType[FieldName]>
   }
-})
 
-type Output = OutputRuntimeTypes<Test, Context, null, {field: RelatedType}>
+export type TestDiscrimant<Type> = Type extends any ? Type : Type
 
-type M = {test: string, other: number};
+type A = TestDiscrimant<Test>
 
-type Types<X> = X extends string ? X : X
-
-type Z = Types<M>
-
-
-type X = {
-  [Key in keyof M]: Key
-}
+type Y = TestResolution<Context, Args, Test>
+type Z = Exclude<Y["dateField"], undefined>["resolve"]

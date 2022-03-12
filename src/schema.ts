@@ -44,13 +44,17 @@ import { Resolver } from "./output";
 //   }
 // }
 
-export function schema<C = any>(
+class QueryRoot {
+
+}
+
+export function schema<ResolverArgs, ResolverOutput, Context = any>(
   schema: {
     queries?: {
-      [key: string]: Resolver<any, C, any, any>
+      [key: string]: Resolver<QueryRoot, Context, ResolverArgs, ResolverOutput>
     },
     mutations?: {
-      [key: string]: Mutation<C, any, any, any, any>
+      [key: string]: Mutation<Context, any, any, any, any>
     }
   }
 ) {
