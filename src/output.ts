@@ -4,51 +4,74 @@
 import { ArgsObject } from "./args";
 import { ArrayTrilean, BooleanOrUndefined, Constructor, GenerateArrayTrilean, GenerateOptions, GetIfArray, GetUnderlyingArrayType, GetUnderlyingRuntimeType, IsNull, UnderlyingIsScalar } from "./types";
 
-export type OutputObject<C, Item> =
-  { type: GetUnderlyingRuntimeType<Item> } 
-    & GenerateOptions<Item> 
+export type OutputObject<Context, OutputType> =
+  { type: GetUnderlyingRuntimeType<OutputType> } 
+    & GenerateOptions<OutputType> 
     & ( 
-        [UnderlyingIsScalar<Item>] extends [false] 
+        [UnderlyingIsScalar<OutputType>] extends [false] 
           ? 
             { 
               name?: string, 
               description?: string, 
               deprecationReason?: string,
               runtimeTypes: 
+                // {
+                //   [
+                //     FieldName in keyof 
+                //       Exclude<
+                //         GetIfArray<OutputType>, 
+                //         null | undefined
+                //       > 
+                //   ]?: 
+                //     OutputObject<
+                //       Context, 
+                //       Exclude<
+                //         GetIfArray<OutputType>, 
+                //         null | undefined
+                //       >[FieldName]
+                //     > | Resolver<
+                //       Exclude<
+                //         GetIfArray<OutputType>, 
+                //         null | undefined
+                //       > 
+                // , Context, any, OutputType[FieldName]>
+                // }
                 OutputRuntimeTypes<
                   Exclude<
-                    GetIfArray<Item>, 
+                    GetIfArray<OutputType>, 
                     null | undefined
                   >, 
-                  C, 
+                  Context, 
                   any
                 >
             }
           : {}
       )
 
-export type Resolver<R, C, A, Item> = 
+export type ResolverFunction<Root, Context, Args, OutputType> =
+  [null] extends [Args] 
+    ? { 
+        resolve: (root: Root, context: Context) => Promise<OutputType> 
+      }
+    : { 
+        resolve: (args: Args, root: Root, context: Context) => Promise<OutputType>,
+        args: ArgsObject<Args>
+      }
+
+export type Resolver<Root, Context, A, OutputType> = 
   { 
-    source: OutputObject<C, Item>,
+    source: OutputObject<Context, OutputType>,
     name?: string,
     description?: string, 
     deprecationReason?: string
   }
-    & GenerateOptions<Item> 
-    & ( 
-        [null] extends [A] 
-          ? { 
-              resolve: (root: R, context: C) => Promise<Item> 
-            }
-          : { 
-              resolve: (args: A, root: R, context: C) => Promise<Item>,
-              args: ArgsObject<A>
-            }
-      )
+    & GenerateOptions<OutputType> 
+    & ResolverFunction<Root, Context, unknown, OutputType>
 
 export type OutputRuntimeTypes<Root, Context, OutputType> = {
   [FieldName in keyof OutputType]?: 
-    OutputObject<Context, OutputType[FieldName]> | Resolver<Root, Context, any, OutputType[FieldName]>
+    // OutputObject<Context, OutputType[FieldName]> | 
+    Resolver<Root, Context, any, OutputType[FieldName]>
 } 
 // & 
 // // Arbitrary properties are allowed.

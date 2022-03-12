@@ -1,6 +1,6 @@
 import { Int } from "type-graphql";
 import { InputRuntimeTypes, ScalarOrInput } from "../src/input";
-import { OutputObject, Resolver } from "../src/output";
+import { OutputObject, OutputRuntimeTypes, Resolver } from "../src/output";
 // import { Scalar} from "../src/scalar";
 import { Constructor, GenerateArrayTrilean, GenerateReturnType, GetIfArray, GetUnderlyingRuntimeType } from "../src/types";
 import { Args, RelatedClass, Test, TestInputObject } from "./test";
@@ -242,5 +242,6 @@ test<RelatedResolver>({
   resolve: async (args: Args, root: Test, context: Context): Promise<RelatedClass> => {
     return new RelatedClass("Hello world");
   }
-
 })
+
+type Output = OutputRuntimeTypes<Test, Context, ReturnType>
