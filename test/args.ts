@@ -7,7 +7,7 @@ function testArgs<A>(object: ArgsObject<A>): ArgsObject<A> {
   return object
 }
 
-const registeredArgs = testArgs({
+export const registeredArgs = testArgs({
   type: Args,
   runtimeTypes: {
     stringField: { type: String },

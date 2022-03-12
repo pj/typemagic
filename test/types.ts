@@ -3,6 +3,7 @@ import { InputRuntimeTypes, ScalarOrInput } from "../src/input";
 import { OutputObject, OutputRuntimeTypes, Resolver } from "../src/output";
 // import { Scalar} from "../src/scalar";
 import { Constructor, GenerateArrayTrilean, GenerateReturnType, GetIfArray, GetUnderlyingRuntimeType } from "../src/types";
+import { registeredArgs } from "./args";
 import { Args, RelatedClass, Test, TestInputObject } from "./test";
 
 type Extends<A, B> = A extends B ? true : false;
@@ -223,15 +224,17 @@ type ValidTestInputObjectNullableItemsNullUndefined =
 
 // Resolver
 type Context = {someContext: string};
-type ReturnType = RelatedClass | null
-type RelatedOutputObject = OutputObject<Context, ReturnType>
+type RelatedType = RelatedClass | null
+type RelatedOutputObject = OutputObject<Context, RelatedType>
 type RelatedTypes = RelatedOutputObject["runtimeTypes"];
 
-type RelatedResolver = Resolver<Test, Context, Args, ReturnType>
+type RelatedResolver = Resolver<Test, Context, Args, RelatedType>
 type ResolverFunction = RelatedResolver["resolve"]
+type Return = ReturnType<ResolverFunction>
 type ResolverArgs = RelatedResolver["args"]
 
 test<RelatedResolver>({
+  args: registeredArgs,
   source: {
     type: RelatedClass, 
     nullable: true,
@@ -239,9 +242,9 @@ test<RelatedResolver>({
       testField: {type: String}
     }
   },
-  resolve: async (args: Args, root: Test, context: Context): Promise<RelatedClass> => {
-    return new RelatedClass("Hello world");
+  resolve: async (args: Args, root: Test, context: Context): Promise<RelatedType> => {
+    return new RelatedClass(`Hello World`);
   }
 })
 
-type Output = OutputRuntimeTypes<Test, Context, ReturnType>
+type Output = OutputRuntimeTypes<Test, Context, RelatedType>

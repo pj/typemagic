@@ -15,36 +15,32 @@ export type OutputObject<Context, OutputType> =
               description?: string, 
               deprecationReason?: string,
               runtimeTypes: 
-                // {
-                //   [
-                //     FieldName in keyof 
-                //       Exclude<
-                //         GetIfArray<OutputType>, 
-                //         null | undefined
-                //       > 
-                //   ]?: 
-                //     OutputObject<
-                //       Context, 
-                //       Exclude<
-                //         GetIfArray<OutputType>, 
-                //         null | undefined
-                //       >[FieldName]
-                //     > | Resolver<
-                //       Exclude<
-                //         GetIfArray<OutputType>, 
-                //         null | undefined
-                //       > 
-                // , Context, any, OutputType[FieldName]>
+                {
+                  [
+                    FieldName in keyof 
+                      Exclude<
+                        GetIfArray<OutputType>, 
+                        null | undefined
+                      > 
+                  ]?: 
+                    OutputObject<
+                      Context, 
+                      Exclude<
+                        GetIfArray<OutputType>, 
+                        null | undefined
+                      >[FieldName]
+                    >
                 // }
-                OutputRuntimeTypes<
-                  Exclude<
-                    GetIfArray<OutputType>, 
-                    null | undefined
-                  >, 
-                  Context, 
-                  any
-                >
+                // OutputRuntimeTypes<
+                //   Exclude<
+                //     GetIfArray<OutputType>, 
+                //     null | undefined
+                //   >, 
+                //   Context, 
+                //   any
+                // >
             }
+          }
           : {}
       )
 
@@ -58,15 +54,14 @@ export type ResolverFunction<Root, Context, Args, OutputType> =
         args: ArgsObject<Args>
       }
 
-export type Resolver<Root, Context, A, OutputType> = 
+export type Resolver<Root, Context, Args, OutputType> = 
   { 
     source: OutputObject<Context, OutputType>,
     name?: string,
     description?: string, 
     deprecationReason?: string
   }
-    & GenerateOptions<OutputType> 
-    & ResolverFunction<Root, Context, unknown, OutputType>
+    & ResolverFunction<Root, Context, Args, OutputType>
 
 export type OutputRuntimeTypes<Root, Context, OutputType> = {
   [FieldName in keyof OutputType]?: 
