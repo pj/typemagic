@@ -1,8 +1,5 @@
-// import { Resolver } from "./query";
-// import { ArrayTrilean, BooleanOrUndefined, Constructor, GenerateArrayTrilean, GenerateReturnType, GetUnderlyingArrayType, GetUnderlyingRuntimeType, IsNull, ScalarTypes } from "./types";
-
 import { ArgsObject } from "./args";
-import { ArrayTrilean, BooleanOrUndefined, Constructor, GenerateArrayTrilean, GenerateOptions, GetIfArray, GetUnderlyingArrayType, GetUnderlyingRuntimeType, IsNull, UnderlyingIsScalar } from "./types";
+import { GenerateOptions, GetIfArray, GetUnderlyingRuntimeType, UnderlyingIsScalar } from "./types";
 
 export type OutputObject<Context, OutputType> =
   { type: GetUnderlyingRuntimeType<OutputType> } 
@@ -15,32 +12,16 @@ export type OutputObject<Context, OutputType> =
               description?: string, 
               deprecationReason?: string,
               runtimeTypes: 
-                {
-                  [
-                    FieldName in keyof 
-                      Exclude<
-                        GetIfArray<OutputType>, 
-                        null | undefined
-                      > 
-                  ]?: 
-                    OutputObject<
-                      Context, 
-                      Exclude<
-                        GetIfArray<OutputType>, 
-                        null | undefined
-                      >[FieldName]
-                    >
-                // }
-                // OutputRuntimeTypes<
-                //   Exclude<
-                //     GetIfArray<OutputType>, 
-                //     null | undefined
-                //   >, 
-                //   Context, 
-                //   any
-                // >
+                OutputRuntimeTypes<
+                  Exclude<
+                    GetIfArray<OutputType>, 
+                    null | undefined
+                  >, 
+                  Context, 
+                  any, 
+                  any
+                >
             }
-          }
           : {}
       )
 
@@ -63,10 +44,11 @@ export type Resolver<Root, Context, Args, OutputType> =
   }
     & ResolverFunction<Root, Context, Args, OutputType>
 
-export type OutputRuntimeTypes<Root, Context, OutputType> = {
+export type OutputRuntimeTypes<Root, Context, Args, OutputType> = {
   [FieldName in keyof OutputType]?: 
-    // OutputObject<Context, OutputType[FieldName]> | 
-    Resolver<Root, Context, any, OutputType[FieldName]>
+    [null] extends [Args]
+      ? OutputObject<Context, OutputType[FieldName]>
+      : Resolver<Root, Context, Args, OutputType[FieldName]>
 } 
 // & 
 // // Arbitrary properties are allowed.

@@ -178,7 +178,7 @@ type InputTestInputObjectNullableItemsNullUndefined = (TestInputObject | null)[]
 // type InputTestInputObjectNullUndefined = TestInputObject | null | undefined;
 // type InputTestInputObject = TestInputObject;
 
-type X = InputRuntimeTypes<GetIfArray<Exclude<InputTestInputObjectNullableItemsNullUndefined, null | undefined>>>
+// type X = InputRuntimeTypes<GetIfArray<Exclude<InputTestInputObjectNullableItemsNullUndefined, null | undefined>>>
 
 type ScalarOrInputTestInputObjectNullableItemsNullUndefined = ScalarOrInput<InputTestInputObjectNullableItemsNullUndefined>
 type ValidTestInputObjectNullableItemsNullUndefined = 
@@ -247,4 +247,15 @@ test<RelatedResolver>({
   }
 })
 
-type Output = OutputRuntimeTypes<Test, Context, RelatedType>
+type Output = OutputRuntimeTypes<Test, Context, null, {field: RelatedType}>
+
+type M = {test: string, other: number};
+
+type Types<X> = X extends string ? X : X
+
+type Z = Types<M>
+
+
+type X = {
+  [Key in keyof M]: Key
+}
