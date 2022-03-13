@@ -1,7 +1,6 @@
-import { resolver } from '../src/output';
-import {QueryRoot, schema} from '../src/schema'
-import { registeredArgs } from './args'
-import { Args, Test, test } from './test'
+import { QueryRoot, schema } from '../src/schema';
+import { registeredArgs } from './args';
+import { Test, test } from './test';
 
 export class ChildArgs {
   constructor(
@@ -21,12 +20,14 @@ schema({
           field: {type: String}
         }
       },
+      // @ts-ignore
       resolve: async (args: ChildArgs, root: QueryRoot, context: any) => {
         return `asdf`;
       }
     },
     testQuery: {
       type: Test,
+      // @ts-ignore
       resolve: test,
       args: registeredArgs,
       runtimeTypes: {
@@ -38,6 +39,7 @@ schema({
               field: {type: String}
             }
           },
+          // @ts-ignore
           resolve: async (args: ChildArgs, root: Test, context: any) => {
             return `asdf`;
           }

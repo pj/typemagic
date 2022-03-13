@@ -1,47 +1,30 @@
-import { RootFieldFilter } from "@graphql-tools/utils";
-import { ArgsObject } from "./args";
-import { GenerateOptions, GetIfArray, GetUnderlyingRuntimeType, UnderlyingIsScalar } from "./types";
+import { ArgsSchema } from "./input";
+import { GenerateNullabilityAndArrayRuntimeOptions, GetRuntimeType, IsCompileTimeScalar } from "./types";
 
-export type ResolverFunction<Root, Context, Args, OutputType> =
-  [unknown] extends [Args] 
-    ? (root: Root, context: Context) => Promise<OutputType> 
-    : { 
-        resolve: (args: Args, root: Root, context: Context) => Promise<OutputType>,
-        args: ArgsObject<Args>
-      }
-
-// export type ChildArgsThing<ChildArgs> =
-//   {
-//     [Key in keyof ChildArgs]: ArgsObject<
-//   }
-
-// export type GenerateChildArgs<OutputType>
-//   = {
-//       [FieldName in keyof OutputType]?:  
-//     }
-
-export type Resolver<Root, Context, OutputType> = 
+export type Resolver<Root, Context, Args, OutputType> = 
   ({
     name?: string,
     description?: string, 
     deprecationReason?: string,
-    type: GetUnderlyingRuntimeType<OutputType>
+    type: GetRuntimeType<OutputType>
   })
-    & GenerateOptions<OutputType> 
-    & 
-      {
-        // resolve: ((args: any, root: Root, context: Context) => Promise<OutputType>),
-        // args: Args
-        // childArgs: {
-        //   [FieldName in keyof OutputType]?:  
-        // }
-      }
+    & GenerateNullabilityAndArrayRuntimeOptions<OutputType> 
     & (
-        [UnderlyingIsScalar<OutputType>] extends [false] 
+      [unknown] extends [Args] 
+        ? {
+            resolve: (root: Root, context: Context) => Promise<OutputType> 
+          }
+        : { 
+            resolve: (args: Args, root: Root, context: Context) => Promise<OutputType>,
+            args: ArgsSchema<Args>
+          }
+    )
+    & (
+        [IsCompileTimeScalar<OutputType>] extends [false] 
           ? {
               runtimeTypes: {
                 [FieldName in keyof OutputType]?: 
-                  Resolver<OutputType, Context, OutputType[FieldName]>
+                  Resolver<OutputType, Context, unknown, OutputType[FieldName]>
               }
             }
           : {}
@@ -62,14 +45,3 @@ export type Resolver<Root, Context, OutputType> =
 //         | RegisteredResolver<R, C, any>
 //       : never
 // };
-
-// export type ResolverInput<Root, Context, Args, OutputType> = 
-//   ResolverCommon<Context, OutputType> 
-//     & ResolverFunction<Root, Context, Args, OutputType>
-
-export function resolver<Root, Context, Args, OutputType>(
-  resolver: ResolverFunction<Root, Context, Args, OutputType>
-): any
- {
-  return resolver;
-}

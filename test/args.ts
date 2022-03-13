@@ -1,15 +1,15 @@
 import { Int } from "type-graphql";
-import { ArgsObject, ArgsRuntimeSchema } from "../src/args";
+import { ArgsSchema } from "../src/input";
 import { Args, TestInputObject } from "./test";
 
 
-function testArgs<A>(object: ArgsObject<A>): ArgsObject<A> {
+function testArgs<A>(object: ArgsSchema<A>): ArgsSchema<A> {
   return object
 }
 
 export const registeredArgs = testArgs({
   type: Args,
-  runtimeTypes: {
+  runtimeSchema: {
     stringField: { type: String },
     booleanField: { type: Boolean },
     dateField: { type: Date },

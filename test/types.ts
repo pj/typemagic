@@ -1,8 +1,8 @@
 import { Int } from "type-graphql";
-import { ArgsAndResolvers } from "../src/args";
 import { ScalarOrInput } from "../src/input";
+import { QueryRoot } from "../src/schema";
 // import { Scalar} from "../src/scalar";
-import { Constructor, GenerateArrayTrilean, GenerateReturnType, GetUnderlyingRuntimeType } from "../src/types";
+import { Constructor, GenerateArrayTrilean, GenerateReturnType, GetRuntimeType } from "../src/types";
 import { RelatedClass, TestInputObject } from "./test";
 
 type Extends<A, B> = A extends B ? true : false;
@@ -92,50 +92,50 @@ type GSUN = GenerateArrayTrilean<(string | null)[] | undefined>
 test<GSUN>("nullable_items");
 
 // Test underlying runtime type
-type SANU = GetUnderlyingRuntimeType<string[] | null | undefined>
+type SANU = GetRuntimeType<string[] | null | undefined>
 test<SANU>(String);
-type SAU = GetUnderlyingRuntimeType<string[] | undefined>
+type SAU = GetRuntimeType<string[] | undefined>
 test<SAU>(String);
-type SAN = GetUnderlyingRuntimeType<string[] | null>
+type SAN = GetRuntimeType<string[] | null>
 test<SAN>(String);
-type SA = GetUnderlyingRuntimeType<string[]>
+type SA = GetRuntimeType<string[]>
 test<SA>(String);
-type SNU = GetUnderlyingRuntimeType<string | null | undefined>
+type SNU = GetRuntimeType<string | null | undefined>
 test<SNU>(String);
-type SN = GetUnderlyingRuntimeType<string | null>
+type SN = GetRuntimeType<string | null>
 test<SN>(String);
-type S = GetUnderlyingRuntimeType<string>
+type S = GetRuntimeType<string>
 test<S>(String);
-type SINU = GetUnderlyingRuntimeType<(string | null)[] | null | undefined>
+type SINU = GetRuntimeType<(string | null)[] | null | undefined>
 test<SINU>(String);
-type SIN = GetUnderlyingRuntimeType<(string | null)[] | null>
+type SIN = GetRuntimeType<(string | null)[] | null>
 test<SIN>(String);
-type SIU = GetUnderlyingRuntimeType<(string | null)[] | undefined>
+type SIU = GetRuntimeType<(string | null)[] | undefined>
 test<SIU>(String);
-type SI = GetUnderlyingRuntimeType<(string | null)[]>
+type SI = GetRuntimeType<(string | null)[]>
 test<SI>(String);
 
-type IANU = GetUnderlyingRuntimeType<TestInputObject[] | null | undefined>
+type IANU = GetRuntimeType<TestInputObject[] | null | undefined>
 test<IANU>(TestInputObject);
-type IAU = GetUnderlyingRuntimeType<TestInputObject[] | undefined>
+type IAU = GetRuntimeType<TestInputObject[] | undefined>
 test<IAU>(TestInputObject);
-type IAN = GetUnderlyingRuntimeType<TestInputObject[] | null>
+type IAN = GetRuntimeType<TestInputObject[] | null>
 test<IAN>(TestInputObject);
-type IA = GetUnderlyingRuntimeType<TestInputObject[]>
+type IA = GetRuntimeType<TestInputObject[]>
 test<IA>(TestInputObject);
-type INU = GetUnderlyingRuntimeType<TestInputObject | null | undefined>
+type INU = GetRuntimeType<TestInputObject | null | undefined>
 test<INU>(TestInputObject);
-type IN = GetUnderlyingRuntimeType<TestInputObject | null>
+type IN = GetRuntimeType<TestInputObject | null>
 test<IN>(TestInputObject);
-type I = GetUnderlyingRuntimeType<TestInputObject>
+type I = GetRuntimeType<TestInputObject>
 test<I>(TestInputObject);
-type IINU = GetUnderlyingRuntimeType<(TestInputObject | null)[] | null | undefined>
+type IINU = GetRuntimeType<(TestInputObject | null)[] | null | undefined>
 test<IINU>(TestInputObject);
-type IIU = GetUnderlyingRuntimeType<(TestInputObject | null)[] | undefined>
+type IIU = GetRuntimeType<(TestInputObject | null)[] | undefined>
 test<IIU>(TestInputObject);
-type IIN = GetUnderlyingRuntimeType<(TestInputObject | null)[] | null>
+type IIN = GetRuntimeType<(TestInputObject | null)[] | null>
 test<IIN>(TestInputObject);
-type II = GetUnderlyingRuntimeType<(TestInputObject | null)[]>
+type II = GetRuntimeType<(TestInputObject | null)[]>
 test<II>(TestInputObject);
 
 // Test Scalar / Input Object
@@ -281,7 +281,7 @@ type ValidTestInputObjectNullableItemsNullUndefined =
 
 // test<InferArgsForType<Test, {stringField: true, nullableField: true}>>({stringField: true, nullableField: true})
 
-function argsTest<ResolveFunction>(data: ArgsAndResolvers<ResolveFunction>) {
+function argsTest<ResolveFunction, Context, Root = QueryRoot, >(data: ArgsAndResolvers<ResolveFunction, Root, Context>) {
   return data;
 }
 
@@ -304,9 +304,10 @@ const x = argsTest({
   runtimeTypes: {
     testField: argsTest({
       type: String,
-      resolve: (args: string) => "asdf",
+      resolve: (args: string | null, root: RelatedClass, context: any) => "asdf",
       args: {
         type: String,
+        nullable: true
       }
     }),
   }

@@ -1,10 +1,10 @@
-import { ArrayTrilean, BooleanOrUndefined, Constructor, GenerateOptions, GetIfArray, GetUnderlyingRuntimeType, UnderlyingIsScalar } from "./types";
+import { ArrayTrilean, BooleanOrUndefined, Constructor, GenerateNullabilityAndArrayRuntimeOptions, GetIfArray, GetRuntimeType, IsCompileTimeScalar, IsRuntimeScalar } from "./types";
 
 export type ScalarOrInput<Item> = 
-  { type: GetUnderlyingRuntimeType<Item> } 
-    & GenerateOptions<Item> 
+  { type: GetRuntimeType<Item> } 
+    & GenerateNullabilityAndArrayRuntimeOptions<Item> 
     & (
-        [UnderlyingIsScalar<Item>] extends [false]
+        [IsCompileTimeScalar<Item>] extends [false]
         ? {
             name?: string,
             runtimeTypes: InputRuntimeTypes<Exclude<GetIfArray<Item>, null | undefined>>
@@ -12,9 +12,9 @@ export type ScalarOrInput<Item> =
         : {}
       )
 
-export type InputRuntimeTypes<Obj> = {
-  [FieldName in keyof Obj]:
-    ScalarOrInput<Obj[FieldName]>
+export type InputRuntimeTypes<ArgsObject> = {
+  [FieldName in keyof ArgsObject]:
+    ScalarOrInput<ArgsObject[FieldName]>
 }
 // & 
 // Arbitrary properties are allowed.
@@ -31,10 +31,7 @@ export type InputRuntimeTypes<Obj> = {
 //       : never
 // };
 
-// export type InputObject<O, N extends BooleanOrUndefined, A extends ArrayTrilean> = {
-//   name?: string,
-//   type: Constructor<O>,
-//   runtimeTypes: InputRuntimeTypes<O>,
-//   nullable?: N,
-//   array?: A
-// };
+export type ArgsSchema<ArgsObject> = {
+  type: Constructor<ArgsObject>,
+  runtimeSchema: InputRuntimeTypes<ArgsObject>
+};

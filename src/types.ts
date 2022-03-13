@@ -24,8 +24,8 @@ export function registerEnum<T>(clazz: IsEnum<T>, name?: string): RegisteredEnum
 export type ScalarTypes = 
   typeof String | (typeof Float | typeof Int) | typeof Date | typeof Boolean;
 
-export type IsCompileTimeScalarType<Type> = 
-  [GetUnderlyingArrayType<Type>] extends [string | number | Date | boolean]
+export type IsCompileTimeScalar<Type> = 
+  [GetUnderlyingType<Type>] extends [string | number | Date | boolean]
     ? true
     : false
 
@@ -50,7 +50,7 @@ export type GenerateReturnType<RT, N, A> =
         : RT | null
 
 export type GetRuntimeScalarType<Scalar> =
-  [GetUnderlyingArrayType<Scalar>] extends [infer Item]
+  [GetUnderlyingType<Scalar>] extends [infer Item]
     ? [Item] extends [Date] 
       ? typeof Date
       : [Item] extends [boolean]
@@ -67,51 +67,26 @@ export type GetRuntimeScalarType<Scalar> =
 export type ArrayTrilean = boolean | "nullable_items" | undefined;
 export type BooleanOrUndefined = boolean | undefined;
 
-export type GenerateArrayTrilean<A> = 
-  [Exclude<A, null | undefined>] extends [Array<infer I>] 
-    ? [null] extends [I] 
-      ? "nullable_items"
-      : true
-    : false
-
-export type IsNull<O> = 
-  [null] extends [O] 
-    ? true : false;
-export type IncludeNull<O> = [null] extends [O] ? null : never;
-
-export type GetUnderlyingArrayType<A> =
+export type GetUnderlyingType<A> =
   [Exclude<A, null | undefined>] extends [Array<infer T>] ? Exclude<T, null | undefined> : Exclude<A, null | undefined>
 
-export type GetUnderlyingRuntimeType<Item> =
-  [Exclude<Item, null | undefined>] extends [Array<infer ArrayType>] 
-    ? [GetRuntimeScalarType<Exclude<ArrayType, null | undefined>>] extends ["Scalar Type not found"] 
-      ? Constructor<Exclude<ArrayType, null | undefined>>
-      : GetRuntimeScalarType<Exclude<ArrayType, null | undefined>>
-    : [GetRuntimeScalarType<Exclude<Item, null | undefined>>] extends ["Scalar Type not found"] 
-      ? Constructor<Exclude<Item, null | undefined>>
-      : GetRuntimeScalarType<Exclude<Item, null | undefined>>
+export type GetRuntimeType<Item> =
+  [GetUnderlyingType<Item>] extends [infer Type]
+    ? [GetRuntimeScalarType<Type>] extends ["Scalar Type not found"]
+      ? Constructor<Type>
+      : GetRuntimeScalarType<Type> 
+    : "Should not happen"
 
-export type UnderlyingIsScalar<Item> =
-  [Exclude<Item, null | undefined>] extends [Array<infer ArrayType>] 
-    ? [GetRuntimeScalarType<Exclude<ArrayType, null | undefined>>] extends [never] 
+export type IsRuntimeScalar<Item> =
+  [GetUnderlyingType<Item>] extends [infer Type]
+    ? [GetRuntimeScalarType<Type>] extends ["Scalar Type not found"]
       ? false
       : true
-    : [GetRuntimeScalarType<Exclude<Item, null | undefined>>] extends [never] 
-      ? false
-      : true
+    : "Should not happen"
 
-export type typeIsScalar<Item> =
-  [Exclude<Item, null | undefined>] extends [Array<infer ArrayType>] 
-    ? [GetRuntimeScalarType<Exclude<ArrayType, null | undefined>>] extends [never] 
-      ? false
-      : true
-    : [GetRuntimeScalarType<Exclude<Item, null | undefined>>] extends [never] 
-      ? false
-      : true
-
-export type GenerateOptions<Item> = 
+export type GenerateNullabilityAndArrayRuntimeOptions<Item> = 
   (
-      [IsNull<Item>] extends [true]
+      [null] extends [Item]
         ? { nullable: true }
         : { nullable?: false }
     )
@@ -122,3 +97,10 @@ export type GenerateOptions<Item> =
         ? {array: "nullable_items"}
         : {array: true}
   )
+
+export type GenerateArrayTrilean<A> = 
+  [Exclude<A, null | undefined>] extends [Array<infer I>] 
+    ? [null] extends [I] 
+      ? "nullable_items"
+      : true
+    : false

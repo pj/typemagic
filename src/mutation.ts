@@ -1,10 +1,21 @@
-import { ArgsObject } from "./args";
-import { ArrayTrilean, BooleanOrUndefined, } from "./types";
+import { ArgsSchema } from "./input";
+import { Resolver } from "./output";
+import { GenerateNullabilityAndArrayRuntimeOptions, GetRuntimeType, IsCompileTimeScalar } from "./types";
 
-export type MutationFunction<C, A, O> = (args: A, context: C) => Promise<O>;
-
-export type Mutation<C, A, O> = {
-  args: ArgsObject<A>,
-  // output: RegisteredOutputObject<C, O, N, Arr>,
-  mutate: MutationFunction<C, A, O>
-}
+export type Mutation<Context, Args, OutputType> = 
+  {
+    args: ArgsSchema<Args>,
+    mutate: (args: Args, context: Context) => Promise<OutputType>;
+    type: GetRuntimeType<OutputType>
+  } 
+    & GenerateNullabilityAndArrayRuntimeOptions<OutputType>
+    & (
+      [IsCompileTimeScalar<OutputType>] extends [false] 
+        ? {
+            runtimeTypes: {
+              [FieldName in keyof OutputType]?: 
+                Resolver<OutputType, Context, unknown, OutputType[FieldName]>
+            }
+          }
+        : {}
+    )
