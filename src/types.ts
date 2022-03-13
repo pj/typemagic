@@ -93,6 +93,15 @@ export type UnderlyingIsScalar<Item> =
       ? false
       : true
 
+export type typeIsScalar<Item> =
+  [Exclude<Item, null | undefined>] extends [Array<infer ArrayType>] 
+    ? [GetUnderlyingScalarType<Exclude<ArrayType, null | undefined>>] extends [never] 
+      ? false
+      : true
+    : [GetUnderlyingScalarType<Exclude<Item, null | undefined>>] extends [never] 
+      ? false
+      : true
+
 export type GenerateOptions<Item> = 
   (
       [IsNull<Item>] extends [true]

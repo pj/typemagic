@@ -1,5 +1,5 @@
 import { Int } from "type-graphql";
-import { ArgsObject, ArgsRuntimeSchema } from "../src/args";
+import { ArgsAndResolvers, ArgsObject, ArgsRuntimeSchema, ArgsTypeFromRuntime, InferArgsForType, RuntimeArgsType } from "../src/args";
 import { InputRuntimeTypes, ScalarOrInput } from "../src/input";
 import { resolver, Resolver } from "../src/output";
 import { QueryRoot, RootMutations, RootQueries, schema } from "../src/schema";
@@ -229,33 +229,78 @@ type ValidTestInputObjectNullableItemsNullUndefined =
 
 // ArgsObject
 
-type X = ArgsObject<ChildArgs>;
-type Y = X["runtimeTypes"]
-type Z = Y["field"]
-export function testSchema<Queries, Mutations, Context = any>(
-  schema: {
-    queries?: RootQueries<Queries, Context>,
-  }
-) {
-  return schema
+// type X = ArgsObject<ChildArgs>;
+// type Y = X["runtimeTypes"]
+// type Z = Y["field"]
+// export function testSchema<Queries, Mutations, Context = any>(
+//   schema: {
+//     queries?: RootQueries<Queries, Context>,
+//   }
+// ) {
+//   return schema
+// }
+
+// const x = testSchema({
+//   queries: {
+//     stringField: {
+//       type: String,
+//       // args: {
+//       //   type: ChildArgs,
+//       //   runtimeTypes: {
+//       //     field: {type: String}
+//       //   }
+//       // },
+//       // resolve: async (args: ChildArgs, root: QueryRoot, context: any) => {
+//       //   return `asdf`;
+//       // }
+//       runtimeTypes: {}
+//     },
+//   }});
+
+// type A = Exclude<(typeof x)["queries"], undefined>["stringField"]["args"]["runtimeTypes"]["field"]
+
+// test<Resolver<QueryRoot, any, string>>({type: String, args: {type: ChildArgs, runtimeTypes: {field: {type: String}}}})
+
+// type GetArgs<Args> 
+//   = {
+//     [Key in keyof Args]: ArgsObject<Args[Key]>
+//   }
+
+// type AllArgs<Args> = {
+//   args: GetArgs<Args>
+// }
+
+// function args<Args>(allArgs: AllArgs<Args>) {
+
+// }
+
+// args({
+//   args: {
+//     anArg: {
+//       type: String,
+//       runtimeTypes: {}
+//     }
+//   }
+// })
+
+// test<InferArgsForType<Test, {stringField: true, nullableField: true}>>({stringField: true, nullableField: true})
+
+function argsTest<Type, InferedArgs>(data: ArgsAndResolvers<Type, InferedArgs>) {
+  return data;
 }
 
-const x = testSchema({
-  queries: {
+const x = argsTest({
+  type: Test,
+  runtimeArgs: {
     stringField: {
       type: String,
-      args: {
-        type: ChildArgs,
-        runtimeTypes: {
-          field: {type: String}
-        }
-      },
-      resolve: async (args: ChildArgs, root: QueryRoot, context: any) => {
-        return `asdf`;
-      }
+      nullable: false,
     },
-  }});
+  },
+  runtimeTypes: {
+    stringField: (args: string) => "asdf",
+    dateField: () => new Date()
+  }
+})
 
-type A = Exclude<(typeof x)["queries"], undefined>["stringField"]["args"]["runtimeTypes"]["field"]
-
-test<Resolver<QueryRoot, any, string>>({type: String, args: {type: ChildArgs, runtimeTypes: {field: {type: String}}}})
+// type X = [boolean] extends [true] ? true : false

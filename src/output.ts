@@ -9,30 +9,16 @@ export type ResolverFunction<Root, Context, Args, OutputType> =
         resolve: (args: Args, root: Root, context: Context) => Promise<OutputType>,
         args: ArgsObject<Args>
       }
-  // {
-  //   resolve: (args: Args, root: Root, context: Context) => Promise<OutputType>,
-  //   args: ArgsObject<Args>
-  // }
 
-// export type Resolver<Root, Context, Args, OutputType> = 
-//   ({
-//     name?: string,
-//     description?: string, 
-//     deprecationReason?: string,
-//     type: GetUnderlyingRuntimeType<OutputType>
-//   })
-//     & GenerateOptions<OutputType> 
-//     & ResolverFunction<Root, Context, Args, OutputType>
-//     & (
-//         [UnderlyingIsScalar<OutputType>] extends [false] 
-//           ? {
-//               runtimeTypes: {
-//                 [FieldName in keyof OutputType]?: 
-//                   Resolver<OutputType, Context, any, OutputType[FieldName]>
-//               }
-//             }
-//           : {}
-//       )
+// export type ChildArgsThing<ChildArgs> =
+//   {
+//     [Key in keyof ChildArgs]: ArgsObject<
+//   }
+
+// export type GenerateChildArgs<OutputType>
+//   = {
+//       [FieldName in keyof OutputType]?:  
+//     }
 
 export type Resolver<Root, Context, OutputType> = 
   ({
@@ -44,8 +30,11 @@ export type Resolver<Root, Context, OutputType> =
     & GenerateOptions<OutputType> 
     & 
       {
-        resolve: ((args: any, root: Root, context: Context) => Promise<OutputType>),
-        args: ArgsObject<any>
+        // resolve: ((args: any, root: Root, context: Context) => Promise<OutputType>),
+        // args: Args
+        // childArgs: {
+        //   [FieldName in keyof OutputType]?:  
+        // }
       }
     & (
         [UnderlyingIsScalar<OutputType>] extends [false] 
