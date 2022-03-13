@@ -2,18 +2,9 @@ import { RootFieldFilter } from "@graphql-tools/utils";
 import { ArgsObject } from "./args";
 import { GenerateOptions, GetIfArray, GetUnderlyingRuntimeType, UnderlyingIsScalar } from "./types";
 
-export type ArgsNull<Args> =
-  [null] extends [Args] 
-    ? [unknown] extends [Args]
-      ? true
-      : false
-    : false
-
 export type ResolverFunction<Root, Context, Args, OutputType> =
-  [null] extends [Args] 
-    ? { 
-        resolve?: (root: Root, context: Context) => Promise<OutputType> 
-      }
+  [unknown] extends [Args] 
+    ? (root: Root, context: Context) => Promise<OutputType> 
     : { 
         resolve: (args: Args, root: Root, context: Context) => Promise<OutputType>,
         args: ArgsObject<Args>
@@ -43,7 +34,7 @@ export type ResolverFunction<Root, Context, Args, OutputType> =
 //           : {}
 //       )
 
-export type ResolverCommon<Context, OutputType> = 
+export type Resolver<Root, Context, OutputType> = 
   ({
     name?: string,
     description?: string, 
@@ -51,6 +42,11 @@ export type ResolverCommon<Context, OutputType> =
     type: GetUnderlyingRuntimeType<OutputType>
   })
     & GenerateOptions<OutputType> 
+    & 
+      {
+        resolve: ((args: any, root: Root, context: Context) => Promise<OutputType>),
+        args: ArgsObject<any>
+      }
     & (
         [UnderlyingIsScalar<OutputType>] extends [false] 
           ? {
@@ -62,14 +58,6 @@ export type ResolverCommon<Context, OutputType> =
           : {}
       )
   
-export type Resolver<Root, Context, OutputType> =
-  ResolverCommon<Context, OutputType>
-    & 
-    { 
-        resolve?: (args: any, root: Root, context: Context) => Promise<OutputType>,
-        args?: ArgsObject<any>
-      }
-
 // // Arbitrary properties are allowed.
 // {
 //   [Key in string]: 
@@ -86,12 +74,13 @@ export type Resolver<Root, Context, OutputType> =
 //       : never
 // };
 
-export type ResolverInput<Root, Context, Args, OutputType> = 
-  ResolverCommon<Context, OutputType> 
-    & ResolverFunction<Root, Context, Args, OutputType>
+// export type ResolverInput<Root, Context, Args, OutputType> = 
+//   ResolverCommon<Context, OutputType> 
+//     & ResolverFunction<Root, Context, Args, OutputType>
 
 export function resolver<Root, Context, Args, OutputType>(
-  resolver: ResolverInput<Root, Context, Args, OutputType>
-): Resolver<Root, Context, OutputType> {
+  resolver: ResolverFunction<Root, Context, Args, OutputType>
+): any
+ {
   return resolver;
 }

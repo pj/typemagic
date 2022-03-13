@@ -44,18 +44,24 @@ import { Resolver } from "./output";
 //   }
 // }
 
-class QueryRoot {
+export class QueryRoot {
 
 }
 
-export function schema<ResolverOutput, Context = any>(
+export type RootQueries<Queries, Context> =
+  {
+    [Key in keyof Queries]: Resolver<QueryRoot, Context, Queries[Key]>
+  }
+
+export type RootMutations<Mutations, Context> =
+  {
+    [Key in keyof Mutations]: Mutation<Context, unknown, Mutations[Key]>
+  }
+
+export function schema<Queries, Mutations, Context = any>(
   schema: {
-    queries?: {
-      [key: string]: Resolver<QueryRoot, Context, ResolverOutput>
-    },
-    mutations?: {
-      [key: string]: Mutation<Context, any, any, any, any>
-    }
+    queries?: RootQueries<Queries, Context>,
+    mutations?: RootMutations<Mutations, Context>
   }
 ) {
 

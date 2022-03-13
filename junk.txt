@@ -425,3 +425,253 @@ export function query<R, A, O, N extends boolean, Arr extends boolean | "nullabl
   //     resolve: (args: A, root: R, context: C) => O[]
   //   } 
 
+// type Context = {someContext: string};
+// type RelatedType = RelatedClass | null
+
+// type X = [UnderlyingIsScalar<RelatedType>] extends [false] ? true : false
+
+// type RelatedResolver = Resolver<Test, Context, Args, RelatedType>
+// type ResolverFunction = RelatedResolver["resolve"]
+// type RelatedRuntimeTypes = RelatedResolver["runtimeTypes"];
+// type TestFieldResolver = RelatedRuntimeTypes["testField"]
+// type ResolverArgs = RelatedResolver["args"]
+
+// export type TestResolution<Context, OutputType> = 
+//   {
+//     [FieldName in keyof OutputType]?: 
+//       Resolver<OutputType, Context, OutputType[FieldName]>
+//   }
+
+// export type TestDiscrimant<Type> = Type extends any ? Type : Type
+
+// type A = TestDiscrimant<Test>
+
+// type Y = TestResolution<Context, Test>
+// type Z = Exclude<Y["dateField"], undefined>["resolve"]
+
+const resolved = {
+  type: Test,
+  resolve: resolver({
+    resolve: testObject,
+    args: registeredArgs,
+  }),
+  runtimeTypes: {
+    stringField: {
+      type: String,
+      resolve: resolver({
+        args: {
+          type: ChildArgs,
+          runtimeTypes: {
+            field: {type: String}
+          }
+        },
+        resolve: async (args: ChildArgs, root: Test, context: any) => {
+          return `asdf`;
+        }
+      })
+    }
+  }
+}
+
+// type TestType = {
+//   field: string,
+//   anotherField: boolean
+// };
+
+// type TestArgsInfer<Type, Args> = 
+//   { 
+//     resolve: (args: Args) => Type,
+//     args: Args
+//   }
+
+// type MapTest<Args> = {
+//   [Key in keyof TestType]:
+//     TestArgsInfer<TestType[Key], Args>
+// }
+
+// function map<Args>(mt: MapTest<Args>): void {
+
+// }
+
+// map({
+//   field: {
+//     resolve: (args: number) => "hello", 
+//     args: 1
+//   },
+//   anotherField: {
+//     resolve: (args: string) => true, 
+//     args: "world"
+//   }
+// }
+
+// type TestType = {
+//   field: string,
+//   anotherField: boolean
+// };
+
+// type TestArgsInfer<Type, Args> = 
+//   { 
+//     resolve: (args: Args) => Type,
+//     args: Args
+//   }
+
+// type MapTest = {
+//   [Key in keyof TestType]:
+//     <Args> () => TestArgsInfer<TestType[Key], Args>
+// }
+
+// function map(mt: MapTest): void {
+
+// }
+
+// map({
+//   field: () => ({
+//     resolve: (args: number) => "hello", 
+//     args: 1
+//   }),
+//   anotherField: () => ({
+//     resolve: (args: string) => true, 
+//     args: "world"
+//   })
+// })
+
+
+// type From = {
+//   field: string,
+//   anotherField: boolean
+// };
+
+
+// type MapTest = {
+//   [Key in keyof From]:
+//     <Args> (args: Args) => From[Key]
+// }
+
+// function map(mt: MapTest): void {
+
+// }
+
+// map({
+//   field: (args: number) => "hello", 
+//   anotherField: (args: string) => true
+// })
+
+type TestType = {
+  field: string,
+  anotherField: boolean
+};
+
+// type X = {
+//   [K in keyof TestType]: TestType[K]
+// }[string]
+
+// type SimpleTransform<X> = {asdf: X} 
+
+// type VariadicAndWithTransform<T extends any[]> = 
+//   {
+//     [K in keyof T]: (v: SimpleTransform<T[K]>) => void
+//   }[number] extends ((v: infer I) => void) ? I : never
+
+// type Z = VariadicAndWithTransform<[{a: 1}, {b: 2}]>
+
+// type ValueOf<T> = T[keyof T];
+
+// type NonEmptyArray<T> = [T, ...T[]]
+
+// type MustInclude<T, U extends T[]> = [T] extends [ValueOf<U>] ? U : never;
+
+// type X = ValueOf<TestType>
+// type Y = NonEmptyArray<keyof TestType>
+
+// type X = (...args: TestType) => void extends 
+// type X = {
+//   [Key in keyof TestType as ]: (args: Args) => TestType[Key]
+//   j
+// }
+
+// type ArgsSchema<Args> = 
+//   Args extends string 
+//     ? "string" 
+//     : Args extends number 
+//       ? "number" 
+//       : Args extends Date
+//         ? typeof Date
+//         : never
+
+// type From = {
+//   field: string,
+//   anotherField: boolean
+// }
+
+// // Map it to
+// type To = {
+//   field: {
+//     resolve: (args: number) => string,
+//     argsSchema: ArgsSchema<number>
+//   },
+//   anotherField: {
+//     resolve: (args: Date) => boolean
+//     argsSchema: ArgsSchema<Date>
+//   }
+// }
+
+// // For an object like
+// const to = {
+//   field: {
+//     resolve: (args: number) => `Hello number ${args}`,
+//     argsSchema: "string"
+//   },
+//   anotherField: 
+//   {
+//     resolve: (args: Date) => args.getSeconds() > 10,
+//     argsSchema: Date
+//   }
+// }
+
+
+// // Example 1
+
+// type MapTest = {
+//   [Key in keyof From]: {
+//     resolve: (args: X) => From[Key],
+//     argsSchema: From[Key]
+//   }
+// }
+
+// function map(mt: MapTest): void {
+
+// }
+
+// map({
+//   field: {
+//     resolve: (args: number) => "hello", 
+//     argsSchema: "number" 
+//   },
+//   anotherField: { 
+//     resolve: (args: string) => true, 
+//     argsSchema: "string" 
+//   }
+// })
+
+// // Example 2
+// // type MapTest2 = {
+// //   [Key in keyof From]: {
+// //     resolve: <Args> (args: Args) => From[Key],
+// //     argsSchema: ArgsSchema<Args>
+// //   }
+// // }
+
+// // function map2(mt: MapTest2): void {
+
+// // }
+
+// // map2({
+// //   field: {
+// //     resolve: (args: number) => "hello", 
+// //     argsSchema: "number" 
+// //   },
+// //   anotherField: { 
+// //     resolve: (args: string) => true, 
+// //     argsSchema: "string" 
+// //   }
+// // })
