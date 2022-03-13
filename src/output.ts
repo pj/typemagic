@@ -1,34 +1,47 @@
 import { ArgsSchema } from "./input";
-import { GenerateNullabilityAndArrayRuntimeOptions, GetRuntimeType, IsCompileTimeScalar } from "./types";
+import { QueryRoot } from "./schema";
+import { GenerateNullabilityAndArrayRuntimeOptions, GetRuntimeType, IsCompileTimeScalar, IsNonNullCompileTimeScalar } from "./types";
 
 export type Resolver<Root, Context, Args, OutputType> = 
-  ({
-    name?: string,
-    description?: string, 
-    deprecationReason?: string,
-    type: GetRuntimeType<OutputType>
-  })
-    & GenerateNullabilityAndArrayRuntimeOptions<OutputType> 
-    & (
-      [unknown] extends [Args] 
-        ? {
-            resolve: (root: Root, context: Context) => Promise<OutputType> 
-          }
-        : { 
-            resolve: (args: Args, root: Root, context: Context) => Promise<OutputType>,
-            args: ArgsSchema<Args>
-          }
-    )
-    & (
-        [IsCompileTimeScalar<OutputType>] extends [false] 
-          ? {
-              runtimeTypes: {
-                [FieldName in keyof OutputType]?: 
-                  Resolver<OutputType, Context, unknown, OutputType[FieldName]>
+  (
+    [Root] extends [QueryRoot]
+      ? never
+      : [IsNonNullCompileTimeScalar<OutputType>] extends [true]
+          ? GetRuntimeType<OutputType> 
+          : never
+  )
+  |
+    ({
+      name?: string,
+      description?: string, 
+      deprecationReason?: string,
+      type: GetRuntimeType<OutputType>
+    })
+      & GenerateNullabilityAndArrayRuntimeOptions<OutputType> 
+      & (
+        [unknown] extends [Args] 
+          ? [Root] extends [QueryRoot]
+            ? {
+                resolve: (root: Root, context: Context) => Promise<OutputType> 
               }
+            : {
+                resolve?: (root: Root, context: Context) => Promise<OutputType> 
+              }
+          : { 
+              resolve: (args: Args, root: Root, context: Context) => Promise<OutputType>,
+              args: ArgsSchema<Args>
             }
-          : {}
       )
+      & (
+          [IsCompileTimeScalar<OutputType>] extends [false] 
+            ? {
+                runtimeTypes: {
+                  [FieldName in keyof OutputType]?: 
+                    Resolver<OutputType, Context, unknown, OutputType[FieldName]>
+                }
+              }
+            : {}
+        )
   
 // // Arbitrary properties are allowed.
 // {

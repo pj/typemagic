@@ -1,6 +1,3 @@
-import { Float, Int } from "type-graphql";
-import { InputRuntimeTypes } from "./input";
-
 type IsEnum<T> = 
   T extends {[key: string]: string} 
     ? T
@@ -21,15 +18,18 @@ export function registerEnum<T>(clazz: IsEnum<T>, name?: string): RegisteredEnum
   return new RegisteredEnum(clazz, name);
 }
 
-export type ScalarTypes = 
-  typeof String | (typeof Float | typeof Int) | typeof Date | typeof Boolean;
+export enum ScalarTypes {
+  STRING,
+  FLOAT,
+  DATE,
+  INT,
+  BOOLEAN
+}
 
 export type IsCompileTimeScalar<Type> = 
   [GetUnderlyingType<Type>] extends [string | number | Date | boolean]
     ? true
     : false
-
-export type IntOrFloat = typeof Int | typeof Float;
 
 export type Constructor<T> = Function & { prototype: T };
 export type ConstructorFromArray<T> = T extends Array<infer C> ? Constructor<C> : Constructor<T>;
@@ -52,15 +52,15 @@ export type GenerateReturnType<RT, N, A> =
 export type GetRuntimeScalarType<Scalar> =
   [GetUnderlyingType<Scalar>] extends [infer Item]
     ? [Item] extends [Date] 
-      ? typeof Date
+      ? ScalarTypes.DATE
       : [Item] extends [boolean]
-        ? typeof Boolean
+        ? ScalarTypes.BOOLEAN
         : [Item] extends [string]
           ? [string] extends [Item] 
-            ? typeof String
+            ? ScalarTypes.STRING
             : RegisteredEnum<{[key: string]: string}>
           : [Item] extends [number]
-            ? IntOrFloat | RegisteredEnum<{[key: number]: string}>
+            ? ScalarTypes.FLOAT | ScalarTypes.INT | RegisteredEnum<{[key: number]: string}>
             : "Scalar Type not found"
     : "Should not happen"
 
@@ -104,3 +104,12 @@ export type GenerateArrayTrilean<A> =
       ? "nullable_items"
       : true
     : false
+
+export type IsNonNullCompileTimeScalar<Scalar> =
+  [null] extends [Scalar]
+    ? false
+    : [Scalar] extends [Array<infer X>]
+      ? false
+      : [IsCompileTimeScalar<Scalar>] extends [true]
+        ? true
+        : false

@@ -1,16 +1,22 @@
-import { ArrayTrilean, BooleanOrUndefined, Constructor, GenerateNullabilityAndArrayRuntimeOptions, GetIfArray, GetRuntimeType, IsCompileTimeScalar, IsRuntimeScalar } from "./types";
+import { Constructor, GenerateNullabilityAndArrayRuntimeOptions, GetIfArray, GetRuntimeType, IsCompileTimeScalar, IsNonNullCompileTimeScalar } from "./types";
 
 export type ScalarOrInput<Item> = 
-  { type: GetRuntimeType<Item> } 
-    & GenerateNullabilityAndArrayRuntimeOptions<Item> 
-    & (
-        [IsCompileTimeScalar<Item>] extends [false]
-        ? {
-            name?: string,
-            runtimeTypes: InputRuntimeTypes<Exclude<GetIfArray<Item>, null | undefined>>
-          }
-        : {}
-      )
+  (
+    [IsNonNullCompileTimeScalar<Item>] extends [true]
+      ? GetRuntimeType<Item> 
+      : never
+  )
+    |  
+      { type: GetRuntimeType<Item> } 
+          & GenerateNullabilityAndArrayRuntimeOptions<Item> 
+          & (
+              [IsCompileTimeScalar<Item>] extends [false]
+              ? {
+                  name?: string,
+                  runtimeTypes: InputRuntimeTypes<Exclude<GetIfArray<Item>, null | undefined>>
+                }
+              : {}
+            );
 
 export type InputRuntimeTypes<ArgsObject> = {
   [FieldName in keyof ArgsObject]:
