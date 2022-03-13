@@ -44,7 +44,7 @@ export type GenerateReturnType<RT, N, A> =
         ? RT
         : RT | null
 
-export type GetUnderlyingScalarType<Item> =
+export type GetRuntimeScalarType<Item> =
   [Item] extends [Date] 
     ? typeof Date
     : [Item] extends [boolean]
@@ -77,28 +77,28 @@ export type GetUnderlyingArrayType<A> =
 
 export type GetUnderlyingRuntimeType<Item> =
   [Exclude<Item, null | undefined>] extends [Array<infer ArrayType>] 
-    ? [GetUnderlyingScalarType<Exclude<ArrayType, null | undefined>>] extends [never] 
+    ? [GetRuntimeScalarType<Exclude<ArrayType, null | undefined>>] extends [never] 
       ? Constructor<Exclude<ArrayType, null | undefined>>
-      : GetUnderlyingScalarType<Exclude<ArrayType, null | undefined>>
-    : [GetUnderlyingScalarType<Exclude<Item, null | undefined>>] extends [never] 
+      : GetRuntimeScalarType<Exclude<ArrayType, null | undefined>>
+    : [GetRuntimeScalarType<Exclude<Item, null | undefined>>] extends [never] 
       ? Constructor<Exclude<Item, null | undefined>>
-      : GetUnderlyingScalarType<Exclude<Item, null | undefined>>
+      : GetRuntimeScalarType<Exclude<Item, null | undefined>>
 
 export type UnderlyingIsScalar<Item> =
   [Exclude<Item, null | undefined>] extends [Array<infer ArrayType>] 
-    ? [GetUnderlyingScalarType<Exclude<ArrayType, null | undefined>>] extends [never] 
+    ? [GetRuntimeScalarType<Exclude<ArrayType, null | undefined>>] extends [never] 
       ? false
       : true
-    : [GetUnderlyingScalarType<Exclude<Item, null | undefined>>] extends [never] 
+    : [GetRuntimeScalarType<Exclude<Item, null | undefined>>] extends [never] 
       ? false
       : true
 
 export type typeIsScalar<Item> =
   [Exclude<Item, null | undefined>] extends [Array<infer ArrayType>] 
-    ? [GetUnderlyingScalarType<Exclude<ArrayType, null | undefined>>] extends [never] 
+    ? [GetRuntimeScalarType<Exclude<ArrayType, null | undefined>>] extends [never] 
       ? false
       : true
-    : [GetUnderlyingScalarType<Exclude<Item, null | undefined>>] extends [never] 
+    : [GetRuntimeScalarType<Exclude<Item, null | undefined>>] extends [never] 
       ? false
       : true
 

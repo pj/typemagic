@@ -1,7 +1,7 @@
 import { InputRuntimeTypes, ScalarOrInput } from "./input";
-import { ArrayTrilean, BooleanOrUndefined, Constructor, GenerateArrayTrilean, GenerateReturnType, GetIfArray, IntOrFloat, IsNull, ScalarTypes, UnderlyingIsScalar } from "./types";
+import { ArrayTrilean, BooleanOrUndefined, Constructor, GenerateArrayTrilean, GenerateReturnType, GetIfArray, GetRuntimeScalarType, IntOrFloat, IsNull, ScalarTypes, UnderlyingIsScalar } from "./types";
 
-export type GetActualScalarType<Item> =
+export type GetCompileTimeScalarType<Item> =
   [Item] extends [typeof Date] 
     ? Date
     : [Item] extends [typeof Boolean]
@@ -23,7 +23,7 @@ export type RuntimeArgsType<Item, B extends BooleanOrUndefined, A extends ArrayT
   } 
 
 export type ArgsTypeFromRuntime<Item, Nullability extends BooleanOrUndefined, IsArray extends ArrayTrilean> =
-  GenerateReturnType<GetActualScalarType<Item>, Nullability, IsArray>
+  GenerateReturnType<GetCompileTimeScalarType<Item>, Nullability, IsArray>
 
 export type InferArgsFromSchema<Item, Nullability extends BooleanOrUndefined, IsArray extends ArrayTrilean> = 
   { 
@@ -64,17 +64,51 @@ export type InferArgsForType<
 
 export type ResolverFunction<InferedArg, ReturnType> = 
   [InferedArg] extends [RuntimeArgsType<infer RuntimeType, infer Nullability, infer IsArray>]
-    ? (args: GenerateReturnType<GetActualScalarType<RuntimeType>, Nullability, IsArray>) => ReturnType
+    ? (args: GenerateReturnType<GetCompileTimeScalarType<RuntimeType>, Nullability, IsArray>) => ReturnType
     : () => ReturnType
 
-export type ArgsAndResolvers<Type, InferedArgs> =
+
+export type ArgsThing<Type> = {
+  [Key in keyof Type]: any
+}
+
+export type ArgsAndResolvers<ResponseType, ArgsRealType, Type extends ResponseType> =
   {
     type: Constructor<Type>,
-    runtimeArgs: InferArgsForType<Type, InferedArgs>,
-    runtimeTypes: {
-      [Key in keyof Type]?: 
-        [Key] extends [keyof InferedArgs]
-          ? ResolverFunction<InferedArgs[Key], Type[Key]>
-          : () => Type[Key]
+  } 
+  & (
+      [null] extends [ResponseType]
+        ? {
+            nullable: true
+          }
+        : {
+            nullable?: false
+          }
+    )
+  & 
+    (
+      [undefined] extends [ArgsRealType] 
+        ? {}
+        : {
+            args: {
+              type: GetRuntimeScalarType<Exclude<ArgsRealType, undefined | null>>,
+            } 
+              & 
+                (
+                  [null] extends [ArgsRealType] 
+                    ? {
+                        nullable: true
+                      }
+                    : {
+                        nullable?: false
+                    }
+                ),
+          }
+      )
+    & {
+      resolve: (args: ArgsRealType) => ResponseType
+      // runtimeTypes: {
+      //   [Key in keyof Type]?:
+      //     ArgsAndResolvers<Type[Key], >
+      // }
     }
-  }

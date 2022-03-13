@@ -1,10 +1,10 @@
 import { Int } from "type-graphql";
-import { ArgsAndResolvers, ArgsObject, ArgsRuntimeSchema, ArgsTypeFromRuntime, InferArgsForType, RuntimeArgsType } from "../src/args";
+import { ArgsAndResolvers, ArgsObject, ArgsRuntimeSchema, ArgsThing, ArgsTypeFromRuntime, InferArgsForType, RuntimeArgsType } from "../src/args";
 import { InputRuntimeTypes, ScalarOrInput } from "../src/input";
 import { resolver, Resolver } from "../src/output";
 import { QueryRoot, RootMutations, RootQueries, schema } from "../src/schema";
 // import { Scalar} from "../src/scalar";
-import { Constructor, GenerateArrayTrilean, GenerateReturnType, GetIfArray, GetUnderlyingRuntimeType, UnderlyingIsScalar } from "../src/types";
+import { BooleanOrUndefined, Constructor, GenerateArrayTrilean, GenerateReturnType, GetIfArray, GetUnderlyingRuntimeType, UnderlyingIsScalar } from "../src/types";
 import { registeredArgs } from "./args";
 import { ChildArgs } from "./schema";
 import { Args, RelatedClass, Test, TestInputObject, test as testObject } from "./test";
@@ -285,22 +285,32 @@ type ValidTestInputObjectNullableItemsNullUndefined =
 
 // test<InferArgsForType<Test, {stringField: true, nullableField: true}>>({stringField: true, nullableField: true})
 
-function argsTest<Type, InferedArgs>(data: ArgsAndResolvers<Type, InferedArgs>) {
+function argsTest<ResponseType, InferedArgs, Type extends ResponseType>(data: ArgsAndResolvers<ResponseType, InferedArgs, Type>) {
   return data;
 }
 
 const x = argsTest({
-  type: Test,
-  runtimeArgs: {
-    stringField: {
-      type: String,
-      nullable: false,
-    },
-  },
-  runtimeTypes: {
-    stringField: (args: string) => "asdf",
-    dateField: () => new Date()
+  type: RelatedClass,
+  // runtimeArgs: {
+  //   stringField: {
+  //     type: String,
+  //     nullable: false,
+  //   },
+  // },
+  nullable: true,
+  resolve: (args: string): RelatedClass | null => new RelatedClass("asdf"),
+  args: {
+    type: String,
   }
+  // runtimeTypes: {
+  //   stringField: {
+  //     resolve: (args: string) => "asdf",
+  //     args: {
+  //       type: String,
+  //       nullable: false
+  //     }
+  //   },
+  // }
 })
 
 // type X = [boolean] extends [true] ? true : false
