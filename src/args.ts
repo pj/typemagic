@@ -1,4 +1,5 @@
 import { InputRuntimeTypes, ScalarOrInput } from "./input";
+import { QueryRoot } from "./schema";
 import { ArrayTrilean, BooleanOrUndefined, Constructor, GenerateArrayTrilean, GenerateReturnType, GetIfArray, GetRuntimeScalarType, GetUnderlyingArrayType, IntOrFloat, IsCompileTimeScalarType, IsNull, ScalarTypes, UnderlyingIsScalar } from "./types";
 
 // export type GetCompileTimeScalarType<Item> =
@@ -72,8 +73,8 @@ export type InferArgsForType<
 //   [Key in keyof Type]: any
 // }
 
-export type ArgsAndResolvers<ResolverFunction> =
-  [ResolverFunction] extends [(args: infer ArgsRealType) => infer ResponseType]
+export type ArgsAndResolvers<ResolverFunction, Root, Context> =
+  [ResolverFunction] extends [(args: infer ArgsRealType, root: infer X, context: Context) => infer ResponseType]
   ?
     {
       type: [IsCompileTimeScalarType<ResponseType>] extends [true]
@@ -95,7 +96,7 @@ export type ArgsAndResolvers<ResolverFunction> =
           ? {}
           : {
               args: {
-                type: GetRuntimeScalarType<Exclude<ArgsRealType, undefined | null>>,
+                type: GetRuntimeScalarType<ArgsRealType>,
               } 
                 & 
                   (
@@ -120,8 +121,12 @@ export type ArgsAndResolvers<ResolverFunction> =
               {
                 runtimeTypes: {
                   [Key in keyof GetUnderlyingArrayType<ResponseType>]:
-                    ArgsAndResolvers<<A, B> (args: A) => B>
+                    ArgsAndResolvers<
+                      (args: never, root: GetUnderlyingArrayType<ResponseType>, context: Context) => GetUnderlyingArrayType<ResponseType>[Key],
+                      GetUnderlyingArrayType<ResponseType>,
+                      Context
+                    >
               }
             } 
         )
-  : "Should not happen"
+  : "Could not determine parameters from type"
