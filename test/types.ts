@@ -338,7 +338,7 @@ testResolver(
         },
       },
       nullable: true,
-      resolve: async (args: ChildArgs, root: QueryRoot, context: any): Promise<string | null> => {
+      resolve: async (root: QueryRoot, context: any): Promise<string | null> => {
         return `asdf`;
       }
     }

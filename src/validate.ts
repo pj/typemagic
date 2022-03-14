@@ -148,6 +148,24 @@ export type ExtractFunctionDetails<ResolverFunction, ArgsConstructor> =
   //     ? {root: Root, context: Context, returnType: ReturnType, functionArgs: FunctionArgs}
   //     : never
 
+export type ValidateResolverFunction<ResolverFunction, ArgsConstructor> =
+  [unknown] extends [ResolverFunction]
+    ? {resolve?: never}
+    : [unknown] extends [ExtractFunctionDetails<ResolverFunction, ArgsConstructor>['functionArgs']]
+      ? {
+          resolve: (
+            root: ExtractFunctionDetails<ResolverFunction, ArgsConstructor>['root'], 
+            context: ExtractFunctionDetails<ResolverFunction, ArgsConstructor>['context'], 
+          ) => Promise<ExtractFunctionDetails<ResolverFunction, ArgsConstructor>['returnType']>
+        }
+      : {
+          resolve: (
+            args: ExtractFunctionDetails<ResolverFunction, ArgsConstructor>['functionArgs'], 
+            root: ExtractFunctionDetails<ResolverFunction, ArgsConstructor>['root'], 
+            context: ExtractFunctionDetails<ResolverFunction, ArgsConstructor>['context'], 
+          ) => Promise<ExtractFunctionDetails<ResolverFunction, ArgsConstructor>['returnType']>
+        }
+
 export type ValidateResolver<Resolver> =
   [Resolver] extends [{
     type?: infer Type,
@@ -164,23 +182,13 @@ export type ValidateResolver<Resolver> =
         type: Type
       }
         & (
-            [ExtractFunctionDetails<ResolverFunction, ArgsConstructor>] extends [infer FunctionDetails]
-            ? [unknown] extends [FunctionDetails['functionArgs']]
-              ? {
-                  resolve: (root: FunctionDetails['root'])
-                }
-              : {
-                resolve: (args: )
-              }
-            : {}
-          )
-        & (
           [Type] extends [ScalarTypes]
             ? {}
             : {
                 runtimeTypes: RuntimeTypes
               }
           )
+        & ValidateResolverFunction<ResolverFunction, ArgsConstructor>
         & GenerateNullabilityAndArrayRuntimeOptions<ExtractFunctionDetails<ResolverFunction, ArgsConstructor>['returnType']> // ReturnType>
         & ValidateArgs<ExtractFunctionDetails<ResolverFunction, ArgsConstructor>['functionArgs']>
     : "Can't infer type"
