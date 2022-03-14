@@ -19,3 +19,10 @@ export type Mutation<Context, Args, OutputType> =
           }
         : {}
     )
+
+export type ValidateMutation<Mutation> = Mutation;
+
+export type ValidateMutations<Mutations> = {
+  [Key in keyof Mutations]:
+    ValidateMutation<Mutations[Key]>
+};

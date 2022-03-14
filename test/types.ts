@@ -1,10 +1,10 @@
 import { Int } from "type-graphql";
 import { ScalarOrInput } from "../src/input";
 import { QueryRoot } from "../src/schema";
-import { Validate, ValidateArgs, ValidateFields, ValidateNullability, ValidateType } from "../src/validate";
-import { Constructor, GenerateArrayTrilean, GenerateReturnType, GetRuntimeType, ScalarTypes } from "../src/types";
+import { ValidateArgs, ValidateResolvers, ValidateNullability, ValidateResolver, ValidateArray, ValidateInputRuntimeType, ValidateInputRuntimeTypes } from "../src/validate";
+import { Constructor, GenerateArrayTrilean, GenerateNullabilityAndArrayRuntimeOptions, GenerateReturnType, GetRuntimeType, ScalarTypes } from "../src/types";
 import { registeredArgs } from "./args";
-import { ChildArgs } from "./schema";
+import { ChildArgs, NestedChildArgs } from "./schema";
 import { RelatedClass, test, Test, TestInputObject } from "./test";
 
 type Extends<A, B> = A extends B ? true : false;
@@ -182,21 +182,22 @@ type InputTestInputObjectNullableItemsNullUndefined = (TestInputObject | null)[]
 // type X = InputRuntimeTypes<GetIfArray<Exclude<InputTestInputObjectNullableItemsNullUndefined, null | undefined>>>
 
 type ScalarOrInputTestInputObjectNullableItemsNullUndefined = ScalarOrInput<InputTestInputObjectNullableItemsNullUndefined>
-type ValidTestInputObjectNullableItemsNullUndefined = 
+type ValidTestInputObjectNullableItemsNullUndefined =
   Extends<
-    ScalarOrInputTestInputObjectNullableItemsNullUndefined, 
-    { type: Constructor<TestInputObject>, 
-      nullable: true, 
-      array: "nullable_items", 
+    ScalarOrInputTestInputObjectNullableItemsNullUndefined,
+    {
+      type: Constructor<TestInputObject>,
+      nullable: true,
+      array: "nullable_items",
       runtimeTypes: {
-        stringField: {type: typeof String}
-        booleanField: {type: typeof String},
-        dateField: {type: typeof Date},
-        numberField: {type: typeof Int},
-        nullableField: {type: typeof String, nullable: true},
-        arrayField: {type: typeof String, array: true},
-        nullableArrayField: {type: typeof String, nullable: true, array: true}
-        nullableItemsField: {type: typeof String, nullable: true, array: "nullable_items"}
+        stringField: { type: typeof String }
+        booleanField: { type: typeof String },
+        dateField: { type: typeof Date },
+        numberField: { type: typeof Int },
+        nullableField: { type: typeof String, nullable: true },
+        arrayField: { type: typeof String, array: true },
+        nullableArrayField: { type: typeof String, nullable: true, array: true }
+        nullableItemsField: { type: typeof String, nullable: true, array: "nullable_items" }
       }
     }
   >
@@ -225,206 +226,120 @@ type ValidTestInputObjectNullableItemsNullUndefined =
 
 // Resolver
 
-// ArgsObject
-
-// type X = ArgsObject<ChildArgs>;
-// type Y = X["runtimeTypes"]
-// type Z = Y["field"]
-// export function testSchema<Queries, Mutations, Context = any>(
-//   schema: {
-//     queries?: RootQueries<Queries, Context>,
-//   }
-// ) {
-//   return schema
-// }
-
-// const x = testSchema({
-//   queries: {
-//     stringField: {
-//       type: String,
-//       // args: {
-//       //   type: ChildArgs,
-//       //   runtimeTypes: {
-//       //     field: {type: String}
-//       //   }
-//       // },
-//       // resolve: async (args: ChildArgs, root: QueryRoot, context: any) => {
-//       //   return `asdf`;
-//       // }
-//       runtimeTypes: {}
-//     },
-//   }});
-
-// type A = Exclude<(typeof x)["queries"], undefined>["stringField"]["args"]["runtimeTypes"]["field"]
-
-// test<Resolver<QueryRoot, any, string>>({type: String, args: {type: ChildArgs, runtimeTypes: {field: {type: String}}}})
-
-// type GetArgs<Args> 
-//   = {
-//     [Key in keyof Args]: ArgsObject<Args[Key]>
-//   }
-
-// type AllArgs<Args> = {
-//   args: GetArgs<Args>
-// }
-
-// function args<Args>(allArgs: AllArgs<Args>) {
-
-// }
-
-// args({
-//   args: {
-//     anArg: {
-//       type: String,
-//       runtimeTypes: {}
-//     }
-//   }
-// })
-
-// test<InferArgsForType<Test, {stringField: true, nullableField: true}>>({stringField: true, nullableField: true})
-
-// function argsTest<ResolveFunction, Context, Root = QueryRoot, >(data: ArgsAndResolvers<ResolveFunction, Root, Context>) {
-//   return data;
-// }
-
-// const y = 
-//   argsTest({
-//     type: String,
-//     resolve: (args: string) => "asdf",
-//     args: {
-//       type: String,
-//     }
-//   })
-
-// const x = argsTest({
-//   type: RelatedClass,
-//   nullable: true,
-//   resolve: (args: string): RelatedClass | null => new RelatedClass("asdf"),
-//   args: {
-//     type: String,
-//   },
-//   runtimeTypes: {
-//     testField: argsTest({
-//       type: String,
-//       resolve: (args: string | null, root: RelatedClass, context: any) => "asdf",
-//       args: {
-//         type: String,
-//         nullable: true
-//       }
-//     }),
-//   }
-// })
-
 const asdf = {
-    stringField: {
+  stringField: {
+    type: ScalarTypes.STRING,
+    args: {
+      type: ChildArgs,
+      runtimeTypes: {
+        field: ScalarTypes.STRING
+      }
+    },
+    resolve: async (args: ChildArgs, root: QueryRoot, context: any) => {
+      return `asdf`;
+    }
+  },
+  testQuery: {
+    type: Test,
+    resolve: test,
+    args: registeredArgs,
+    nullable: true,
+    // runtimeTypes: {
+    //   stringField: {
+    //     type: ScalarTypes.STRING,
+    //     args: {
+    //       type: ChildArgs,
+    //       runtimeTypes: {
+    //         field: {type: ScalarTypes.STRING}
+    //       }
+    //     },
+    //     resolve: async (args: ChildArgs, root: Test, context: any) => {
+    //       return `asdf`;
+    //     }
+    // }
+    // }
+  }
+} as const;
+
+testType<GenerateNullabilityAndArrayRuntimeOptions<string>>({ nullable: false })
+testType<GenerateNullabilityAndArrayRuntimeOptions<string>>({})
+testType<GenerateNullabilityAndArrayRuntimeOptions<string | null>>({ nullable: true })
+testType<GenerateNullabilityAndArrayRuntimeOptions<string>>({})
+testType<GenerateNullabilityAndArrayRuntimeOptions<string[]>>({array: true})
+testType<GenerateNullabilityAndArrayRuntimeOptions<string[] | null>>({ array: true, nullable: true });
+
+testType<GenerateNullabilityAndArrayRuntimeOptions<string>>({ array: false })
+testType<GenerateNullabilityAndArrayRuntimeOptions<string>>({})
+// @ts-expect-error
+testType<GenerateNullabilityAndArrayRuntimeOptions<string[]>>({ array: false })
+// @ts-expect-error
+testType<GenerateNullabilityAndArrayRuntimeOptions<string[]>>({})
+testType<GenerateNullabilityAndArrayRuntimeOptions<string[]>>({ array: true })
+testType<GenerateNullabilityAndArrayRuntimeOptions<string[] | null>>({ array: true, nullable: true})
+testType<GenerateNullabilityAndArrayRuntimeOptions<(string | null)[]>>({ array: "nullable_items" })
+// @ts-expect-error
+testType<GenerateNullabilityAndArrayRuntimeOptions<(string | null)[]>>({ array: true })
+
+testType<GenerateNullabilityAndArrayRuntimeOptions<(string | null)[] | null>>({ array: "nullable_items", nullable: true })
+
+function testResolver<Z extends ValidateResolver<Z>>(resolver: Z) {
+  return resolver;
+}
+
+const tttt = testResolver(
+  {
+    type: ScalarTypes.STRING
+  }
+);
+
+testType<ValidateArgs<NestedChildArgs>>(
+  {
+    args: {
+      type: NestedChildArgs,
+      runtimeTypes: {
+        field: { type: ScalarTypes.STRING },
+        nullableField: { type: ScalarTypes.STRING, nullable: true },
+        arrayField: { type: ScalarTypes.STRING, nullable: true, array: true },
+        childArgs: {
+          type: ChildArgs,
+          runtimeTypes: {
+            field: { type: ScalarTypes.STRING }
+          }
+        },
+        arrayOfChildArgs: {
+          type: ChildArgs,
+          nullable: true,
+          array: "nullable_items",
+          runtimeTypes: {
+            field: { type: ScalarTypes.STRING }
+          }
+        }
+      },
+    }
+  }
+);
+
+testType<ValidateInputRuntimeType<(ChildArgs | null)[] | null>>({
+  type: ChildArgs,
+  nullable: true,
+  array: "nullable_items",
+  runtimeTypes: {
+    field: { type: ScalarTypes.STRING }
+  }
+});
+
+testResolver(
+    {
       type: ScalarTypes.STRING,
       args: {
         type: ChildArgs,
         runtimeTypes: {
-          field: ScalarTypes.STRING
-        }
+          field: {type: ScalarTypes.STRING},
+        },
       },
-      resolve: async (args: ChildArgs, root: QueryRoot, context: any) => {
+      nullable: true,
+      resolve: async (args: ChildArgs, root: QueryRoot, context: any): Promise<string | null> => {
         return `asdf`;
       }
-    },
-    testQuery: {
-      type: Test,
-      resolve: test,
-      args: registeredArgs,
-      nullable: true,
-      // runtimeTypes: {
-      //   stringField: {
-      //     type: ScalarTypes.STRING,
-      //     args: {
-      //       type: ChildArgs,
-      //       runtimeTypes: {
-      //         field: {type: ScalarTypes.STRING}
-      //       }
-      //     },
-      //     resolve: async (args: ChildArgs, root: Test, context: any) => {
-      //       return `asdf`;
-      //     }
-        // }
-      // }
     }
-  } as const;
-
-// type X = (typeof asdf)['stringField'] extends {nullable?: infer Nullability, resolve?: (args: infer FunctionArgs, root: infer Root, context: infer Context) => Promise<infer ReturnType>}
-//   ? [ValidateNullability<ReturnType, Nullability>, ReturnType, Nullability]
-//   : never
-
-// type A = typeof asdf
-// type B = [A["testQuery"]] extends [{
-//         type: infer Type,
-//         nullable?: infer Nullability,
-//         array?: infer ArrayType,
-//         args?: {
-//           type: infer ArgsType
-//         },
-//         resolve?: (args: infer FunctionArgs, root: infer Root, context: infer Context) => Promise<infer ReturnType>
-//         runtimeTypes?: infer RuntimeTypes
-//       }]
-//       ? true
-//       : false
-
-// type C = ValidateArgs<typeof ChildArgs, ChildArgs>
-
-// type IsValid = ValidateFields<typeof asdf>
-
-
-// type BuildResponse<Type> =
-//       Array<Type>
-
-export type TestValidate<Input> =
-      Input extends 
-      // [string]
-      Array<Input>
-    // [
-    // {
-    //     type: infer Type,
-    //     nullable?: infer Nullability,
-    //     array?: infer ArrayType,
-    //     args?: {
-    //       type: infer ArgsType
-    //     },
-    //     resolve?: (args: infer FunctionArgs, root: infer Root, context: infer Context) => Promise<infer ReturnType>
-    //     runtimeTypes?: infer RuntimeTypes
-    //   }
-    // ] 
-    ?
-      BuildResponse<Type> : never
-
-function testValidation<Z extends ValidateFields<Z>>(input: Z) {
-  // function _inner<X extends ValidateFields<Z>>(i: X) {
-  //   return i
-  // }
-  // return _inner(input); //(input as unknown) as ValidateFields<Z>;
-  return input;
-}
-
-const tttt = testValidation(
-  "asdf",
-//   {
-//   ffff: {
-//     type: ScalarTypes.STRING
-//   }
-// }
-
 );
-
-type X = (typeof tttt)
-  
-  
-//   {
-//   type: ScalarTypes.STRING,
-//   args: {
-//     type: ChildArgs,
-//     runtimeTypes: {
-//       field: ScalarTypes.STRING
-//     }
-//   },
-//   resolve: async (args: ChildArgs, root: QueryRoot, context: any) => {
-//     return `asdf`;
-//   }
-// });

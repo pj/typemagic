@@ -8,9 +8,9 @@ function testArgs<A>(object: ArgsSchema<A>): ArgsSchema<A> {
   return object
 }
 
-export const registeredArgs = testArgs({
+export const registeredArgs = {
   type: Args,
-  runtimeSchema: {
+  runtimeTypes: {
     stringField: ScalarTypes.STRING,
     booleanField: { type: ScalarTypes.BOOLEAN },
     dateField: { type: ScalarTypes.DATE },
@@ -40,9 +40,7 @@ export const registeredArgs = testArgs({
         booleanField: { type: ScalarTypes.BOOLEAN },
         dateField: { type: ScalarTypes.DATE },
         numberField: { type: ScalarTypes.INT },
-        // @ts-expect-error
         nullableField: ScalarTypes.STRING,
-        // @ts-expect-error
         arrayField: ScalarTypes.STRING,
         nullableArrayField: { type: ScalarTypes.STRING, nullable: true, array: true },
         nullableItemsField: { type: ScalarTypes.STRING, array: "nullable_items" },
@@ -55,8 +53,7 @@ export const registeredArgs = testArgs({
         stringField: { type: ScalarTypes.STRING },
         booleanField: { type: ScalarTypes.BOOLEAN },
         dateField: { type: ScalarTypes.DATE },
-        // @ts-expect-error
-        numberField: { type: Float },
+        numberField: { type: ScalarTypes.FLOAT },
         nullableField: { type: ScalarTypes.STRING, nullable: true },
         arrayField: { type: ScalarTypes.STRING, array: true },
         nullableArrayField: { type: ScalarTypes.STRING, nullable: true, array: true },
@@ -93,4 +90,4 @@ export const registeredArgs = testArgs({
       }
     }
   }
-});
+};

@@ -1,4 +1,4 @@
-import { Constructor, GetRuntimeScalarType } from "./types";
+import { Constructor, GenerateArrayTrilean, GenerateNullabilityAndArrayRuntimeOptions, GetRuntimeScalarType, GetUnderlyingType, IsCompileTimeScalar, IsNonNullCompileTimeScalar, ScalarTypes } from "./types";
 
 // export type ValidateNullability<ReturnType, Nullability> =
 //   [null] extends [ReturnType]
@@ -78,44 +78,60 @@ import { Constructor, GetRuntimeScalarType } from "./types";
 //         ValidateType<Fields[Key]>
 //     }
 
-export type ValidateNullability<ReturnType, Nullability> =
-  [null] extends [ReturnType]
-    ? [Nullability] extends [true]
-      ? [Nullability] extends [undefined | unknown]
-        ? "Nullability is also undefined"
-        : true
-      : "Return type is null, but nullable not set to true."
-    : [Nullability] extends [false | undefined | unknown]
-      ? true
-      : "Return type is not null, but nullable is set"
+export type ValidateNullability<ReturnType> =
+  // Nullable shouldn't be set if we don't know the return type
+  [unknown] extends [ReturnType]
+    ? {}
+    : [null] extends [ReturnType]
+      ? {nullable: true}
+      : {nullable?: false}
 
-export type ValidateArray<ReturnType, ArrayType> =
-  [ReturnType] extends [Array<infer X>]
-    ? [ArrayType] extends [true]
-      ? [ArrayType] extends [undefined | unknown]
-        ? "ArrayType is possibly undefined, even though return type is an array."
-        : [null] extends [X]
-          ? "Elements of array are nullable, even though runtime type is not set to nullable_items"
-          : true
-      : [ArrayType] extends ["nullable_items"]
-        ? [ArrayType] extends [undefined | unknown]
-          ? "ArrayType is possibly undefined, even though return type is an array."
-          : [null] extends [X]
-            ? true
-            : "Elements of array are not nullable, even though runtime type is set to nullable_items"
-        : ["Return type is array, but array is not a known value", ArrayType]
-    : [ArrayType] extends [false | undefined | unknown]
-      ? true
-      : "Return type is not an array but runtime array is set."
+export type ValidateArray<Type> =
+  [unknown] extends [Type]
+    ? {array?: unknown}
+    : GenerateArrayTrilean<Type>
+    // [GetArray] extends [Array<infer X>]
+    //   ? [null] extends [X]
+    //     ? {array: "nullable_items"}
+    //     : {array: true}
+    //   : {array?: Type}
 
-export type ValidateArgs<ArgsType, FunctionArgs> =
-   [ArgsType] extends [Constructor<FunctionArgs>]
-    ? true
-    : "args parameter does not match runtime type";
+export type ValidateInputRuntimeType<FunctionArg> =
+  // [IsNonNullCompileTimeScalar<FunctionArg>] extends [true]
+    // ? GetRuntimeScalarType<FunctionArg> | {type: GetRuntimeScalarType<FunctionArg>}
+    // ? GetRuntimeScalarType<FunctionArg> | {type: GetRuntimeScalarType<FunctionArg>}
+    // : 
+      (
+        [IsCompileTimeScalar<FunctionArg>] extends [true]
+          ? {type: GetRuntimeScalarType<FunctionArg>}
+          : {
+              type: Constructor<GetUnderlyingType<FunctionArg>>
+              runtimeTypes: ValidateInputRuntimeTypes<GetUnderlyingType<FunctionArg>>
+            }
+      )
+      // & ValidateNullability<FunctionArg>
+      // & ValidateArray<FunctionArg>
+      & GenerateNullabilityAndArrayRuntimeOptions<FunctionArg>
 
 
-export type ValidateType<Input> =
-  [Input] extends [{
+export type ValidateInputRuntimeTypes<FunctionArgs> =
+  {
+    [Key in keyof FunctionArgs]:
+      ValidateInputRuntimeType<FunctionArgs[Key]>
+  }
+
+export type ValidateArgs<FunctionArgs> =
+  [unknown] extends [FunctionArgs]
+    ? {args: never}
+    : {
+        args: {
+          type: Constructor<GetUnderlyingType<FunctionArgs>>,
+          runtimeTypes: ValidateInputRuntimeTypes<FunctionArgs>
+        }
+      }
+
+export type ValidateResolver<Resolver> =
+  [Resolver] extends [{
     type?: infer Type,
     nullable?: infer Nullability,
     array?: infer ArrayType,
@@ -127,24 +143,22 @@ export type ValidateType<Input> =
     runtimeTypes?: infer RuntimeTypes
   }]
     ? 
-    {
-      type: Type,
-      nullable?: Nullability,
-      array?: ArrayType,
-      args?: {
-        type?: ArgsType,
-        runtimeTypes?: ArgsRuntimeTypes
-      },
-      resolve?: (args: FunctionArgs, root: Root, context: Context) => Promise<ReturnType>
-      runtimeTypes?: RuntimeTypes
-    }
+      {
+        type: Type,
+        resolve?: (args: FunctionArgs, root: Root, context: Context) => Promise<ReturnType>
+        runtimeTypes?: RuntimeTypes
+      }
+      // & ValidateNullability<ReturnType>
+      // & ValidateArray<ReturnType>
+      & GenerateNullabilityAndArrayRuntimeOptions<ReturnType>
+      & ValidateArgs<FunctionArgs>
     : "Can't infer type"
 
-export type ValidateFields<Fields> =
-  [Fields] extends [{[key: string]: any}]
+export type ValidateResolvers<Resolvers> =
+  [Resolvers] extends [{[key: string]: any}]
     ?  
     {
-      [Key in keyof Fields]:
-        ValidateType<Fields[Key]>
+      [Key in keyof Resolvers]:
+        ValidateResolver<Resolvers[Key]>
     }
     : never

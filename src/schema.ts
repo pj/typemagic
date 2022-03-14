@@ -1,8 +1,9 @@
 import { GraphQLBoolean, GraphQLFieldConfigMap, GraphQLFloat, GraphQLInt, GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLScalarType, GraphQLSchema, GraphQLString, GraphQLType } from "graphql";
-import { Float, GraphQLISODateTime, Int } from "type-graphql";
-import { Mutation } from "./mutation";
+import { GraphQLISODateTime } from "type-graphql";
+import { Mutation, ValidateMutations } from "./mutation";
 import { Resolver } from "./output";
 import { ScalarTypes } from "./types";
+import { ValidateResolvers } from "./validate";
 
 export class QueryRoot {
 
@@ -18,11 +19,29 @@ export type RootMutations<Mutations, Context> =
     [Key in keyof Mutations]: Mutation<Context, unknown, Mutations[Key]>
   }
 
-export function schema<Queries, Mutations, Context = any>(
-  schema: {
-    queries?: RootQueries<Queries, Context>,
-    mutations?: RootMutations<Mutations, Context>
-  }
+export type ValidateSchema<Schema> = 
+  [Schema] extends [
+    {
+      queries?: infer Queries,
+      mutations?: infer Mutations 
+    }
+  ]
+  ? 
+      (
+        [undefined] extends [Queries] 
+          ? {queries?: undefined}
+          : {queries: ValidateResolvers<Queries>}
+      ) 
+    & 
+      (
+        [undefined] extends [Mutations]
+          ? {mutations?: undefined}
+          : {mutations: ValidateMutations<Mutations>}
+      )
+  : never
+
+export function schema<Schema extends ValidateSchema<Schema>, Context = any>(
+  schema: Schema
 ) {
 
   const queries: GraphQLFieldConfigMap<any, any> = {};

@@ -85,18 +85,24 @@ export type IsRuntimeScalar<Item> =
     : "Should not happen"
 
 export type GenerateNullabilityAndArrayRuntimeOptions<Item> = 
-  (
-      [null] extends [Item]
-        ? { nullable: true }
-        : { nullable?: false }
-    )
-  & (
-    [GenerateArrayTrilean<Item>] extends [false]
-      ? { array?: false }
-      : [GenerateArrayTrilean<Item>] extends ["nullable_items"]
-        ? {array: "nullable_items"}
-        : {array: true}
-  )
+  [Item] extends [unknown]
+    ? [unknown] extends [Item]
+      ? {nullable?: unknown, array?: unknown}
+      : 
+        (
+          [null] extends [Item]
+            ? { nullable: true }
+            : { nullable?: false }
+        )
+        & 
+        (
+          [GenerateArrayTrilean<Item>] extends [false]
+            ? { array?: false }
+            : [GenerateArrayTrilean<Item>] extends ["nullable_items"]
+              ? {array: "nullable_items"}
+              : {array: true}
+        )
+    : "asdf"
 
 export type GenerateArrayTrilean<A> = 
   [Exclude<A, null | undefined>] extends [Array<infer I>] 

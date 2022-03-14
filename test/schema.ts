@@ -11,43 +11,49 @@ export class ChildArgs {
   }
 }
 
+export class NestedChildArgs {
+  constructor(
+    public field: string,
+    public nullableField: string | null,
+    public arrayField: string[] | null,
+    public childArgs: ChildArgs,
+    public arrayOfChildArgs: (ChildArgs | null)[] | null
+  ) {
+
+  }
+}
+
 schema({
   queries: {
-    stringField: {
+    testQuery: {
       type: ScalarTypes.STRING,
       args: {
-        type: ChildArgs,
+        type: NestedChildArgs,
         runtimeTypes: {
-          field: ScalarTypes.STRING
-        }
-      },
-      // @ts-ignore
-      resolve: async (args: ChildArgs, root: QueryRoot, context: any) => {
-        return `asdf`;
-      }
-    },
-    testQuery: {
-      type: Test,
-      // @ts-ignore
-      resolve: test,
-      args: registeredArgs,
-      runtimeTypes: {
-        stringField: {
-          type: ScalarTypes.STRING,
-          args: {
-            type: ChildArgs,
+          field: {type: ScalarTypes.STRING},
+          nullableField: { type: ScalarTypes.STRING, nullable: true },
+          arrayField: {type: ScalarTypes.STRING, nullable: true, array: true},
+          childArgs: {
+            type: ChildArgs, 
             runtimeTypes: {
               field: {type: ScalarTypes.STRING}
             }
           },
-          // @ts-ignore
-          resolve: async (args: ChildArgs, root: Test, context: any) => {
-            return `asdf`;
+          arrayOfChildArgs: {
+            type: ChildArgs,
+            nullable: true,
+            array: "nullable_items",
+            runtimeTypes: {
+              field: {type: ScalarTypes.STRING}
+            }
           }
-        }
+        },
+      },
+      nullable: true,
+      resolve: async (args: NestedChildArgs, root: QueryRoot, context: any): Promise<string | null> => {
+        return `asdf`;
       }
     }
   }
-})
-
-
+}
+);
