@@ -339,7 +339,7 @@ testResolver(
     },
     nullable: true,
     array: true,
-    resolve: async (args: ChildArgs, root: QueryRoot): Promise<string[] | null> => {
+    resolve: async (args: ChildArgs): Promise<string[] | null> => {
       return [`${args.field} - asdf`];
     }
   }
@@ -351,5 +351,11 @@ testResolver(
     resolve: async (root: QueryRoot, context: {}): Promise<string> => {
       return `asdf`;
     }
+  }
+);
+
+testResolver(
+  {
+    type: ScalarTypes.STRING,
   }
 );

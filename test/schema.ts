@@ -1,7 +1,7 @@
 import { QueryRoot, schema } from '../src/schema';
 import { ScalarTypes } from '../src/types';
 import { registeredArgs } from './args';
-import { Test, test } from './test';
+import { RelatedClass, Test, test } from './test';
 
 export class ChildArgs {
   constructor(
@@ -53,7 +53,15 @@ schema({
       resolve: async (root: QueryRoot, context: any): Promise<string | null> => {
         return `asdf`;
       }
+    },
+   otherQuery: {
+      type: RelatedClass,
+      nullable: true,
+      runtimeTypes: {
+        testField: {type: ScalarTypes.STRING}
+      }
     }
   }
+  },
 }
 );
