@@ -1,7 +1,7 @@
 import { Int } from "type-graphql";
 import { ScalarOrInput } from "../src/input";
 import { QueryRoot } from "../src/schema";
-import { ValidateArgs, ValidateResolvers, ValidateNullability, ValidateResolver, ValidateArray, ValidateInputRuntimeType, ValidateInputRuntimeTypes } from "../src/validate";
+import { ValidateArgs, ValidateResolvers, ValidateNullability, ValidateResolver, ValidateArray, ValidateInputRuntimeType, ValidateInputRuntimeTypes, ExtractFunctionDetails } from "../src/validate";
 import { Constructor, GenerateArrayTrilean, GenerateNullabilityAndArrayRuntimeOptions, GenerateReturnType, GetRuntimeType, ScalarTypes } from "../src/types";
 import { registeredArgs } from "./args";
 import { ChildArgs, NestedChildArgs } from "./schema";
@@ -343,3 +343,15 @@ testResolver(
       }
     }
 );
+
+testResolver(
+    {
+      type: ScalarTypes.STRING,
+      resolve: async (root: QueryRoot, context: any): Promise<string> => {
+        return `asdf`;
+      }
+    }
+);
+
+type X = ExtractFunctionDetails<(root: QueryRoot) => Promise<string>, unknown>
+type Y = ExtractFunctionDetails<(root: QueryRoot, context: any) => Promise<string>, unknown>

@@ -1,3 +1,4 @@
+import { RootFieldFilter } from "@graphql-tools/utils";
 import { Constructor, GenerateArrayTrilean, GenerateNullabilityAndArrayRuntimeOptions, GetRuntimeScalarType, GetUnderlyingType, IsCompileTimeScalar, IsNonNullCompileTimeScalar, ScalarTypes } from "./types";
 
 // export type ValidateNullability<ReturnType, Nullability> =
@@ -122,7 +123,7 @@ export type ValidateInputRuntimeTypes<FunctionArgs> =
 
 export type ValidateArgs<FunctionArgs> =
   [unknown] extends [FunctionArgs]
-    ? {args: never}
+    ? {args?: never}
     : {
         args: {
           type: Constructor<GetUnderlyingType<FunctionArgs>>,
@@ -130,28 +131,58 @@ export type ValidateArgs<FunctionArgs> =
         }
       }
 
+export type ExtractFunctionDetails<ResolverFunction, ArgsConstructor> =
+  [unknown] extends [ResolverFunction]
+      ? {root: unknown, context: unknown, returnType: unknown, functionArgs: unknown}
+      : [undefined] extends [ArgsConstructor]
+          ? [ResolverFunction] extends [(first: infer Root, second: infer Context) => Promise<infer ReturnType>]
+            ? {root: Root, context: Context, returnType: ReturnType, functionArgs: unknown}
+            : {root: unknown, context: unknown, returnType: unknown, functionArgs: unknown}
+          : [ResolverFunction] extends [(first: infer FunctionArgs, second: infer Root, third: infer Context) => Promise<infer ReturnType>]
+            ? {root: Root, context: Context, returnType: ReturnType, functionArgs: FunctionArgs}
+            : {root: unknown, context: unknown, returnType: unknown, functionArgs: unknown}
+
+  // [ResolverFunction] extends [(root: infer Root, context: infer Context) => Promise<infer ReturnType>]
+  //   ? {root: Root, context: Context, returnType: ReturnType, functionArgs: unknown}
+  //   : [ResolverFunction] extends [(args: infer FunctionArgs, root: infer Root, context: infer Context) => Promise<infer ReturnType>]
+  //     ? {root: Root, context: Context, returnType: ReturnType, functionArgs: FunctionArgs}
+  //     : never
+
 export type ValidateResolver<Resolver> =
   [Resolver] extends [{
     type?: infer Type,
     nullable?: infer Nullability,
     array?: infer ArrayType,
     args?: {
-      type?: infer ArgsType,
+      type?: infer ArgsConstructor,
       runtimeTypes?: infer ArgsRuntimeTypes
     },
-    resolve?: (args: infer FunctionArgs, root: infer Root, context: infer Context) => Promise<infer ReturnType>
+    resolve?: infer ResolverFunction //(args: infer FunctionArgs, root: infer Root, context: infer Context) => Promise<infer ReturnType>
     runtimeTypes?: infer RuntimeTypes
   }]
-    ? 
-      {
-        type: Type,
-        resolve?: (args: FunctionArgs, root: Root, context: Context) => Promise<ReturnType>
-        runtimeTypes?: RuntimeTypes
+    ? {
+        type: Type
       }
-      // & ValidateNullability<ReturnType>
-      // & ValidateArray<ReturnType>
-      & GenerateNullabilityAndArrayRuntimeOptions<ReturnType>
-      & ValidateArgs<FunctionArgs>
+        & (
+            [ExtractFunctionDetails<ResolverFunction, ArgsConstructor>] extends [infer FunctionDetails]
+            ? [unknown] extends [FunctionDetails['functionArgs']]
+              ? {
+                  resolve: (root: FunctionDetails['root'])
+                }
+              : {
+                resolve: (args: )
+              }
+            : {}
+          )
+        & (
+          [Type] extends [ScalarTypes]
+            ? {}
+            : {
+                runtimeTypes: RuntimeTypes
+              }
+          )
+        & GenerateNullabilityAndArrayRuntimeOptions<ExtractFunctionDetails<ResolverFunction, ArgsConstructor>['returnType']> // ReturnType>
+        & ValidateArgs<ExtractFunctionDetails<ResolverFunction, ArgsConstructor>['functionArgs']>
     : "Can't infer type"
 
 export type ValidateResolvers<Resolvers> =
