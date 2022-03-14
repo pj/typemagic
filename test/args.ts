@@ -1,5 +1,6 @@
 import { Int } from "type-graphql";
 import { ArgsSchema } from "../src/input";
+import { ScalarTypes } from "../src/types";
 import { Args, TestInputObject } from "./test";
 
 
@@ -10,68 +11,70 @@ function testArgs<A>(object: ArgsSchema<A>): ArgsSchema<A> {
 export const registeredArgs = testArgs({
   type: Args,
   runtimeSchema: {
-    stringField: { type: String },
-    booleanField: { type: Boolean },
-    dateField: { type: Date },
-    numberField: { type: Int },
-    nullableField: { type: String, nullable: true },
-    arrayField: { type: String, array: true },
-    nullableArrayField: { type: String, nullable: true, array: true },
-    nullableItemsField: { type: String, array: "nullable_items" },
+    stringField: ScalarTypes.STRING,
+    booleanField: { type: ScalarTypes.BOOLEAN },
+    dateField: { type: ScalarTypes.DATE },
+    numberField: { type: ScalarTypes.INT },
+    nullableField: { type: ScalarTypes.STRING, nullable: true },
+    arrayField: { type: ScalarTypes.STRING, array: true },
+    nullableArrayField: { type: ScalarTypes.STRING, nullable: true, array: true },
+    nullableItemsField: { type: ScalarTypes.STRING, array: "nullable_items" },
     inputObjectField: {
       type: TestInputObject,
       runtimeTypes: {
-        stringField: { type: String },
-        booleanField: { type: Boolean },
-        dateField: { type: Date },
-        numberField: { type: Int },
-        nullableField: { type: String, nullable: true },
-        arrayField: { type: String, array: true },
-        nullableArrayField: { type: String, nullable: true, array: true },
-        nullableItemsField: { type: String, array: "nullable_items" },
+        stringField: { type: ScalarTypes.STRING },
+        booleanField: { type: ScalarTypes.BOOLEAN },
+        dateField: { type: ScalarTypes.DATE },
+        numberField: { type: ScalarTypes.INT },
+        nullableField: { type: ScalarTypes.STRING, nullable: true },
+        arrayField: { type: ScalarTypes.STRING, array: true },
+        nullableArrayField: { type: ScalarTypes.STRING, nullable: true, array: true },
+        nullableItemsField: { type: ScalarTypes.STRING, array: "nullable_items" },
       }
     },
     inputObjectArray: {
       array: true,
       type: TestInputObject,
       runtimeTypes: {
-        stringField: { type: String },
-        booleanField: { type: Boolean },
-        dateField: { type: Date },
-        numberField: { type: Int },
-        nullableField: { type: String, nullable: true },
-        arrayField: { type: String, array: true },
-        nullableArrayField: { type: String, nullable: true, array: true },
-        nullableItemsField: { type: String, array: "nullable_items" },
+        stringField: { type: ScalarTypes.STRING },
+        booleanField: { type: ScalarTypes.BOOLEAN },
+        dateField: { type: ScalarTypes.DATE },
+        numberField: { type: ScalarTypes.INT },
+        // @ts-expect-error
+        nullableField: ScalarTypes.STRING,
+        // @ts-expect-error
+        arrayField: ScalarTypes.STRING,
+        nullableArrayField: { type: ScalarTypes.STRING, nullable: true, array: true },
+        nullableItemsField: { type: ScalarTypes.STRING, array: "nullable_items" },
       }
     },
     inputObjectNullableItems: {
       array: "nullable_items",
       type: TestInputObject,
       runtimeTypes: {
-        stringField: { type: String },
-        booleanField: { type: Boolean },
-        dateField: { type: Date },
+        stringField: { type: ScalarTypes.STRING },
+        booleanField: { type: ScalarTypes.BOOLEAN },
+        dateField: { type: ScalarTypes.DATE },
         // @ts-expect-error
         numberField: { type: Float },
-        nullableField: { type: String, nullable: true },
-        arrayField: { type: String, array: true },
-        nullableArrayField: { type: String, nullable: true, array: true },
-        nullableItemsField: { type: String, array: "nullable_items" },
+        nullableField: { type: ScalarTypes.STRING, nullable: true },
+        arrayField: { type: ScalarTypes.STRING, array: true },
+        nullableArrayField: { type: ScalarTypes.STRING, nullable: true, array: true },
+        nullableItemsField: { type: ScalarTypes.STRING, array: "nullable_items" },
       }
     },
     nullableInputObjectField: {
       nullable: true,
       type: TestInputObject,
       runtimeTypes: {
-        stringField: { type: String },
-        booleanField: { type: Boolean },
-        dateField: { type: Date },
-        numberField: { type: Int },
-        nullableField: { type: String, nullable: true },
-        arrayField: { type: String, array: true },
-        nullableArrayField: { type: String, nullable: true, array: true },
-        nullableItemsField: { type: String, array: "nullable_items" }
+        stringField: { type: ScalarTypes.STRING },
+        booleanField: { type: ScalarTypes.BOOLEAN },
+        dateField: { type: ScalarTypes.DATE },
+        numberField: { type: ScalarTypes.INT },
+        nullableField: { type: ScalarTypes.STRING, nullable: true },
+        arrayField: { type: ScalarTypes.STRING, array: true },
+        nullableArrayField: { type: ScalarTypes.STRING, nullable: true, array: true },
+        nullableItemsField: { type: ScalarTypes.STRING, array: "nullable_items" }
       }
     },
     nullableInputObjectNullableItems: {
@@ -79,14 +82,14 @@ export const registeredArgs = testArgs({
       array: "nullable_items",
       type: TestInputObject,
       runtimeTypes: {
-        stringField: { type: String },
-        booleanField: { type: Boolean },
-        dateField: { type: Date },
-        numberField: { type: Int },
-        nullableField: { type: String, nullable: true },
-        arrayField: { type: String, array: true },
-        nullableArrayField: { type: String, nullable: true, array: true },
-        nullableItemsField: { type: String, array: "nullable_items" }
+        stringField: { type: ScalarTypes.STRING },
+        booleanField: { type: ScalarTypes.BOOLEAN },
+        dateField: { type: ScalarTypes.DATE },
+        numberField: { type: ScalarTypes.INT },
+        nullableField: { type: ScalarTypes.STRING, nullable: true },
+        arrayField: { type: ScalarTypes.STRING, array: true },
+        nullableArrayField: { type: ScalarTypes.STRING, nullable: true, array: true },
+        nullableItemsField: { type: ScalarTypes.STRING, array: "nullable_items" }
       }
     }
   }

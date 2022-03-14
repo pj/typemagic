@@ -1,7 +1,8 @@
-import { GraphQLBoolean, GraphQLFieldConfigMap, GraphQLFloat, GraphQLInt, GraphQLObjectType, GraphQLScalarType, GraphQLSchema, GraphQLString } from "graphql";
+import { GraphQLBoolean, GraphQLFieldConfigMap, GraphQLFloat, GraphQLInt, GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLScalarType, GraphQLSchema, GraphQLString, GraphQLType } from "graphql";
 import { Float, GraphQLISODateTime, Int } from "type-graphql";
 import { Mutation } from "./mutation";
 import { Resolver } from "./output";
+import { ScalarTypes } from "./types";
 
 export class QueryRoot {
 
@@ -24,77 +25,102 @@ export function schema<Queries, Mutations, Context = any>(
   }
 ) {
 
-  // const queries: GraphQLFieldConfigMap<any, any> = {};
-  // if (schema.queries) {
-  //   for (let [name, query] of Object.entries(schema.queries)) {
-  //     name = query.name || name;
-  //     queries[name] = {
-  //       type: mapToGraphQLType(query.output),
-  //       resolve: (
-  //         source: any,
-  //         args: any,
-  //         context: any,
-  //       ) => {
-  //         return query.resolve(args, source, context);
-  //       }
-  //     }
-  //   }
-  // }
+  const queries: GraphQLFieldConfigMap<any, any> = {};
+  if (schema.queries) {
+    for (let [name, query] of Object.entries<any>(schema.queries)) {
+      name = query.name || name;
+      queries[name] = {
+        type: mapToGraphQLType(query.output),
+        resolve: (
+          source: any,
+          args: any,
+          context: any,
+        ) => {
+          return query.resolve(args, source, context);
+        }
+      }
+    }
+  }
 
-  // new GraphQLSchema({
-  //   query: new GraphQLObjectType({
-  //     name: 'Query',
-  //     fields:
-  //     {
-  //       ...queries,
-  //       hello: {
-  //         type: GraphQLString,
-  //         resolve() {
-  //           return 'world';
-  //         },
-  //       },
-  //     },
-  //   }),
-  // });
+  new GraphQLSchema({
+    query: new GraphQLObjectType({
+      name: 'Query',
+      fields: queries,
+    }),
+  });
 }
 
-// function mapToGraphQLType(type: RegisteredOutputWithScalars<any, any>): GraphQLScalarType | GraphQLObjectType {
-//   switch (type) {
-//     case Int: return GraphQLInt
-//     case Float: return GraphQLFloat
-//     case String: return GraphQLString
-//     case Boolean: return GraphQLBoolean
-//     case Date: return GraphQLISODateTime
-//     default:
-//       if (type instanceof RegisteredOutputObject) {
-//         const name = type.name || type.source.name;
-//         const fields = {};
-//         for (let [name, field] of Object.entries(type.fieldTypes)) {
-//           if (field === undefined) {
-//             continue;
-//           }
-//           if (field instanceof Nullable) {
-
-//           }
-//           name = field.name || name;
-//           queries[name] = {
-//             type: mapToGraphQLType(query.output),
-//             resolve: (
-//               source: any,
-//               args: any,
-//               context: any,
-//             ) => {
-//               return query.resolve(args, source, context);
-//             }
-//           }
-//         }
-
-//         return new GraphQLObjectType({
-//           name,
-//           fields
-//         });
-//       } else {
-//         throw new Error(`Unknown type: ${type}`)
-//       }
-//   }
+// export interface GraphQLField<
+//   name: string;
+//   description: Maybe<string>;
+//   type: GraphQLOutputType;
+//   args: Array<GraphQLArgument>;
+//   resolve?: GraphQLFieldResolver<TSource, TContext, TArgs>;
+//   deprecationReason: Maybe<string>;
 // }
+
+// export interface GraphQLFieldConfig<
+//   description?: Maybe<string>;
+//   type: GraphQLOutputType;
+//   args?: GraphQLFieldConfigArgumentMap;
+//   resolve?: GraphQLFieldResolver<TSource, TContext, TArgs>;
+//   deprecationReason?: Maybe<string>;
+
+// export class GraphQLObjectType<TSource = any, TContext = any> {
+//   name: string;
+//   description: Maybe<string>;
+//   isTypeOf: Maybe<GraphQLIsTypeOfFn<TSource, TContext>>;
+//   constructor(config: Readonly<GraphQLObjectTypeConfig<TSource, TContext>>);
+// }
+
+function mapNullableAndArray(type: GraphQLType, options: any): GraphQLType {
+  let output = type
+  if (options.array === true) {
+    output = new GraphQLList(new GraphQLNonNull(output));
+  }
+  if (options.array === "nullable_items") {
+    output = new GraphQLList(output);
+  }
+  if (!options.nullable) {
+    output = new GraphQLNonNull(output)
+  }
+  return output;
+}
+
+function mapToGraphQLType(type: any): GraphQLScalarType | GraphQLObjectType {
+  switch (type) {
+    case ScalarTypes.INT: return GraphQLInt
+    case ScalarTypes.FLOAT: return GraphQLFloat
+    case ScalarTypes.STRING: return GraphQLString
+    case ScalarTypes.BOOLEAN: return GraphQLBoolean
+    case ScalarTypes.DATE: return GraphQLISODateTime
+    default:
+      const name = type.name || type.type.name;
+      const runtimeTypes: GraphQLFieldConfigMap<any, any> = {};
+      for (let [name, field] of Object.entries<any>(type.runtimeTypes)) {
+        if (field === undefined) {
+          continue;
+        }
+        name = field.name || name;
+        runtimeTypes[name] = {
+          type: mapToGraphQLType(field.type),
+          description: field.description,
+          deprecationReason: field.deprecationReason,
+          // args: [],
+          resolve: field.resolve ? (
+            source: any,
+            args: any,
+            context: any,
+          ) => {
+            return field.resolve(args, source, context);
+          } : undefined
+        }
+      }
+
+      return new GraphQLObjectType({
+        name,
+        description: type.description,
+        fields: runtimeTypes
+      });
+  }
+}

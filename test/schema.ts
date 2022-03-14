@@ -1,4 +1,5 @@
 import { QueryRoot, schema } from '../src/schema';
+import { ScalarTypes } from '../src/types';
 import { registeredArgs } from './args';
 import { Test, test } from './test';
 
@@ -13,11 +14,11 @@ export class ChildArgs {
 schema({
   queries: {
     stringField: {
-      type: String,
+      type: ScalarTypes.STRING,
       args: {
         type: ChildArgs,
         runtimeTypes: {
-          field: {type: String}
+          field: ScalarTypes.STRING
         }
       },
       // @ts-ignore
@@ -32,11 +33,11 @@ schema({
       args: registeredArgs,
       runtimeTypes: {
         stringField: {
-          type: String,
+          type: ScalarTypes.STRING,
           args: {
             type: ChildArgs,
             runtimeTypes: {
-              field: {type: String}
+              field: {type: ScalarTypes.STRING}
             }
           },
           // @ts-ignore
