@@ -1,62 +1,64 @@
 import { Int } from "type-graphql";
 import { ScalarOrInput } from "../src/input";
 import { QueryRoot } from "../src/schema";
-// import { Scalar} from "../src/scalar";
-import { Constructor, GenerateArrayTrilean, GenerateReturnType, GetRuntimeType } from "../src/types";
-import { RelatedClass, TestInputObject } from "./test";
+import { Validate, ValidateArgs, ValidateFields, ValidateNullability, ValidateType } from "../src/validate";
+import { Constructor, GenerateArrayTrilean, GenerateReturnType, GetRuntimeType, ScalarTypes } from "../src/types";
+import { registeredArgs } from "./args";
+import { ChildArgs } from "./schema";
+import { RelatedClass, test, Test, TestInputObject } from "./test";
 
 type Extends<A, B> = A extends B ? true : false;
 
-function test<X>(x: X): void { }
+function testType<X>(x: X): void { }
 
 type DTF = GenerateReturnType<Date, true, false>
-test<DTF>(new Date());
+testType<DTF>(new Date());
 // @ts-expect-error
-test<DTF>([new Date()]);
+testType<DTF>([new Date()]);
 // @ts-expect-error
-test<DTF>([null]);
-test<DTF>(null);
+testType<DTF>([null]);
+testType<DTF>(null);
 
 type DTT = GenerateReturnType<Date, true, true>
 // @ts-expect-error
-test<DTT>(new Date())
-test<DTT>([new Date()])
+testType<DTT>(new Date())
+testType<DTT>([new Date()])
 // @ts-expect-error
-test<DTT>([null]);
-test<DTT>(null);
+testType<DTT>([null]);
+testType<DTT>(null);
 
 type DFT = GenerateReturnType<Date, false, true>
 // @ts-expect-error
-test<DFT>(new Date())
-test<DFT>([new Date()]);
+testType<DFT>(new Date())
+testType<DFT>([new Date()]);
 // @ts-expect-error
-test<DFT>([null]);
+testType<DFT>([null]);
 // @ts-expect-error
-test<DFT>(null);
+testType<DFT>(null);
 
 type DFF = GenerateReturnType<Date, false, false>
-test<DFF>(new Date())
+testType<DFF>(new Date())
 // @ts-expect-error
-test<DFF>([new Date()]);
+testType<DFF>([new Date()]);
 // @ts-expect-error
-test<DFF>([null]);
+testType<DFF>([null]);
 // @ts-expect-error
-test<DFF>(null);
+testType<DFF>(null);
 
 type DTN = GenerateReturnType<Date, true, "nullable_items">
 // @ts-expect-error
-test<DTN>(new Date())
-test<DTN>([new Date()]);
-test<DTN>([null]);
-test<DTN>(null);
+testType<DTN>(new Date())
+testType<DTN>([new Date()]);
+testType<DTN>([null]);
+testType<DTN>(null);
 
 type DFN = GenerateReturnType<Date, false, "nullable_items">
 // @ts-expect-error
-test<DFN>(new Date())
-test<DFN>([new Date()]);
-test<DFN>([null]);
+testType<DFN>(new Date())
+testType<DFN>([new Date()]);
+testType<DFN>([null]);
 // @ts-expect-error
-test<DFN>(null);
+testType<DFN>(null);
 
 type DUU = GenerateReturnType<Date, undefined, undefined>
 type DFU = GenerateReturnType<Date, false, undefined>
@@ -79,64 +81,64 @@ type SUT = GenerateReturnType<string, undefined, true>
 type SUN = GenerateReturnType<string, undefined, "nullable_items">
 
 type GSF = GenerateArrayTrilean<string>
-test<GSF>(false);
+testType<GSF>(false);
 type GST = GenerateArrayTrilean<string[]>
-test<GST>(true);
+testType<GST>(true);
 type GSN = GenerateArrayTrilean<(string | null)[]>
-test<GSN>("nullable_items");
+testType<GSN>("nullable_items");
 type GSUF = GenerateArrayTrilean<string | undefined>
-test<GSUF>(false);
+testType<GSUF>(false);
 type GSUT = GenerateArrayTrilean<string[] | undefined>
-test<GSUT>(true);
+testType<GSUT>(true);
 type GSUN = GenerateArrayTrilean<(string | null)[] | undefined>
-test<GSUN>("nullable_items");
+testType<GSUN>("nullable_items");
 
 // Test underlying runtime type
 type SANU = GetRuntimeType<string[] | null | undefined>
-test<SANU>(String);
+testType<SANU>(ScalarTypes.STRING);
 type SAU = GetRuntimeType<string[] | undefined>
-test<SAU>(String);
+testType<SAU>(ScalarTypes.STRING);
 type SAN = GetRuntimeType<string[] | null>
-test<SAN>(String);
+testType<SAN>(ScalarTypes.STRING);
 type SA = GetRuntimeType<string[]>
-test<SA>(String);
+testType<SA>(ScalarTypes.STRING);
 type SNU = GetRuntimeType<string | null | undefined>
-test<SNU>(String);
+testType<SNU>(ScalarTypes.STRING);
 type SN = GetRuntimeType<string | null>
-test<SN>(String);
+testType<SN>(ScalarTypes.STRING);
 type S = GetRuntimeType<string>
-test<S>(String);
+testType<S>(ScalarTypes.STRING);
 type SINU = GetRuntimeType<(string | null)[] | null | undefined>
-test<SINU>(String);
+testType<SINU>(ScalarTypes.STRING);
 type SIN = GetRuntimeType<(string | null)[] | null>
-test<SIN>(String);
+testType<SIN>(ScalarTypes.STRING);
 type SIU = GetRuntimeType<(string | null)[] | undefined>
-test<SIU>(String);
+testType<SIU>(ScalarTypes.STRING);
 type SI = GetRuntimeType<(string | null)[]>
-test<SI>(String);
+testType<SI>(ScalarTypes.STRING);
 
 type IANU = GetRuntimeType<TestInputObject[] | null | undefined>
-test<IANU>(TestInputObject);
+testType<IANU>(TestInputObject);
 type IAU = GetRuntimeType<TestInputObject[] | undefined>
-test<IAU>(TestInputObject);
+testType<IAU>(TestInputObject);
 type IAN = GetRuntimeType<TestInputObject[] | null>
-test<IAN>(TestInputObject);
+testType<IAN>(TestInputObject);
 type IA = GetRuntimeType<TestInputObject[]>
-test<IA>(TestInputObject);
+testType<IA>(TestInputObject);
 type INU = GetRuntimeType<TestInputObject | null | undefined>
-test<INU>(TestInputObject);
+testType<INU>(TestInputObject);
 type IN = GetRuntimeType<TestInputObject | null>
-test<IN>(TestInputObject);
+testType<IN>(TestInputObject);
 type I = GetRuntimeType<TestInputObject>
-test<I>(TestInputObject);
+testType<I>(TestInputObject);
 type IINU = GetRuntimeType<(TestInputObject | null)[] | null | undefined>
-test<IINU>(TestInputObject);
+testType<IINU>(TestInputObject);
 type IIU = GetRuntimeType<(TestInputObject | null)[] | undefined>
-test<IIU>(TestInputObject);
+testType<IIU>(TestInputObject);
 type IIN = GetRuntimeType<(TestInputObject | null)[] | null>
-test<IIN>(TestInputObject);
+testType<IIN>(TestInputObject);
 type II = GetRuntimeType<(TestInputObject | null)[]>
-test<II>(TestInputObject);
+testType<II>(TestInputObject);
 
 // Test Scalar / Input Object
 type InputStringNullableItemsNullUndefined = (string | null)[] | null | undefined;
@@ -148,27 +150,27 @@ type InputString = string;
 
 type ScalarOrInputStringNullableItemsNullUndefined = ScalarOrInput<InputStringNullableItemsNullUndefined>
 type ValidStringNullableItemsNullUndefined = Extends<ScalarOrInputStringNullableItemsNullUndefined, { type: StringConstructor, nullable: true, array: "nullable_items" }>
-test<ValidStringNullableItemsNullUndefined>(true);
+testType<ValidStringNullableItemsNullUndefined>(true);
 
 type ScalarOrInputStringArrayNullUndefined = ScalarOrInput<InputStringArrayNullUndefined>
 type ValidStringArrayNullUndefined = Extends<ScalarOrInputStringArrayNullUndefined, { type: StringConstructor, nullable: true, array: true }>
-test<ValidStringArrayNullUndefined>(true);
+testType<ValidStringArrayNullUndefined>(true);
 
 type ScalarOrInputStringArrayUndefined = ScalarOrInput<InputStringArrayUndefined>;
 type ValidStringArrayUndefined = Extends<ScalarOrInputStringArrayUndefined, { type: StringConstructor, nullable?: false, array: true }>
-test<ValidStringArrayUndefined>(true);
+testType<ValidStringArrayUndefined>(true);
 
 type ScalarOrInputStringArray = ScalarOrInput<InputStringArray>;
 type ValidStringArray = Extends<ScalarOrInputStringArray, { type: StringConstructor, nullable?: false, array: true }>
-test<ValidStringArray>(true);
+testType<ValidStringArray>(true);
 
 type ScalarOrInputStringNullUndefined = ScalarOrInput<InputStringNullUndefined>;
 type ValidStringNullUndefined = Extends<ScalarOrInputStringNullUndefined, { type: StringConstructor, nullable: true, array?: false }>
-test<ValidStringNullUndefined>(true);
+testType<ValidStringNullUndefined>(true);
 
 type ScalarOrInputString = ScalarOrInput<InputString>;
 type ValidString = Extends<ScalarOrInputString, { type: StringConstructor, nullable?: false, array?: false }>
-test<ValidString>(true);
+testType<ValidString>(true);
 
 type InputTestInputObjectNullableItemsNullUndefined = (TestInputObject | null)[] | null | undefined;
 // type InputTestInputObjectArrayNullUndefined = TestInputObject[] | null | undefined;
@@ -281,36 +283,111 @@ type ValidTestInputObjectNullableItemsNullUndefined =
 
 // test<InferArgsForType<Test, {stringField: true, nullableField: true}>>({stringField: true, nullableField: true})
 
-function argsTest<ResolveFunction, Context, Root = QueryRoot, >(data: ArgsAndResolvers<ResolveFunction, Root, Context>) {
-  return data;
+// function argsTest<ResolveFunction, Context, Root = QueryRoot, >(data: ArgsAndResolvers<ResolveFunction, Root, Context>) {
+//   return data;
+// }
+
+// const y = 
+//   argsTest({
+//     type: String,
+//     resolve: (args: string) => "asdf",
+//     args: {
+//       type: String,
+//     }
+//   })
+
+// const x = argsTest({
+//   type: RelatedClass,
+//   nullable: true,
+//   resolve: (args: string): RelatedClass | null => new RelatedClass("asdf"),
+//   args: {
+//     type: String,
+//   },
+//   runtimeTypes: {
+//     testField: argsTest({
+//       type: String,
+//       resolve: (args: string | null, root: RelatedClass, context: any) => "asdf",
+//       args: {
+//         type: String,
+//         nullable: true
+//       }
+//     }),
+//   }
+// })
+
+const asdf = {
+    stringField: {
+      type: ScalarTypes.STRING,
+      args: {
+        type: ChildArgs,
+        runtimeTypes: {
+          field: ScalarTypes.STRING
+        }
+      },
+      resolve: async (args: ChildArgs, root: QueryRoot, context: any) => {
+        return `asdf`;
+      }
+    },
+    testQuery: {
+      type: Test,
+      resolve: test,
+      args: registeredArgs,
+      nullable: true,
+      // runtimeTypes: {
+      //   stringField: {
+      //     type: ScalarTypes.STRING,
+      //     args: {
+      //       type: ChildArgs,
+      //       runtimeTypes: {
+      //         field: {type: ScalarTypes.STRING}
+      //       }
+      //     },
+      //     resolve: async (args: ChildArgs, root: Test, context: any) => {
+      //       return `asdf`;
+      //     }
+        // }
+      // }
+    }
+  } //as const;
+
+type X = (typeof asdf)['stringField'] extends {nullable?: infer Nullability, resolve?: (args: infer FunctionArgs, root: infer Root, context: infer Context) => Promise<infer ReturnType>}
+  ? [ValidateNullability<ReturnType, Nullability>, ReturnType, Nullability]
+  : never
+
+type A = typeof asdf
+type B = [A["testQuery"]] extends [{
+        type: infer Type,
+        nullable?: infer Nullability,
+        array?: infer ArrayType,
+        args?: {
+          type: infer ArgsType
+        },
+        resolve?: (args: infer FunctionArgs, root: infer Root, context: infer Context) => Promise<infer ReturnType>
+        runtimeTypes?: infer RuntimeTypes
+      }]
+      ? true
+      : false
+
+type C = ValidateArgs<typeof ChildArgs, ChildArgs>
+
+type IsValid = ValidateFields<typeof asdf>
+
+export type TestValidate<Input> =
+      [Input] extends [{
+        type: infer Type,
+        nullable?: infer Nullability,
+        array?: infer ArrayType,
+        args?: {
+          type?: infer ArgsType,
+          runtimeTypes?: infer ArgsRuntimeTypes
+        },
+        resolve?: (args: infer FunctionArgs, root: infer Root, context: infer Context) => Promise<infer ReturnType>
+        runtimeTypes?: infer RuntimeTypes
+      }] ?
+        Type : never
+
+function testValidation<Z>(input: TestValidate<Z>) {
+  return input;
 }
 
-const y = 
-  argsTest({
-    type: String,
-    resolve: (args: string) => "asdf",
-    args: {
-      type: String,
-    }
-  })
-
-const x = argsTest({
-  type: RelatedClass,
-  nullable: true,
-  resolve: (args: string): RelatedClass | null => new RelatedClass("asdf"),
-  args: {
-    type: String,
-  },
-  runtimeTypes: {
-    testField: argsTest({
-      type: String,
-      resolve: (args: string | null, root: RelatedClass, context: any) => "asdf",
-      args: {
-        type: String,
-        nullable: true
-      }
-    }),
-  }
-})
-
-// type X = [boolean] extends [true] ? true : false
+testValidation(asdf["stringField"]);
