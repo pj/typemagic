@@ -141,36 +141,36 @@ type II = GetRuntimeType<(TestInputObject | null)[]>
 testType<II>(TestInputObject);
 
 // Test Scalar / Input Object
-type InputStringNullableItemsNullUndefined = (string | null)[] | null | undefined;
-type InputStringArrayNullUndefined = string[] | null | undefined;
-type InputStringArrayUndefined = string[] | undefined;
-type InputStringArray = string[];
-type InputStringNullUndefined = string | null | undefined;
-type InputString = string;
+// type InputStringNullableItemsNullUndefined = (string | null)[] | null | undefined;
+// type InputStringArrayNullUndefined = string[] | null | undefined;
+// type InputStringArrayUndefined = string[] | undefined;
+// type InputStringArray = string[];
+// type InputStringNullUndefined = string | null | undefined;
+// type InputString = string;
 
-type ScalarOrInputStringNullableItemsNullUndefined = ScalarOrInput<InputStringNullableItemsNullUndefined>
-type ValidStringNullableItemsNullUndefined = Extends<ScalarOrInputStringNullableItemsNullUndefined, { type: StringConstructor, nullable: true, array: "nullable_items" }>
-testType<ValidStringNullableItemsNullUndefined>(true);
+// type ScalarOrInputStringNullableItemsNullUndefined = ScalarOrInput<InputStringNullableItemsNullUndefined>
+// type ValidStringNullableItemsNullUndefined = Extends<ScalarOrInputStringNullableItemsNullUndefined, { type: StringConstructor, nullable: true, array: "nullable_items" }>
+// testType<ValidStringNullableItemsNullUndefined>(true);
 
-type ScalarOrInputStringArrayNullUndefined = ScalarOrInput<InputStringArrayNullUndefined>
-type ValidStringArrayNullUndefined = Extends<ScalarOrInputStringArrayNullUndefined, { type: StringConstructor, nullable: true, array: true }>
-testType<ValidStringArrayNullUndefined>(true);
+// type ScalarOrInputStringArrayNullUndefined = ScalarOrInput<InputStringArrayNullUndefined>
+// type ValidStringArrayNullUndefined = Extends<ScalarOrInputStringArrayNullUndefined, { type: StringConstructor, nullable: true, array: true }>
+// testType<ValidStringArrayNullUndefined>(true);
 
-type ScalarOrInputStringArrayUndefined = ScalarOrInput<InputStringArrayUndefined>;
-type ValidStringArrayUndefined = Extends<ScalarOrInputStringArrayUndefined, { type: StringConstructor, nullable?: false, array: true }>
-testType<ValidStringArrayUndefined>(true);
+// type ScalarOrInputStringArrayUndefined = ScalarOrInput<InputStringArrayUndefined>;
+// type ValidStringArrayUndefined = Extends<ScalarOrInputStringArrayUndefined, { type: StringConstructor, nullable?: false, array: true }>
+// testType<ValidStringArrayUndefined>(true);
 
-type ScalarOrInputStringArray = ScalarOrInput<InputStringArray>;
-type ValidStringArray = Extends<ScalarOrInputStringArray, { type: StringConstructor, nullable?: false, array: true }>
-testType<ValidStringArray>(true);
+// type ScalarOrInputStringArray = ScalarOrInput<InputStringArray>;
+// type ValidStringArray = Extends<ScalarOrInputStringArray, { type: StringConstructor, nullable?: false, array: true }>
+// testType<ValidStringArray>(true);
 
-type ScalarOrInputStringNullUndefined = ScalarOrInput<InputStringNullUndefined>;
-type ValidStringNullUndefined = Extends<ScalarOrInputStringNullUndefined, { type: StringConstructor, nullable: true, array?: false }>
-testType<ValidStringNullUndefined>(true);
+// type ScalarOrInputStringNullUndefined = ScalarOrInput<InputStringNullUndefined>;
+// type ValidStringNullUndefined = Extends<ScalarOrInputStringNullUndefined, { type: StringConstructor, nullable: true, array?: false }>
+// testType<ValidStringNullUndefined>(true);
 
-type ScalarOrInputString = ScalarOrInput<InputString>;
-type ValidString = Extends<ScalarOrInputString, { type: StringConstructor, nullable?: false, array?: false }>
-testType<ValidString>(true);
+// type ScalarOrInputString = ScalarOrInput<InputString>;
+// type ValidString = Extends<ScalarOrInputString, { type: StringConstructor, nullable?: false, array?: false }>
+// testType<ValidString>(true);
 
 type InputTestInputObjectNullableItemsNullUndefined = (TestInputObject | null)[] | null | undefined;
 // type InputTestInputObjectArrayNullUndefined = TestInputObject[] | null | undefined;
@@ -282,7 +282,7 @@ testType<GenerateNullabilityAndArrayRuntimeOptions<(string | null)[]>>({ array: 
 
 testType<GenerateNullabilityAndArrayRuntimeOptions<(string | null)[] | null>>({ array: "nullable_items", nullable: true })
 
-function testResolver<Z extends ValidateResolver<Z>>(resolver: Z) {
+function testResolver<Z extends ValidateResolver<Z, QueryRoot, {}>>(resolver: Z) {
   return resolver;
 }
 
@@ -329,29 +329,32 @@ testType<ValidateInputRuntimeType<(ChildArgs | null)[] | null>>({
 });
 
 testResolver(
-    {
-      type: ScalarTypes.STRING,
-      args: {
-        type: ChildArgs,
-        runtimeTypes: {
-          field: {type: ScalarTypes.STRING},
-        },
+  {
+    type: ScalarTypes.STRING,
+    args: {
+      type: ChildArgs,
+      runtimeTypes: {
+        field: {type: ScalarTypes.STRING},
       },
-      nullable: true,
-      resolve: async (root: QueryRoot, context: any): Promise<string | null> => {
-        return `asdf`;
-      }
+    },
+    nullable: true,
+    array: true,
+    resolve: async (root: QueryRoot, context: {}): Promise<string[] | null> => {
+      return [`asdf`];
     }
+  }
 );
 
 testResolver(
-    {
-      type: ScalarTypes.STRING,
-      resolve: async (root: QueryRoot, context: any): Promise<string> => {
-        return `asdf`;
-      }
+  {
+    type: ScalarTypes.STRING,
+    resolve: async (root: QueryRoot, context: {}): Promise<string> => {
+      return `asdf`;
     }
+  }
 );
 
 type X = ExtractFunctionDetails<(root: QueryRoot) => Promise<string>, unknown>
 type Y = ExtractFunctionDetails<(root: QueryRoot, context: any) => Promise<string>, unknown>
+
+type Z = (typeof ChildArgs)['prototype']

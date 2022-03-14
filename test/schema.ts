@@ -50,7 +50,7 @@ schema({
         },
       },
       nullable: true,
-      resolve: async (args: NestedChildArgs, root: QueryRoot, context: any): Promise<string | null> => {
+      resolve: async (root: QueryRoot, context: any): Promise<string | null> => {
         return `asdf`;
       }
     }

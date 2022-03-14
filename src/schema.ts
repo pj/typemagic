@@ -19,7 +19,7 @@ export type RootMutations<Mutations, Context> =
     [Key in keyof Mutations]: Mutation<Context, unknown, Mutations[Key]>
   }
 
-export type ValidateSchema<Schema> = 
+export type ValidateSchema<Schema, Context> = 
   [Schema] extends [
     {
       queries?: infer Queries,
@@ -30,7 +30,7 @@ export type ValidateSchema<Schema> =
       (
         [undefined] extends [Queries] 
           ? {queries?: undefined}
-          : {queries: ValidateResolvers<Queries>}
+          : {queries: ValidateResolvers<Queries, QueryRoot, Context>}
       ) 
     & 
       (
@@ -40,7 +40,7 @@ export type ValidateSchema<Schema> =
       )
   : never
 
-export function schema<Schema extends ValidateSchema<Schema>, Context = any>(
+export function schema<Schema extends ValidateSchema<Schema, Context>, Context = any>(
   schema: Schema
 ) {
 

@@ -1,4 +1,6 @@
 import { RootFieldFilter } from "@graphql-tools/utils";
+import { Resolver } from "dns";
+import { QueryRoot } from "./schema";
 import { Constructor, GenerateArrayTrilean, GenerateNullabilityAndArrayRuntimeOptions, GetRuntimeScalarType, GetUnderlyingType, IsCompileTimeScalar, IsNonNullCompileTimeScalar, ScalarTypes } from "./types";
 
 // export type ValidateNullability<ReturnType, Nullability> =
@@ -148,25 +150,77 @@ export type ExtractFunctionDetails<ResolverFunction, ArgsConstructor> =
   //     ? {root: Root, context: Context, returnType: ReturnType, functionArgs: FunctionArgs}
   //     : never
 
-export type ValidateResolverFunction<ResolverFunction, ArgsConstructor> =
-  [unknown] extends [ResolverFunction]
-    ? {resolve?: never}
-    : [unknown] extends [ExtractFunctionDetails<ResolverFunction, ArgsConstructor>['functionArgs']]
-      ? {
-          resolve: (
-            root: ExtractFunctionDetails<ResolverFunction, ArgsConstructor>['root'], 
-            context: ExtractFunctionDetails<ResolverFunction, ArgsConstructor>['context'], 
-          ) => Promise<ExtractFunctionDetails<ResolverFunction, ArgsConstructor>['returnType']>
-        }
+export type ValidateResolverFunction<ResolverFunction, ArgsConstructor, Root, Context> =
+  [unknown] extends [ArgsConstructor]
+    ? [unknown] extends [ResolverFunction]
+      ? {resolve?: never, args?: never}
       : {
-          resolve: (
-            args: ExtractFunctionDetails<ResolverFunction, ArgsConstructor>['functionArgs'], 
-            root: ExtractFunctionDetails<ResolverFunction, ArgsConstructor>['root'], 
-            context: ExtractFunctionDetails<ResolverFunction, ArgsConstructor>['context'], 
-          ) => Promise<ExtractFunctionDetails<ResolverFunction, ArgsConstructor>['returnType']>
+          resolve: (root: Root, context: Context) 
+            => [ResolverFunction] extends [(...args: infer X) => Promise<infer ReturnType>] 
+              ? Promise<ReturnType>
+              : never,
+          args?: never
         }
+    : {
+        resolve: (
+          args: [ArgsConstructor] extends [{prototype: infer T}] ? T : never, 
+          root: [Root] extends [ArgsConstructor] ? never : Root, 
+          context: Context
+        ) => [ResolverFunction] extends [(...args: infer X) => Promise<infer ReturnType>] 
+          ? Promise<ReturnType>
+          : never,
+        args: {
+          type: ArgsConstructor,
+          runtimeTypes: ValidateInputRuntimeTypes<[ArgsConstructor] extends [{prototype: infer T}] ? T : never>
+        }
+      }
 
-export type ValidateResolver<Resolver> =
+      // : [ResolverFunction] extends [(first: infer First, second: infer Second, third: infer Third) => Promise<infer ReturnType>]
+      //   ? [First] extends [Root]
+      //     ? [Second] extends [Context]
+      //       ? {
+      //           resolve: (root: First, context: Context) => Promise<ReturnType>,
+      //           args?: never
+      //         }
+      //       : "Second argument must be Context type"
+      //     : "First argument is not Root type"
+      //   : "Unable to infer function"
+    
+    // [ResolverFunction] extends [(first: infer First, second: infer Second, third: infer Third) => Promise<infer ReturnType>]
+    //   ? [ArgsConstructor] extends [Constructor<First>]
+    //     ? [Constructor<First>] extends [ArgsConstructor]
+    //       ? [Second] extends [Root]
+    //         ? [Third] extends [Context]
+    //           ? {
+    //               resolve: (args: First, root: Second, context: Third) => Promise<ReturnType>,
+    //               args: {
+    //                 type: Constructor<GetUnderlyingType<First>>,
+    //                 runtimeTypes: ValidateInputRuntimeTypes<First>
+    //               }
+    //             }
+    //           : "Third argument must be Context type"
+    //         : "Second argument must be Root type"
+    //       : "First argument must match args constructor"
+    //     : "First argument must match args constructor"
+    //   : "Unable to infer function"
+  // [unknown] extends [ResolverFunction]
+  //   ? {resolve?: never}
+  //   : [unknown] extends [ExtractFunctionDetails<ResolverFunction, ArgsConstructor>['functionArgs']]
+  //     ? {
+  //         resolve: (
+  //           root: ExtractFunctionDetails<ResolverFunction, ArgsConstructor>['root'], 
+  //           context: ExtractFunctionDetails<ResolverFunction, ArgsConstructor>['context'], 
+  //         ) => Promise<ExtractFunctionDetails<ResolverFunction, ArgsConstructor>['returnType']>
+  //       }
+  //     : {
+  //         resolve: (
+  //           args: ExtractFunctionDetails<ResolverFunction, ArgsConstructor>['functionArgs'], 
+  //           root: ExtractFunctionDetails<ResolverFunction, ArgsConstructor>['root'], 
+  //           context: ExtractFunctionDetails<ResolverFunction, ArgsConstructor>['context'], 
+  //         ) => Promise<ExtractFunctionDetails<ResolverFunction, ArgsConstructor>['returnType']>
+  //       }
+
+export type ValidateResolver<Resolver, Root, Context> =
   [Resolver] extends [{
     type?: infer Type,
     nullable?: infer Nullability,
@@ -188,16 +242,14 @@ export type ValidateResolver<Resolver> =
                 runtimeTypes: RuntimeTypes
               }
           )
-        & ValidateResolverFunction<ResolverFunction, ArgsConstructor>
-        & GenerateNullabilityAndArrayRuntimeOptions<ExtractFunctionDetails<ResolverFunction, ArgsConstructor>['returnType']> // ReturnType>
-        & ValidateArgs<ExtractFunctionDetails<ResolverFunction, ArgsConstructor>['functionArgs']>
+        & ValidateResolverFunction<ResolverFunction, ArgsConstructor, Root, Context>
+        & GenerateNullabilityAndArrayRuntimeOptions<
+          [ResolverFunction] extends [(...args: infer X) => Promise<infer ReturnType>] ? ReturnType : unknown>
+        // & ValidateArgs<ExtractFunctionDetails<ResolverFunction, ArgsConstructor>['functionArgs']>
     : "Can't infer type"
 
-export type ValidateResolvers<Resolvers> =
-  [Resolvers] extends [{[key: string]: any}]
-    ?  
-    {
-      [Key in keyof Resolvers]:
-        ValidateResolver<Resolvers[Key]>
-    }
-    : never
+export type ValidateResolvers<Resolvers, Root, Context> =
+  {
+    [Key in keyof Resolvers]:
+      ValidateResolver<Resolvers[Key], Root, Context>
+  }
