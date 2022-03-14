@@ -1,11 +1,11 @@
 import { Int } from "type-graphql";
 import { ScalarOrInput } from "../src/input";
 import { QueryRoot } from "../src/schema";
-import { ValidateArgs, ValidateResolvers, ValidateNullability, ValidateResolver, ValidateArray, ValidateInputRuntimeType, ValidateInputRuntimeTypes, ExtractFunctionDetails } from "../src/validate";
 import { Constructor, GenerateArrayTrilean, GenerateNullabilityAndArrayRuntimeOptions, GenerateReturnType, GetRuntimeType, ScalarTypes } from "../src/types";
+import { ValidateArgs, ValidateInputRuntimeType, ValidateResolver } from "../src/validate";
 import { registeredArgs } from "./args";
 import { ChildArgs, NestedChildArgs } from "./schema";
-import { RelatedClass, test, Test, TestInputObject } from "./test";
+import { test, Test, TestInputObject } from "./test";
 
 type Extends<A, B> = A extends B ? true : false;
 
@@ -339,8 +339,8 @@ testResolver(
     },
     nullable: true,
     array: true,
-    resolve: async (root: QueryRoot, context: {}): Promise<string[] | null> => {
-      return [`asdf`];
+    resolve: async (args: ChildArgs, root: QueryRoot): Promise<string[] | null> => {
+      return [`${args.field} - asdf`];
     }
   }
 );
@@ -353,8 +353,3 @@ testResolver(
     }
   }
 );
-
-type X = ExtractFunctionDetails<(root: QueryRoot) => Promise<string>, unknown>
-type Y = ExtractFunctionDetails<(root: QueryRoot, context: any) => Promise<string>, unknown>
-
-type Z = (typeof ChildArgs)['prototype']
