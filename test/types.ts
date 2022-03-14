@@ -348,46 +348,83 @@ const asdf = {
         // }
       // }
     }
-  } //as const;
+  } as const;
 
-type X = (typeof asdf)['stringField'] extends {nullable?: infer Nullability, resolve?: (args: infer FunctionArgs, root: infer Root, context: infer Context) => Promise<infer ReturnType>}
-  ? [ValidateNullability<ReturnType, Nullability>, ReturnType, Nullability]
-  : never
+// type X = (typeof asdf)['stringField'] extends {nullable?: infer Nullability, resolve?: (args: infer FunctionArgs, root: infer Root, context: infer Context) => Promise<infer ReturnType>}
+//   ? [ValidateNullability<ReturnType, Nullability>, ReturnType, Nullability]
+//   : never
 
-type A = typeof asdf
-type B = [A["testQuery"]] extends [{
-        type: infer Type,
-        nullable?: infer Nullability,
-        array?: infer ArrayType,
-        args?: {
-          type: infer ArgsType
-        },
-        resolve?: (args: infer FunctionArgs, root: infer Root, context: infer Context) => Promise<infer ReturnType>
-        runtimeTypes?: infer RuntimeTypes
-      }]
-      ? true
-      : false
+// type A = typeof asdf
+// type B = [A["testQuery"]] extends [{
+//         type: infer Type,
+//         nullable?: infer Nullability,
+//         array?: infer ArrayType,
+//         args?: {
+//           type: infer ArgsType
+//         },
+//         resolve?: (args: infer FunctionArgs, root: infer Root, context: infer Context) => Promise<infer ReturnType>
+//         runtimeTypes?: infer RuntimeTypes
+//       }]
+//       ? true
+//       : false
 
-type C = ValidateArgs<typeof ChildArgs, ChildArgs>
+// type C = ValidateArgs<typeof ChildArgs, ChildArgs>
 
-type IsValid = ValidateFields<typeof asdf>
+// type IsValid = ValidateFields<typeof asdf>
+
+
+// type BuildResponse<Type> =
+//       Array<Type>
 
 export type TestValidate<Input> =
-      [Input] extends [{
-        type: infer Type,
-        nullable?: infer Nullability,
-        array?: infer ArrayType,
-        args?: {
-          type?: infer ArgsType,
-          runtimeTypes?: infer ArgsRuntimeTypes
-        },
-        resolve?: (args: infer FunctionArgs, root: infer Root, context: infer Context) => Promise<infer ReturnType>
-        runtimeTypes?: infer RuntimeTypes
-      }] ?
-        Type : never
+      Input extends 
+      // [string]
+      Array<Input>
+    // [
+    // {
+    //     type: infer Type,
+    //     nullable?: infer Nullability,
+    //     array?: infer ArrayType,
+    //     args?: {
+    //       type: infer ArgsType
+    //     },
+    //     resolve?: (args: infer FunctionArgs, root: infer Root, context: infer Context) => Promise<infer ReturnType>
+    //     runtimeTypes?: infer RuntimeTypes
+    //   }
+    // ] 
+    ?
+      BuildResponse<Type> : never
 
-function testValidation<Z>(input: TestValidate<Z>) {
+function testValidation<Z extends ValidateFields<Z>>(input: Z) {
+  // function _inner<X extends ValidateFields<Z>>(i: X) {
+  //   return i
+  // }
+  // return _inner(input); //(input as unknown) as ValidateFields<Z>;
   return input;
 }
 
-testValidation(asdf["stringField"]);
+const tttt = testValidation(
+  "asdf",
+//   {
+//   ffff: {
+//     type: ScalarTypes.STRING
+//   }
+// }
+
+);
+
+type X = (typeof tttt)
+  
+  
+//   {
+//   type: ScalarTypes.STRING,
+//   args: {
+//     type: ChildArgs,
+//     runtimeTypes: {
+//       field: ScalarTypes.STRING
+//     }
+//   },
+//   resolve: async (args: ChildArgs, root: QueryRoot, context: any) => {
+//     return `asdf`;
+//   }
+// });
