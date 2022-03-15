@@ -1,5 +1,5 @@
-import { QueryRoot, schema } from "../src/schema";
-import { registerEnum, ScalarTypes } from "../src/types";
+import { QueryRoot, schema } from "../graphql/schema";
+import { registerEnum, ScalarTypes } from "../graphql/types";
 
 export class Test {
   constructor(
@@ -112,47 +112,6 @@ export class NestedChildArgs {
 
   }
 }
-
-schema({
-  queries: {
-    testQuery: {
-      type: ScalarTypes.STRING,
-      args: {
-        type: NestedChildArgs,
-        runtimeTypes: {
-          field: { type: ScalarTypes.STRING },
-          nullableField: { type: ScalarTypes.STRING, nullable: true },
-          arrayField: { type: ScalarTypes.STRING, nullable: true, array: true },
-          childArgs: {
-            type: ChildArgs,
-            runtimeTypes: {
-              field: { type: ScalarTypes.STRING }
-            }
-          },
-          arrayOfChildArgs: {
-            type: ChildArgs,
-            nullable: true,
-            array: "nullable_items",
-            runtimeTypes: {
-              field: { type: ScalarTypes.STRING }
-            }
-          }
-        },
-      },
-      nullable: true,
-      resolve: async (root: QueryRoot, context: any): Promise<string | null> => {
-        return `asdf`;
-      }
-    },
-    otherQuery: {
-      type: RelatedClass,
-      nullable: true,
-      runtimeTypes: {
-        testField: { type: ScalarTypes.STRING }
-      }
-    }
-  }
-});
 
 const registeredArgs =
 {

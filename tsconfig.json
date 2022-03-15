@@ -5,10 +5,16 @@
   },
   "references": [ 
     {
-      "path": "./src"
+      "path": "./graphql"
     },
     {
-      "path": "./test"
-    }
+      "path": "./graphql_test"
+    },
+    {
+      "path": "./sql"
+    },
+    {
+      "path": "./sql_test"
+    },
    ]
 }
