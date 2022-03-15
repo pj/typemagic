@@ -11,7 +11,7 @@ function testArgs<A>(object: ArgsSchema<A>): ArgsSchema<A> {
 export const registeredArgs = {
   type: Args,
   runtimeTypes: {
-    stringField: ScalarTypes.STRING,
+    stringField: { type: ScalarTypes.STRING } ,
     booleanField: { type: ScalarTypes.BOOLEAN },
     dateField: { type: ScalarTypes.DATE },
     numberField: { type: ScalarTypes.INT },

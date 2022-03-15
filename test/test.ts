@@ -1,3 +1,6 @@
+import { QueryRoot, schema } from "../src/schema";
+import { registerEnum, ScalarTypes } from "../src/types";
+
 export class Test {
   constructor(
     public stringField: string,
@@ -6,7 +9,7 @@ export class Test {
     public intField: number,
     public floatField: number,
     public relatedField: RelatedClass,
-    public arrayRelatedField: ArrayRelatedClass[], 
+    public arrayRelatedField: ArrayRelatedClass[],
     public stringEnumField: StringEnum,
     public numberEnumField: IntEnum,
     public arrayField: string[],
@@ -40,7 +43,7 @@ export class TestInputObject {
     public arrayField: string[],
     public nullableArrayField: string[] | null,
     public nullableItemsField: (string | null)[]
-  ) {}
+  ) { }
 }
 
 export class Args {
@@ -90,131 +93,228 @@ enum IntEnum {
   second
 }
 
-// const registedArgs = args({
-//     object: Args,
-//     fieldTypes: {
-//       stringField: String,
-//       booleanField: Boolean,
-//       dateField: Date,
-//     }
-//   });
+export class ChildArgs {
+  constructor(
+    public field: string
+  ) {
 
-// const testQuery = query({
-//   resolve: test,
-//   args: registedArgs,
-//   output: object({
-//     type: Test,
-//     fieldTypes: {
-//       stringField: query({
-//         output: String,
-//         resolve: async (root: Test) => {
-//           return `${root.stringField} is being resolved`;
-//         }
-//       }),
-//       booleanField: Boolean,
-//       dateField: date(),
-//       stringEnumField: registerEnum(StringEnum),
-//       numberEnumField: registerEnum(IntEnum),
-//       intField: Int,
-//       floatField: Float,
-//       // extra: () => object({
-//       //   object: ASDF,
-//       //   resolve: (root: Test): ASDF => {
-//       //     return ASDF.asdf;
-//       //   },
-//       // }),
-//       relatedField: resolver({
-//         output: object({
-//           type: RelatedClass,
-//           fieldTypes: {
-//             testField: String
-//           },
-//         }),
-//         resolve: async (root: Test) => {
-//           return new RelatedClass(`${root.intField} times`);
-//         },
-//       }),
-//       arrayRelatedField: array({
-//         output: object({
-//           type: ArrayRelatedClass,
-//           fieldTypes: {
-//             asdfField: String
-//           }
-//         }),
-//         resolve: async () => {
-//           return [new ArrayRelatedClass("array related")];
-//         },
-//       }),
-//       arrayField: array({
-//         output: String,
-//         resolve: async (root: Test) => {
-//           return root.arrayField;
-//         }
-//       }),
-//       nullableArrayField: nullable(
-//         array({
-//           output: String,
-//           resolve: async (root: Test): Promise<string[] | null> => {
-//             return root.nullableArrayField
-//           }
-//         })
-//       ),
-//       queriedField: query({
-//         output: object({
-//           type: RelatedClass,
-//           fieldTypes: {
-//             testField: String
-//           }
-//         }),
-//         args: registedArgs,
-//         resolve: async (args: Args, root: Test): Promise<RelatedClass> => {
-//           return root.queriedField;
-//         }
-//       }),
-//       nullableRelatedField: nullable(
-//         resolver({
-//           output: object({
-//             type: RelatedClass,
-//             fieldTypes: {
-//               testField: String
-//             },
-//           }),
-//           resolve: async (root: Test) => {
-//             return root.nullableRelatedField;
-//           },
-//         })
-//       ),
-//     }
-//   })
-// });
+  }
+}
 
-// // type X = OutputRuntimeTypes<any, any, {asdf: string[] | null}>
-// // type Y = HandleArray<any, any, string[], RelatedClass | null>
-// type X = GenerateScalarReturnType<string, false, true>;
-// type Y = GenerateScalarReturnType<string, true, "nullable_items">;
-// type Z = GenerateScalarReturnType<RelatedClass, undefined, undefined>;
-// type A = GenerateScalarReturnType<RelatedClass, true, undefined>;
+export class NestedChildArgs {
+  constructor(
+    public field: string,
+    public nullableField: string | null,
+    public arrayField: string[] | null,
+    public childArgs: ChildArgs,
+    public arrayOfChildArgs: (ChildArgs | null)[] | null
+  ) {
 
-// type B = OutputRuntimeTypes<any, any, {x: RelatedClass | null}>
+  }
+}
 
-// type C = never
+schema({
+  queries: {
+    testQuery: {
+      type: ScalarTypes.STRING,
+      args: {
+        type: NestedChildArgs,
+        runtimeTypes: {
+          field: { type: ScalarTypes.STRING },
+          nullableField: { type: ScalarTypes.STRING, nullable: true },
+          arrayField: { type: ScalarTypes.STRING, nullable: true, array: true },
+          childArgs: {
+            type: ChildArgs,
+            runtimeTypes: {
+              field: { type: ScalarTypes.STRING }
+            }
+          },
+          arrayOfChildArgs: {
+            type: ChildArgs,
+            nullable: true,
+            array: "nullable_items",
+            runtimeTypes: {
+              field: { type: ScalarTypes.STRING }
+            }
+          }
+        },
+      },
+      nullable: true,
+      resolve: async (root: QueryRoot, context: any): Promise<string | null> => {
+        return `asdf`;
+      }
+    },
+    otherQuery: {
+      type: RelatedClass,
+      nullable: true,
+      runtimeTypes: {
+        testField: { type: ScalarTypes.STRING }
+      }
+    }
+  }
+});
 
-// schema({
-//   queries: {
-//     testQuery
-//   }, 
-//   mutations: {
-//     testMutation: mutation({
-//       args: registedArgs,
-//       mutate: async (args: Args, context: any) => {
-//         return new RelatedClass("asdf");
-//       },
-//       output: object({
-//         type: RelatedClass,
-//         fieldTypes: {
-//           testField: String
-//         }
-//       })
-//     })
-//   }
-// });
+const registeredArgs =
+{
+        type: Args,
+        runtimeTypes: {
+          stringField: { type: ScalarTypes.STRING },
+          booleanField: { type: ScalarTypes.BOOLEAN },
+          dateField: { type: ScalarTypes.DATE },
+          numberField: { type: ScalarTypes.INT },
+          nullableField: { type: ScalarTypes.STRING, nullable: true },
+          arrayField: { type: ScalarTypes.STRING, array: true },
+          nullableArrayField: { type: ScalarTypes.STRING, nullable: true, array: true },
+          nullableItemsField: { type: ScalarTypes.STRING, array: "nullable_items" },
+          inputObjectField: {
+            type: TestInputObject,
+            runtimeTypes: {
+              stringField: { type: ScalarTypes.STRING },
+              booleanField: { type: ScalarTypes.BOOLEAN },
+              dateField: { type: ScalarTypes.DATE },
+              numberField: { type: ScalarTypes.INT },
+              nullableField: { type: ScalarTypes.STRING, nullable: true },
+              arrayField: { type: ScalarTypes.STRING, array: true },
+              nullableArrayField: { type: ScalarTypes.STRING, nullable: true, array: true },
+              nullableItemsField: { type: ScalarTypes.STRING, array: "nullable_items" },
+            }
+          },
+          inputObjectArray: {
+            array: true,
+            type: TestInputObject,
+            runtimeTypes: {
+              stringField: { type: ScalarTypes.STRING },
+              booleanField: { type: ScalarTypes.BOOLEAN },
+              dateField: { type: ScalarTypes.DATE },
+              numberField: { type: ScalarTypes.INT },
+              nullableField: { type: ScalarTypes.STRING, nullable: true },
+              arrayField: { type: ScalarTypes.STRING, array: true },
+              nullableArrayField: { type: ScalarTypes.STRING, nullable: true, array: true },
+              nullableItemsField: { type: ScalarTypes.STRING, array: "nullable_items" },
+            }
+          },
+          inputObjectNullableItems: {
+            array: "nullable_items",
+            type: TestInputObject,
+            runtimeTypes: {
+              stringField: { type: ScalarTypes.STRING },
+              booleanField: { type: ScalarTypes.BOOLEAN },
+              dateField: { type: ScalarTypes.DATE },
+              numberField: { type: ScalarTypes.FLOAT },
+              nullableField: { type: ScalarTypes.STRING, nullable: true },
+              arrayField: { type: ScalarTypes.STRING, array: true },
+              nullableArrayField: { type: ScalarTypes.STRING, nullable: true, array: true },
+              nullableItemsField: { type: ScalarTypes.STRING, array: "nullable_items" },
+            }
+          },
+          nullableInputObjectField: {
+            nullable: true,
+            type: TestInputObject,
+            runtimeTypes: {
+              stringField: { type: ScalarTypes.STRING },
+              booleanField: { type: ScalarTypes.BOOLEAN },
+              dateField: { type: ScalarTypes.DATE },
+              numberField: { type: ScalarTypes.INT },
+              nullableField: { type: ScalarTypes.STRING, nullable: true },
+              arrayField: { type: ScalarTypes.STRING, array: true },
+              nullableArrayField: { type: ScalarTypes.STRING, nullable: true, array: true },
+              nullableItemsField: { type: ScalarTypes.STRING, array: "nullable_items" }
+            }
+          },
+          nullableInputObjectNullableItems: {
+            nullable: true,
+            array: "nullable_items",
+            type: TestInputObject,
+            runtimeTypes: {
+              stringField: { type: ScalarTypes.STRING },
+              booleanField: { type: ScalarTypes.BOOLEAN },
+              dateField: { type: ScalarTypes.DATE },
+              numberField: { type: ScalarTypes.INT },
+              nullableField: { type: ScalarTypes.STRING, nullable: true },
+              arrayField: { type: ScalarTypes.STRING, array: true },
+              nullableArrayField: { type: ScalarTypes.STRING, nullable: true, array: true },
+              nullableItemsField: { type: ScalarTypes.STRING, array: "nullable_items" }
+            }
+          }
+        }
+      } as const;
+
+schema({
+  queries: {
+    testQuery: {
+      resolve: test,
+      args: registeredArgs,
+      type: Test,
+      runtimeTypes: {
+        stringField: {
+          type: ScalarTypes.STRING,
+          resolve: async (root: Test) => {
+            return `${root.stringField} is being resolved`;
+          }
+        },
+        booleanField: { type: ScalarTypes.BOOLEAN },
+        dateField: { type: ScalarTypes.DATE },
+        stringEnumField: { type: registerEnum(StringEnum) },
+        numberEnumField: { type: registerEnum(IntEnum) },
+        intField: { type: ScalarTypes.INT },
+        floatField: { type: ScalarTypes.FLOAT },
+        relatedField: {
+          type: RelatedClass,
+          runtimeTypes: {
+            testField: {
+              type: ScalarTypes.STRING
+            }
+          },
+          resolve: async (root: Test) => {
+            return new RelatedClass(`${root.intField} times`);
+          },
+        },
+        arrayRelatedField: {
+          type: ArrayRelatedClass,
+          runtimeTypes: {
+            asdfField: { type: ScalarTypes.STRING }
+          },
+          array: true,
+          resolve: async () => {
+            return [new ArrayRelatedClass("array related")];
+          },
+        },
+        arrayField: {
+          type: ScalarTypes.STRING,
+          array: true,
+          resolve: async (root: Test) => {
+            return root.arrayField;
+          }
+        },
+        nullableArrayField: {
+          type: ScalarTypes.STRING,
+          nullable: true,
+          array: true,
+          resolve: async (root: Test): Promise<string[] | null> => {
+            return root.nullableArrayField
+          }
+        },
+        queriedField: {
+          type: RelatedClass,
+          runtimeTypes: {
+            testField: { type: ScalarTypes.STRING }
+          },
+          args: registeredArgs,
+          resolve: async (args: Args, root: Test): Promise<RelatedClass> => {
+            return root.queriedField;
+          }
+        },
+        nullableRelatedField: {
+          type: RelatedClass,
+          runtimeTypes: {
+            testField: { type: ScalarTypes.STRING }
+          },
+          nullable: true,
+          resolve: async (root: Test) => {
+            return root.nullableRelatedField;
+          },
+        }
+      }
+    }
+  }
+});

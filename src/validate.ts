@@ -1,4 +1,4 @@
-import { CompileTimeTypeFromConstructor, Constructor, GenerateNullabilityAndArrayRuntimeOptions, GetRuntimeScalarType, GetUnderlyingType, IsCompileTimeScalar, ScalarTypes } from "./types";
+import { CompileTimeTypeFromConstructor, Constructor, GenerateNullabilityAndArrayRuntimeOptions, GetRuntimeScalarType, GetUnderlyingType, IsCompileTimeScalar, RegisteredEnum, ScalarTypes } from "./types";
 
 export type ValidateInputRuntimeType<FunctionArg> =
   (
@@ -42,38 +42,46 @@ export type ValidateResolverFunction<ResolverFunction, ArgsConstructor, Root, Co
           | (() => ReturnType)
       : never
 
-export type ValidateRuntimeField<Field, Root, Context> =
-  GenerateNullabilityAndArrayRuntimeOptions<Field>
-
-export type ValidateResolverRuntimeTypes<TypeConstructor, ResolverFunction, Root, Context> =
-    [TypeConstructor] extends [ScalarTypes]
+export type ValidateRuntimeTypes<RuntimeTypes, TypeConstructor, ResolverFunction, Context> =
+  [TypeConstructor] extends [ScalarTypes]
+    ? {
+        type: TypeConstructor,
+        runtimeTypes?: never
+      }
+    : [TypeConstructor] extends [RegisteredEnum<any>]
       ? {
-          type: TypeConstructor,
-          runtimeTypes?: never
-        }
+        type: TypeConstructor,
+        runtimeTypes?: never
+      }
       : [unknown] extends [ResolverFunction]
         ? {
-            type: TypeConstructor, 
+            type: TypeConstructor,
             runtimeTypes: {
-              [Key in keyof CompileTimeTypeFromConstructor<TypeConstructor>]?:
-                ValidateRuntimeField<
-                  CompileTimeTypeFromConstructor<TypeConstructor>[Key], 
-                  CompileTimeTypeFromConstructor<TypeConstructor>, 
-                  Context
-                >
+              [Key in keyof RuntimeTypes]:
+                [Key] extends [keyof CompileTimeTypeFromConstructor<TypeConstructor>]
+                  ? ValidateResolver<
+                      RuntimeTypes[Key], 
+                      CompileTimeTypeFromConstructor<TypeConstructor>[Key], 
+                      Context
+                    >
+                  : never
             }
           }
-        : [ResolverFunction] extends [(first: infer First, second: infer Second, third: infer Third) => infer ReturnType]
-          ? {
-              type: Constructor<ReturnType>, 
-              runtimeTypes: {
-                [Key in keyof ReturnType]?:
-                  ValidateRuntimeField<ReturnType[Key], ReturnType, Context>
+          : [ResolverFunction] extends [(first: infer First, second: infer Second, third: infer Third) => Promise<infer ReturnType>]
+            ? {
+                type: Constructor<GetUnderlyingType<ReturnType>>,
+                runtimeTypes: {
+                  [Key in keyof RuntimeTypes]:
+                    [Key] extends [keyof GetUnderlyingType<ReturnType>]
+                      ? ValidateResolver<
+                          RuntimeTypes[Key], 
+                          GetUnderlyingType<ReturnType>, 
+                          Context
+                        >
+                      : ["here", ReturnType]
+                }
               }
-            }
-          : {
-              type: "Invalid Resolver"
-            }
+            : {type: "Runtime types invalid"}
 
 export type ValidateResolver<Resolver, Root, Context> =
   [Resolver] extends [{
@@ -88,7 +96,7 @@ export type ValidateResolver<Resolver, Root, Context> =
     runtimeTypes?: infer RuntimeTypes
   }]
     ? 
-        ValidateResolverRuntimeTypes<Type, ResolverFunction, Root, Context>
+        ValidateRuntimeTypes<RuntimeTypes, Type, ResolverFunction, Context>
         & (
             [unknown] extends [ResolverFunction] 
               ? {resolve?: never, args?: never} 
@@ -107,12 +115,12 @@ export type ValidateResolver<Resolver, Root, Context> =
                           : ValidateArgs<CompileTimeTypeFromConstructor<ArgsConstructor>>
                         : {args?: never}
                     )
-                : ["ResolverFunction isn't valid", ValidateResolverFunction<ResolverFunction, ArgsConstructor, Root, Context>]
+                : {resolve: ["ResolverFunction isn't valid", ValidateResolverFunction<ResolverFunction, ArgsConstructor, Root, Context>, Root]}
           )
         & GenerateNullabilityAndArrayRuntimeOptions<
             [ResolverFunction] extends [(...args: infer X) => Promise<infer ReturnType>] ? ReturnType : unknown
           >
-    : ["Can't infer type", Resolver, Root, Context]
+    : {resolve: ["Can't infer type", Resolver, Root, Context]}
 
 export type ValidateResolvers<Resolvers, Root, Context> =
   {

@@ -120,4 +120,4 @@ export type IsNonNullCompileTimeScalar<Scalar> =
         ? true
         : false
 
-export type CompileTimeTypeFromConstructor<T> = [T] extends [{ prototype: infer X }] ? X : never;
+export type CompileTimeTypeFromConstructor<T> = [GetUnderlyingType<T>] extends [{ prototype: infer X }] ? X : never;
