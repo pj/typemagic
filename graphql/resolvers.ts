@@ -31,6 +31,14 @@ export type ValidateResolver<Resolver, Root, Context> =
         >
     : {resolve: ["Can't infer type", Resolver, Root, Context]}
 
+export function resolver<Root, Context, Resolver extends ValidateResolver<Resolver, Root, Context>>(
+  root: Root,
+  context: Context,
+  resolver: Resolver
+) {
+  return resolver;
+}
+
 export type ValidateResolverFunction<ResolverFunction, Root, Context> =
   [unknown] extends [ResolverFunction]
     ? {resolve?: never, argsFields?: "No resolve function so no args"}

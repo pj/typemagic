@@ -56,6 +56,7 @@ type SchemaResolver = {
 }
 
 export function schema<Schema extends ValidateSchema<Schema, Context>, Context = any>(
+  context: Context,
   schema: Schema
 ) {
   const queries: GraphQLFieldConfigMap<any, any> = {};

@@ -53,7 +53,7 @@ export type ValidateRuntimeTypes<RuntimeTypes, ResolverFunction, Context, Scalar
             [Key in keyof RuntimeTypes]:
               [Key] extends [keyof GetUnderlyingType<ReturnType>]
                 ? ValidateResolver<
-                    RuntimeTypes[Key], 
+                    RuntimeTypes[Key],
                     GetUnderlyingType<ReturnType>, 
                     Context
                   >
