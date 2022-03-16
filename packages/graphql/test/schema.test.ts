@@ -1,7 +1,4 @@
-import { QueryRoot, schema } from "../graphql/schema";
-import { registerEnum, ScalarTypes } from "../graphql/types";
-import { argsFields } from "../graphql/common";
-import { resolver } from "../graphql/resolvers";
+import { resolver, ScalarTypes, schema } from "../src";
 
 export class Test {
   constructor(
@@ -126,6 +123,7 @@ const registeredArgs =
       nullableArrayField: { type: ScalarTypes.STRING, nullable: true, array: true },
       nullableItemsField: { type: ScalarTypes.STRING, array: "nullable_items" },
       inputObjectField: {
+        inputName: 'TestInputObject',
         inputFields: {
           stringField: { type: ScalarTypes.STRING },
           booleanField: { type: ScalarTypes.BOOLEAN },
@@ -139,6 +137,7 @@ const registeredArgs =
       },
       inputObjectArray: {
         array: true,
+        inputName: 'TestInputObject',
         inputFields: {
           stringField: { type: ScalarTypes.STRING },
           booleanField: { type: ScalarTypes.BOOLEAN },
@@ -152,6 +151,7 @@ const registeredArgs =
       },
       inputObjectNullableItems: {
         array: "nullable_items",
+        inputName: 'TestInputObject',
         inputFields: {
           stringField: { type: ScalarTypes.STRING },
           booleanField: { type: ScalarTypes.BOOLEAN },
@@ -165,6 +165,7 @@ const registeredArgs =
       },
       nullableInputObjectField: {
         nullable: true,
+        inputName: 'TestInputObject',
         inputFields: {
           stringField: { type: ScalarTypes.STRING },
           booleanField: { type: ScalarTypes.BOOLEAN },
@@ -179,6 +180,7 @@ const registeredArgs =
       nullableInputObjectNullableItems: {
         nullable: true,
         array: "nullable_items",
+        inputName: 'TestInputObject',
         inputFields: {
           stringField: { type: ScalarTypes.STRING },
           booleanField: { type: ScalarTypes.BOOLEAN },

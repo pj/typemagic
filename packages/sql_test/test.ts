@@ -1,4 +1,4 @@
-import {query} from "../sql"
+import {query} from "@typemagic/sql";
 
 class TestTable {
   constructor(

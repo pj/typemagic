@@ -1,5 +1,5 @@
-import { CompileTimeTypeFromConstructor, GenerateArrayTrilean, GenerateReturnType, GetRuntimeType, IsEnum, ScalarTypes } from "../graphql/types";
-import { TestInputObject } from "./test";
+import { GenerateArrayTrilean, GenerateReturnType, GetRuntimeType, IsEnum, ScalarTypes } from "../src/types";
+import { TestInputObject } from "./schema.test";
 
 type Extends<A, B> = A extends B ? true : false;
 
