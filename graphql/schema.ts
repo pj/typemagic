@@ -50,12 +50,9 @@ type SchemaResolver = {
   type?: ScalarTypes | object,
   nullable?: boolean,
   array?: ArrayTrilean,
-  args?: {
-    type?: ScalarTypes | object,
-    runtimeTypes?: object
-  },
+  argsFields?: object,
   resolve?: Function
-  runtimeTypes?: object
+  objectFields?: object
 }
 
 export function schema<Schema extends ValidateSchema<Schema, Context>, Context = any>(
@@ -87,9 +84,9 @@ export function schema<Schema extends ValidateSchema<Schema, Context>, Context =
 
   const config: GraphQLSchemaConfig = {};
 
-  if (schema.queries) {
-    config.query = mapToGraphQLType(schema.queries)
-  }
+  // if (schema.queries) {
+  //   config.query = mapToGraphQLType(schema.queries)
+  // }
 
   new GraphQLSchema(config);
 }
@@ -134,31 +131,31 @@ function mapNullableAndArray(type: GraphQLType, options: any): GraphQLType {
 function mapToGraphQLType(type: any): GraphQLScalarType | GraphQLObjectType {
   const name = type.name || type.type.name;
   const runtimeTypes: GraphQLFieldConfigMap<any, any> = {};
-  for (let [name, query] of Object.entries<SchemaResolver>(type.runtimeTypes)) {
-    if (field === undefined) {
-      continue;
-    }
-    name = field.name || name;
-    const runtimeType: GraphQLFieldConfig<any, any> = {
-      type: mapToGraphQLType(query),
-      description: query.description,
-      deprecationReason: query.deprecationReason
-    };
+  // for (let [name, query] of Object.entries<SchemaResolver>(type.runtimeTypes)) {
+  //   if (field === undefined) {
+  //     continue;
+  //   }
+  //   name = field.name || name;
+  //   const runtimeType: GraphQLFieldConfig<any, any> = {
+  //     type: mapToGraphQLType(query),
+  //     description: query.description,
+  //     deprecationReason: query.deprecationReason
+  //   };
 
-    runtimeTypes[name] = {
-      type: mapToGraphQLType(field.type),
-      description: field.description,
-      deprecationReason: field.deprecationReason,
-      // args: [],
-      resolve: field.resolve ? (
-        source: any,
-        args: any,
-        context: any,
-      ) => {
-        return field.resolve(args, source, context);
-      } : undefined
-    }
-  }
+  //   runtimeTypes[name] = {
+  //     type: mapToGraphQLType(field.type),
+  //     description: field.description,
+  //     deprecationReason: field.deprecationReason,
+  //     // args: [],
+  //     resolve: field.resolve ? (
+  //       source: any,
+  //       args: any,
+  //       context: any,
+  //     ) => {
+  //       return field.resolve(args, source, context);
+  //     } : undefined
+  //   }
+  // }
 
   return new GraphQLObjectType({
     name,

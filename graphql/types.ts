@@ -1,4 +1,4 @@
-type IsEnum<T> = 
+export type IsEnum<T> = 
   T extends {[key: string]: string} 
     ? T
     : T extends {[key: number]: string} 
@@ -121,3 +121,10 @@ export type IsNonNullCompileTimeScalar<Scalar> =
         : false
 
 export type CompileTimeTypeFromConstructor<T> = [GetUnderlyingType<T>] extends [{ prototype: infer X }] ? X : never;
+
+export type Exact<A, B> =
+  [A] extends [B]
+    ? [B] extends [A]
+      ? true
+      : false
+    : false
