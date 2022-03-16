@@ -1,5 +1,6 @@
 import { ValidateArgs, ValidateRuntimeTypes } from "./common";
 import { 
+  Constructor,
   Exact,
   GenerateNullabilityAndArrayRuntimeOptions, RegisteredEnum, ScalarTypes, 
 } from "./types";
@@ -32,8 +33,8 @@ export type ValidateResolver<Resolver, Root, Context> =
     : {resolve: ["Can't infer type", Resolver, Root, Context]}
 
 export function resolver<Root, Context, Resolver extends ValidateResolver<Resolver, Root, Context>>(
-  root: Root,
-  context: Context,
+  root: Root | Constructor<Root>,
+  context: Context | Constructor<Context>,
   resolver: Resolver
 ) {
   return resolver;

@@ -1,6 +1,7 @@
 import { QueryRoot, schema } from "../graphql/schema";
 import { registerEnum, ScalarTypes } from "../graphql/types";
 import { argsFields } from "../graphql/common";
+import { resolver } from "../graphql/resolvers";
 
 export class Test {
   constructor(
@@ -192,19 +193,27 @@ const registeredArgs =
     } as const
   ;
 
-schema({
+const context = {} as any;
+
+class Context {
+
+}
+
+schema(
+  context, 
+  {
   queries: {
     testQuery: {
       objectName: "Test",
       resolve: test,
       argsFields: registeredArgs,
       objectFields: {
-        stringField: {
+        stringField: resolver(Test, Context, {
           type: ScalarTypes.STRING,
           resolve: async (root: Test) => {
             return `${root.stringField} is being resolved`;
           }
-        },
+        }),
         booleanField: { type: ScalarTypes.BOOLEAN },
         dateField: { type: ScalarTypes.DATE },
         // stringEnumField: { type: registerEnum(StringEnum) },

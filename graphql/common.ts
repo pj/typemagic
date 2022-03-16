@@ -12,20 +12,25 @@ import {
 import { ValidateResolver } from "./resolvers"
 
 export type ValidateInputRuntimeType<FunctionArg> =
-  (
-    [IsCompileTimeScalar<FunctionArg>] extends [true]
-      ? { type: GetRuntimeScalarType<FunctionArg> }
-      : {
-        inputFields: ValidateInputRuntimeTypes<GetUnderlyingType<FunctionArg>>
-      }
-  )
+  {
+    description?: string,
+    defaultValue?: string,
+  }
+  & (
+      [IsCompileTimeScalar<FunctionArg>] extends [true]
+        ? { type: GetRuntimeScalarType<FunctionArg> }
+        : {
+          inputFields: ValidateInputRuntimeTypes<GetUnderlyingType<FunctionArg>>,
+          inputName: string
+        }
+    )
   & GenerateNullabilityAndArrayRuntimeOptions<FunctionArg>
 
 
 export type ValidateInputRuntimeTypes<FunctionArgs> =
   {
     [Key in keyof FunctionArgs]:
-    ValidateInputRuntimeType<FunctionArgs[Key]>
+      ValidateInputRuntimeType<FunctionArgs[Key]>
   }
 
 export type ValidateArgs<FunctionArgs> =
@@ -35,7 +40,7 @@ export type ValidateArgs<FunctionArgs> =
         argsFields: ValidateInputRuntimeTypes<FunctionArgs>
       }
 
-export function argsFields<FunctionArgs extends ValidateArgs<{argsFields: FunctionArgs}>>(args: FunctionArgs) {
+export function argsFields<FunctionArgs extends ValidateArgs<FunctionArgs>>(args: FunctionArgs) {
   return args;
 }
 
