@@ -18,6 +18,26 @@ export type ValidateResolverFunction<ResolverFunction, ArgsConstructor, Root, Co
           | (() => ReturnType)
       : never
 
+export type ValidateResolverFunctionAndArgs<ResolverFunction, ArgsConstructor, Root, Context> =
+  [unknown] extends [ResolverFunction] 
+    ? {resolve?: never, args?: never} 
+    : [ResolverFunction] extends [ValidateResolverFunction<ResolverFunction, ArgsConstructor, Root, Context>]
+      ? [unknown] extends [ArgsConstructor]
+        ? {
+          resolve: ResolverFunction, 
+          args?: never
+        }
+        : {
+            resolve: ResolverFunction, 
+          } & (
+            [ResolverFunction] extends [(first: infer First, second: infer Second, third: infer Third) => infer ReturnType]
+              ? [unknown] extends [First] 
+                ? {args?: never}
+                : ValidateArgs<CompileTimeTypeFromConstructor<ArgsConstructor>>
+              : {args?: never}
+          )
+      : {resolve: ["ResolverFunction isn't valid", ValidateResolverFunction<ResolverFunction, ArgsConstructor, Root, Context>, Root]}
+
 export type ValidateResolver<Resolver, Root, Context> =
   [Resolver] extends [{
     name?: infer Name,
@@ -35,26 +55,7 @@ export type ValidateResolver<Resolver, Root, Context> =
   }]
     ? { name?: Name, description?: Description, deprecationReason?: DeprecationReason }
       & ValidateRuntimeTypes<RuntimeTypes, Type, ResolverFunction, Context>
-      & (
-          [unknown] extends [ResolverFunction] 
-            ? {resolve?: never, args?: never} 
-            : [ResolverFunction] extends [ValidateResolverFunction<ResolverFunction, ArgsConstructor, Root, Context>]
-              ? [unknown] extends [ArgsConstructor]
-                ? {
-                  resolve: ResolverFunction, 
-                  args?: never
-                }
-                : {
-                    resolve: ResolverFunction, 
-                  } & (
-                    [ResolverFunction] extends [(first: infer First, second: infer Second, third: infer Third) => infer ReturnType]
-                      ? [unknown] extends [First] 
-                        ? {args?: never}
-                        : ValidateArgs<CompileTimeTypeFromConstructor<ArgsConstructor>>
-                      : {args?: never}
-                  )
-              : {resolve: ["ResolverFunction isn't valid", ValidateResolverFunction<ResolverFunction, ArgsConstructor, Root, Context>, Root]}
-        )
+      & ValidateResolverFunctionAndArgs<ResolverFunction, ArgsConstructor, Root, Context>
       & GenerateNullabilityAndArrayRuntimeOptions<
           [ResolverFunction] extends [(...args: infer X) => Promise<infer ReturnType>] ? ReturnType : unknown
         >
