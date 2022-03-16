@@ -14,8 +14,7 @@
     "esModuleInterop": true,
     "declaration": true,
     "strict": true,
-    "composite": true,
-    "noErrorTruncation": true
+    "composite": true
     // "disableSourceOfProjectReferenceRedirect": true,
     // "declaration": true,
     // "target": "es5",

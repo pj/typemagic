@@ -1,5 +1,6 @@
 import { QueryRoot, schema } from "../graphql/schema";
 import { registerEnum, ScalarTypes } from "../graphql/types";
+import { argsFields } from "../graphql/common";
 
 export class Test {
   constructor(
@@ -114,7 +115,7 @@ export class NestedChildArgs {
 }
 
 const registeredArgs =
-  {
+{
       stringField: { type: ScalarTypes.STRING },
       booleanField: { type: ScalarTypes.BOOLEAN },
       dateField: { type: ScalarTypes.DATE },
@@ -188,7 +189,8 @@ const registeredArgs =
           nullableItemsField: { type: ScalarTypes.STRING, array: "nullable_items" }
         }
       }
-    } as const;
+    } as const
+  ;
 
 schema({
   queries: {

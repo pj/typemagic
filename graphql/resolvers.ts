@@ -33,7 +33,7 @@ export type ValidateResolver<Resolver, Root, Context> =
 
 export type ValidateResolverFunction<ResolverFunction, Root, Context> =
   [unknown] extends [ResolverFunction]
-    ? unknown
+    ? {resolve?: never, argsFields?: "No resolve function so no args"}
     : [ResolverFunction] extends [(first: infer First, second: infer Second, third: infer Third) => infer ReturnType]
       ? [Exact<First, Root>] extends [true]
         ? [ResolverFunction] extends [
