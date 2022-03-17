@@ -2,8 +2,10 @@ import { ValidateArgs, ValidateRuntimeTypes } from "./common";
 import { 
   Constructor,
   Exact,
-  GenerateNullabilityAndArrayRuntimeOptions, RegisteredEnum, ScalarTypes, 
+  GenerateNullabilityAndArrayRuntimeOptions, GetRawReturnType, RegisteredEnum, ScalarTypes, 
 } from "./types";
+
+// export type Name<X extends string, C> = Name<X, C> | null;
 
 export type ValidateResolvers<Resolvers, Root, Context> =
   {
@@ -25,10 +27,10 @@ export type ValidateResolver<Resolver, Root, Context> =
     objectFields?: infer RuntimeTypes
   }]
     ? { description?: Description, deprecationReason?: DeprecationReason, alias?: Alias }
-      & ValidateRuntimeTypes<RuntimeTypes, ResolverFunction, Context, ScalarType>
+      & ValidateRuntimeTypes<RuntimeTypes, ResolverFunction, Context, ScalarType, ObjectName>
       & ValidateResolverFunction<ResolverFunction, Root, Context>
       & GenerateNullabilityAndArrayRuntimeOptions<
-          [ResolverFunction] extends [(...args: infer X) => Promise<infer ReturnType>] ? ReturnType : unknown
+          [ResolverFunction] extends [(...args: infer X) => GetRawReturnType<infer ReturnType>] ? ReturnType : unknown
         >
     : {resolve: ["Can't infer type", Resolver, Root, Context]}
 

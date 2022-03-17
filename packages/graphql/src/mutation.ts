@@ -38,7 +38,7 @@ export type ValidateMutation<Resolver, Context> =
       & ValidateRuntimeTypes<RuntimeTypes, MutationFunction, Context, Type>
       & ValidateMutationFunction<MutationFunction, Context> 
       & GenerateNullabilityAndArrayRuntimeOptions<
-          [MutationFunction] extends [(...args: infer X) => Promise<infer ReturnType>] ? ReturnType : unknown
+          [MutationFunction] extends [(...args: infer X) => infer ReturnType] ? ReturnType : unknown
         >
     : {resolve: ["Can't infer type", Resolver, Context]}
 

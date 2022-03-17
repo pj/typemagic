@@ -44,8 +44,8 @@ export function argsFields<FunctionArgs extends ValidateArgs<FunctionArgs>>(args
   return args;
 }
 
-export type ValidateRuntimeTypes<RuntimeTypes, ResolverFunction, Context, ScalarType> =
-  [ResolverFunction] extends [(first: infer First, second: infer Second, third: infer Third) => Promise<infer ReturnType>]
+export type ValidateRuntimeTypes<RuntimeTypes, ResolverFunction, Context, ScalarType, ObjectName> =
+  [ResolverFunction] extends [(first: infer First, second: infer Second, third: infer Third) => infer ReturnType]
     ? [IsCompileTimeScalar<ReturnType>] extends [true]
       ? {
           type: GetRuntimeScalarType<ReturnType>,
@@ -72,5 +72,6 @@ export type ValidateRuntimeTypes<RuntimeTypes, ResolverFunction, Context, Scalar
           objectName?: never
         }
       : {
-          objectFields: "Unable to infer return type of function"
+          objectFields: "Unable to infer return type of function",
+          objectName: "Unable to infer return type of function"
         }

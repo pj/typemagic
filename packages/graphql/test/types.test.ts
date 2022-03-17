@@ -135,18 +135,3 @@ type II = GetRuntimeType<(TestInputObject | null)[]>
 testType<II>(TestInputObject);
 
 // Resolver
-
-type X<Y> = [Y] extends [{thing?: (t: infer T) => infer R}]
-              ? Y
-              : [Y] extends [{thing?: unknown}]
-                ? {thing?: unknown}
-                : {thing: never}
-
-testType<X<{thing?: unknown}>>({});
-testType<X<{thing?: (t: string) => string}>>({});
-
-enum Blah {
-  asdf,
-  quer
-}
-type  Z = IsEnum<typeof Blah>

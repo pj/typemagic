@@ -1,24 +1,24 @@
-import { 
-  GraphQLBoolean, 
-  GraphQLField, 
-  GraphQLFieldConfig, 
-  GraphQLFieldConfigArgumentMap, 
-  GraphQLFieldConfigMap, 
-  GraphQLFloat, 
-  GraphQLInputFieldConfig, 
-  GraphQLInputFieldConfigMap, 
-  GraphQLInputObjectType, 
-  GraphQLInputType, 
-  GraphQLInt, 
-  GraphQLList, 
-  GraphQLNonNull, 
-  GraphQLObjectType, 
-  GraphQLOutputType, 
-  GraphQLScalarType, 
-  GraphQLSchema, 
-  GraphQLSchemaConfig, 
-  GraphQLString, 
-  GraphQLType 
+import {
+  GraphQLBoolean,
+  GraphQLField,
+  GraphQLFieldConfig,
+  GraphQLFieldConfigArgumentMap,
+  GraphQLFieldConfigMap,
+  GraphQLFloat,
+  GraphQLInputFieldConfig,
+  GraphQLInputFieldConfigMap,
+  GraphQLInputObjectType,
+  GraphQLInputType,
+  GraphQLInt,
+  GraphQLList,
+  GraphQLNonNull,
+  GraphQLObjectType,
+  GraphQLOutputType,
+  GraphQLScalarType,
+  GraphQLSchema,
+  GraphQLSchemaConfig,
+  GraphQLString,
+  GraphQLType
 } from "graphql";
 import { GraphQLISODateTime } from "type-graphql";
 import { ValidateMutations } from "./mutation";
@@ -29,25 +29,25 @@ export class QueryRoot {
 
 }
 
-export type ValidateSchema<Schema, Context> = 
+export type ValidateSchema<Schema, Context> =
   [Schema] extends [
     {
       queries?: infer Queries,
-      mutations?: infer Mutations 
+      mutations?: infer Mutations
     }
   ]
-  ? 
-      (
-        [undefined] extends [Queries] 
-          ? {queries?: undefined}
-          : {queries: ValidateResolvers<Queries, QueryRoot, Context>}
-      ) 
-    & 
-      (
-        [undefined] extends [Mutations]
-          ? {mutations?: undefined}
-          : {mutations: ValidateMutations<Mutations, Context>}
-      )
+  ?
+    (
+      [undefined] extends [Queries]
+      ? { queries?: undefined }
+      : { queries: ValidateResolvers<Queries, QueryRoot, Context> }
+    )
+    &
+    (
+      [undefined] extends [Mutations]
+      ? { mutations?: undefined }
+      : { mutations: ValidateMutations<Mutations, Context> }
+    )
   : never
 
 type InputResolver = {
@@ -57,7 +57,7 @@ type InputResolver = {
   type?: ScalarTypes,
   nullable?: boolean,
   array?: ArrayTrilean,
-  inputFields?: {[key: string]: InputResolver},
+  inputFields?: { [key: string]: InputResolver },
   inputName: string,
   defaultValue: any
 }
@@ -69,10 +69,10 @@ type SchemaResolver = {
   type?: ScalarTypes,
   nullable?: boolean,
   array?: ArrayTrilean,
-  argsFields?: {[key: string]: InputResolver},
+  argsFields?: { [key: string]: InputResolver },
   resolve?: (args: any, root: any, context?: any) => any,
   objectName: string,
-  objectFields?: {[key: string]: SchemaResolver}
+  objectFields?: { [key: string]: SchemaResolver }
 }
 
 export function schema<Schema extends ValidateSchema<Schema, Context>, Context>(
@@ -86,7 +86,7 @@ export function schema<Schema extends ValidateSchema<Schema, Context>, Context>(
     for (let [fieldName, field] of Object.entries<SchemaResolver>(schema.queries)) {
       fields[field.alias || fieldName] = mapToGraphQLOutputField(field)
     }
-    config.query = 
+    config.query =
       new GraphQLObjectType({
         name: "Query",
         fields
@@ -97,9 +97,9 @@ export function schema<Schema extends ValidateSchema<Schema, Context>, Context>(
 }
 
 function mapOutputNullableAndArray(
-  type: GraphQLOutputType, 
+  type: GraphQLOutputType,
   options: {
-    nullable?: boolean, 
+    nullable?: boolean,
     array?: ArrayTrilean
   }
 ): GraphQLOutputType {
@@ -117,9 +117,9 @@ function mapOutputNullableAndArray(
 }
 
 function mapInputToNullableAndArray(
-  type: GraphQLInputType, 
+  type: GraphQLInputType,
   options: {
-    nullable?: boolean, 
+    nullable?: boolean,
     array?: ArrayTrilean
   }
 ): GraphQLInputType {
@@ -139,19 +139,19 @@ function mapInputToNullableAndArray(
 function mapToGraphQLOutputType(type: SchemaResolver): GraphQLOutputType {
   let output;
   switch (type.type) {
-    case ScalarTypes.BOOLEAN: 
+    case ScalarTypes.BOOLEAN:
       output = GraphQLBoolean;
       break;
-    case ScalarTypes.STRING: 
+    case ScalarTypes.STRING:
       output = GraphQLString;
       break;
-    case ScalarTypes.FLOAT: 
+    case ScalarTypes.FLOAT:
       output = GraphQLFloat;
       break;
-    case ScalarTypes.INT: 
+    case ScalarTypes.INT:
       output = GraphQLInt;
       break;
-    case ScalarTypes.DATE: 
+    case ScalarTypes.DATE:
       output = GraphQLISODateTime;
       break;
     default:
@@ -210,26 +210,26 @@ function mapToGraphQLOutputField(field: SchemaResolver): GraphQLFieldConfig<any,
 function mapToGraphQLInputType(type: InputResolver): GraphQLInputType {
   let output;
   switch (type.type) {
-    case ScalarTypes.BOOLEAN: 
+    case ScalarTypes.BOOLEAN:
       output = GraphQLBoolean;
       break;
-    case ScalarTypes.STRING: 
+    case ScalarTypes.STRING:
       output = GraphQLString;
       break;
-    case ScalarTypes.FLOAT: 
+    case ScalarTypes.FLOAT:
       output = GraphQLFloat;
       break;
-    case ScalarTypes.INT: 
+    case ScalarTypes.INT:
       output = GraphQLInt;
       break;
-    case ScalarTypes.DATE: 
+    case ScalarTypes.DATE:
       output = GraphQLISODateTime;
       break;
     default:
       const fields: GraphQLInputFieldConfigMap = {};
       if (type.inputFields) {
         for (let [fieldName, field] of Object.entries<InputResolver>(type.inputFields)) {
-          fields[field.alias || fieldName] =  {
+          fields[field.alias || fieldName] = {
             description: field.description,
             type: mapToGraphQLInputType(field),
             defaultValue: field.defaultValue,

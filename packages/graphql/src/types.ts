@@ -68,7 +68,18 @@ export type ArrayTrilean = boolean | "nullable_items" | undefined;
 export type BooleanOrUndefined = boolean | undefined;
 
 export type GetUnderlyingType<A> =
-  [Exclude<A, null | undefined>] extends [Array<infer T>] ? Exclude<T, null | undefined> : Exclude<A, null | undefined>
+  [Exclude<A, null | undefined>] extends [Promise<infer P>]
+    ? [Exclude<P, null | undefined>] extends [Array<infer T>] 
+      ? Exclude<T, null | undefined> 
+      : Exclude<P, null | undefined>
+    : [Exclude<A, null | undefined>] extends [Array<infer T>] 
+      ? Exclude<T, null | undefined> 
+      : Exclude<A, null | undefined>
+
+export type GetRawReturnType<P> =
+  [P] extends [Promise<infer T>]
+    ? T
+    : P
 
 export type GetRuntimeType<Item> =
   [GetUnderlyingType<Item>] extends [infer Type]

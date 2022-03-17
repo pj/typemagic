@@ -64,22 +64,25 @@ export class Args {
   }
 }
 
+const testObject = new Test(
+  "asdf",
+  false,
+  new Date(),
+  1,
+  1.0,
+  new RelatedClass("qwer"),
+  [new ArrayRelatedClass("test")],
+  // StringEnum.asdf,
+  // IntEnum.second,
+  ["goodbye"],
+  ["hello", "world"],
+  new RelatedClass("hello"),
+  null
+);
+
+
 export async function test(args: Args): Promise<Test> {
-  return new Test(
-    "asdf",
-    false,
-    new Date(),
-    1,
-    1.0,
-    new RelatedClass("qwer"),
-    [new ArrayRelatedClass("test")],
-    // StringEnum.asdf,
-    // IntEnum.second,
-    ["goodbye"],
-    ["hello", "world"],
-    new RelatedClass("hello"),
-    null
-  );
+  return testObject;
 }
 
 enum StringEnum {
