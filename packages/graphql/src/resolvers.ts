@@ -24,10 +24,10 @@ export type ValidateResolver<Resolver, Root, Context> =
     array?: infer ArrayType,
     argsFields?: infer ArgsRuntimeTypes,
     resolve?: infer ResolverFunction
-    objectFields?: infer RuntimeTypes
+    objectFields?: infer ObjectFields
   }]
     ? { description?: Description, deprecationReason?: DeprecationReason, alias?: Alias }
-      & ValidateRuntimeTypes<RuntimeTypes, ResolverFunction, Context, ScalarType, ObjectName>
+      & ValidateRuntimeTypes<ObjectFields, ResolverFunction, Context, ScalarType>
       & ValidateResolverFunction<ResolverFunction, Root, Context>
       & GenerateNullabilityAndArrayRuntimeOptions<
           [ResolverFunction] extends [(...args: infer X) => GetRawReturnType<infer ReturnType>] ? ReturnType : unknown

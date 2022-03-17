@@ -1,7 +1,6 @@
+- Verify root properties.
 - Generation code
 - Interfaces
 - Unions
-- description and deprecation reason
-- Multi level input and output objects.
+- Test multi level input and output objects.
 - Additional properties on output
-- Object from runtimetypes
