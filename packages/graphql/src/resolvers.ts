@@ -1,8 +1,11 @@
-import { ValidateArgs, ValidateRuntimeTypes } from "./common";
-import { 
-  Constructor,
+import { ValidateInputRuntimeTypes } from "./common";
+import {
   Exact,
-  GenerateNullabilityAndArrayRuntimeOptions, GetRawReturnType, RegisteredEnum, ScalarTypes, 
+  GenerateNullabilityAndArrayRuntimeOptions, 
+  GetRuntimeScalarType, 
+  GetUnderlyingType, 
+  IsCompileTimeScalar, 
+  IsNonNullCompileTimeScalar
 } from "./types";
 
 // export type Name<X extends string, C> = Name<X, C> | null;
@@ -10,10 +13,12 @@ import {
 export type ValidateResolvers<Resolvers, Root, Context> =
   {
     [Key in keyof Resolvers]:
-      ValidateResolver<Resolvers[Key], Root, Context>
+      [Key] extends [keyof Root]
+        ? ValidateResolver<Resolvers[Key], Root, Root[Key], Context>
+        : "Unknown key"
   }
 
-export type ValidateResolver<Resolver, Root, Context> =
+export type ValidateResolver<Resolver, Root, RootFieldType, Context> =
   [Resolver] extends [{
     type?: infer ScalarType
     alias?: infer Alias,
@@ -27,44 +32,112 @@ export type ValidateResolver<Resolver, Root, Context> =
     objectFields?: infer ObjectFields
   }]
     ? { description?: Description, deprecationReason?: DeprecationReason, alias?: Alias }
-      & ValidateRuntimeTypes<ObjectFields, ResolverFunction, Context, ScalarType>
-      & ValidateResolverFunction<ResolverFunction, Root, Context>
-      & GenerateNullabilityAndArrayRuntimeOptions<
-          [ResolverFunction] extends [(...args: infer X) => GetRawReturnType<infer ReturnType>] ? ReturnType : unknown
-        >
+      & ValidateResolverFunction<ResolverFunction, Root, ReturnTypeForRoot<ResolverFunction, RootFieldType>, ObjectFields, Context>
+      & GenerateNullabilityAndArrayRuntimeOptions<RootFieldType> 
     : {resolve: ["Can't infer type", Resolver, Root, Context]}
 
-export function resolver<Root, Context, Resolver extends ValidateResolver<Resolver, Root, Context>>(
-  root: Root | Constructor<Root>,
-  context: Context | Constructor<Context>,
-  resolver: Resolver
-) {
-  return resolver;
-}
+// export function resolver<Root, Context, Resolver extends ValidateResolver<Resolver, Root, Context>>(
+//   root: Root | Constructor<Root>,
+//   context: Context | Constructor<Context>,
+//   resolver: Resolver
+// ) {
+//   return resolver;
+// }
 
-export type ValidateResolverFunction<ResolverFunction, Root, Context> =
+export type ValidateResolverFunction<ResolverFunction, Root, RootFieldType, ObjectFields, Context> =
   [unknown] extends [ResolverFunction]
-    ? {resolve?: never, argsFields?: "No resolve function so no args"}
-    : [ResolverFunction] extends [(first: infer First, second: infer Second, third: infer Third) => infer ReturnType]
-      ? [Exact<First, Root>] extends [true]
-        ? [ResolverFunction] extends [
-            ((root: Root, context: Context) => ReturnType) 
-            | ((root: Root) => ReturnType) 
-            | (() => ReturnType)
-          ]
-            ? {
-                resolve: ResolverFunction,
-                argsFields?: never
+    ? (
+        NonNullScalar<RootFieldType, ScalarOrObjectType<RootFieldType, ObjectFields, Context>>
+        & { resolve?: never, argsFields?: never}
+      )
+    : [ResolverFunction] extends [(args: infer Args, root: infer X, context: infer Z) => infer ReturnType]
+      ? (
+          ScalarOrObjectType<RootFieldType, ObjectFields, Context> 
+          & ValidateInputRuntimeTypes<Args>
+          & { 
+              resolve: ((args: Args, root: Root, context: Context) => RootFieldType) 
+                      | ((args: Args, root: Root, context: Context) => Promise<RootFieldType>)
+            }
+        )
+      : [ResolverFunction] extends [(rootOrArgs: infer RootOrArgs, rootOrContext: infer RootOrContext) => infer ReturnType]
+        ? [Exact<RootOrArgs, Root>] extends [true]
+          ? (
+              ScalarOrObjectType<RootFieldType, ObjectFields, Context> 
+              & { 
+                  argsFields?: never,
+                  resolve: ((root: Root, context: Context) => RootFieldType) 
+                           | ((root: Root, context: Context) => Promise<RootFieldType>)
+                }
+            )
+          : (
+              ScalarOrObjectType<RootFieldType, ObjectFields, Context> 
+              & ValidateInputRuntimeTypes<RootOrArgs>
+              & { 
+                resolve: ((args: RootOrArgs, root: Root) => RootFieldType) 
+                         | ((args: RootOrArgs, root: Root) => Promise<RootFieldType>)
               }
-            : {resolve: {error: "Should not happen, make github issue.", function: ResolverFunction}}
-        : [ResolverFunction] extends [
-            ((args: First, root: Root, context: Context) => ReturnType) 
-            | ((args: First, root: Root) => ReturnType) 
-            | ((args: First) => ReturnType) 
-          ]
-            ? {
-                resolve: ResolverFunction,
+            )
+        : [ResolverFunction] extends [(rootOrArgs: infer RootOrArgs) => infer ReturnType]
+          ? [Exact<RootOrArgs, Root>] extends [true]
+            ? (
+                ScalarOrObjectType<RootFieldType, ObjectFields, Context> 
+                & { 
+                    argsFields?: never,
+                    resolve: ((root: Root) => RootFieldType) 
+                            | ((root: Root) => Promise<RootFieldType>)
+                  }
+              )
+            : (
+                ScalarOrObjectType<RootFieldType, ObjectFields, Context> 
+                & ValidateInputRuntimeTypes<RootOrArgs>
+                & { 
+                  resolve: ((args: RootOrArgs) => RootFieldType) 
+                          | ((args: RootOrArgs) => Promise<RootFieldType>)
+                }
+              )
+          : [ResolverFunction] extends [() => infer ReturnType]
+            ? (
+                ScalarOrObjectType<RootFieldType, ObjectFields, Context> 
+                & { 
+                    argsFields?: never,
+                    resolve: (() => RootFieldType) 
+                            | (() => Promise<RootFieldType>)
+                  }
+              )
+            : {
+                resolve: "Resolver function invalid"
               }
-              & ValidateArgs<First>
-            : {resolve: ["Resolver function should have format like (args: Args, root: Root, context: Context) => Promise<Something>", ResolverFunction]}
-      : never
+
+export type ScalarOrObjectType<RootFieldType, RuntimeTypes, Context> =
+  [IsCompileTimeScalar<RootFieldType>] extends [true]
+    ? {
+        type: GetRuntimeScalarType<RootFieldType>,
+        objectName?: never,
+        objectFields?: never
+      }
+    : {
+        objectName: string,
+        objectFields: {
+          [Key in keyof RuntimeTypes]:
+            [Key] extends [keyof GetUnderlyingType<RootFieldType>]
+              ? ValidateResolver<
+                  RuntimeTypes[Key],
+                  GetUnderlyingType<RootFieldType>, 
+                  GetUnderlyingType<RootFieldType>[Key], 
+                  Context
+                >
+              : ["here", RootFieldType]
+        }
+      }
+
+export type NonNullScalar<Scalar, Resolver> =
+  [IsNonNullCompileTimeScalar<Scalar>] extends [true]
+    ? GetRuntimeScalarType<Scalar> | Resolver
+    : Resolver
+
+export type ReturnTypeForRoot<ResolverFunction, RootFieldType> =
+  [RootFieldType] extends [unknown]
+    ? [ResolverFunction] extends [(...args: infer Args) => infer ReturnType]
+      ? ReturnType
+      : "Unable to determine return type for root query"
+    : RootFieldType

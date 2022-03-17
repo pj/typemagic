@@ -44,34 +44,35 @@ export function argsFields<FunctionArgs extends ValidateArgs<FunctionArgs>>(args
   return args;
 }
 
-export type ValidateRuntimeTypes<RuntimeTypes, ResolverFunction, Context, ScalarType> =
-  [ResolverFunction] extends [(first: infer First, second: infer Second, third: infer Third) => infer ReturnType]
-    ? [IsCompileTimeScalar<ReturnType>] extends [true]
-      ? {
-          type: GetRuntimeScalarType<ReturnType>,
-          objectFields?: "Runtime types not used when return type is scalar."
-          objectName?: never
-        }
-      : {
-          objectName: string
-          objectFields: {
-            [Key in keyof RuntimeTypes]:
-              [Key] extends [keyof GetUnderlyingType<ReturnType>]
-                ? ValidateResolver<
-                    RuntimeTypes[Key],
-                    GetUnderlyingType<ReturnType>, 
-                    Context
-                  >
-                : ["here", ReturnType]
-          }
-        }
-    : [ScalarType] extends [ScalarTypes]
-      ? {
-          type: ScalarType,
-          objectFields?: never,
-          objectName?: never
-        }
-      : {
-          objectFields: "Unable to infer return type of function",
-          objectName: "Unable to infer return type of function"
-        }
+// export type ValidateRuntimeTypes<RuntimeTypes, ResolverFunction, Context, ScalarType> =
+//   [ResolverFunction] extends [(first: infer First, second: infer Second, third: infer Third) => infer ReturnType]
+//     ? [IsCompileTimeScalar<ReturnType>] extends [true]
+//       ? {
+//           type: GetRuntimeScalarType<ReturnType>,
+//           objectFields?: "Runtime types not used when return type is scalar."
+//           objectName?: never
+//         }
+//       : {
+//           objectName: string
+//           objectFields: {
+//             [Key in keyof RuntimeTypes]:
+//               [Key] extends [keyof GetUnderlyingType<ReturnType>]
+//                 ? ValidateResolver<
+//                     RuntimeTypes[Key],
+//                     GetUnderlyingType<ReturnType>, 
+//                     GetUnderlyingType<ReturnType>[Key], 
+//                     Context
+//                   >
+//                 : ["here", ReturnType]
+//           }
+//         }
+//     : [ScalarType] extends [ScalarTypes]
+//       ? {
+//           type: ScalarType,
+//           objectFields?: never,
+//           objectName?: never
+//         }
+//       : {
+//           objectFields: "Unable to infer return type of function",
+//           objectName: "Unable to infer return type of function"
+//         }

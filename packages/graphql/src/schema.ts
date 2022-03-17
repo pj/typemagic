@@ -23,11 +23,17 @@ import {
 import { GraphQLISODateTime } from "type-graphql";
 import { ValidateMutations } from "./mutation";
 import { ArrayTrilean, Constructor, ScalarTypes } from "./types";
-import { ValidateResolvers } from "./resolvers"
+import { ValidateResolver, ValidateResolvers } from "./resolvers"
 
 export class QueryRoot {
 
 }
+
+export type ValidateQueries<Queries, QueryRoot, Context> =
+  {
+    [Key in keyof Queries]:
+      ValidateResolver<Queries[Key], QueryRoot, unknown, Context>
+  }
 
 export type ValidateSchema<Schema, Context> =
   [Schema] extends [
@@ -40,7 +46,7 @@ export type ValidateSchema<Schema, Context> =
     (
       [undefined] extends [Queries]
       ? { queries?: undefined }
-      : { queries: ValidateResolvers<Queries, QueryRoot, Context> }
+      : { queries: ValidateQueries<Queries, QueryRoot, Context> }
     )
     &
     (
