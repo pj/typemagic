@@ -1,48 +1,34 @@
-import { ValidateArgs, ValidateInputRuntimeTypes } from "./common";
+import { ValidateArgs } from "./common";
 import {
   Exact,
-  GenerateNullabilityAndArrayRuntimeOptions, 
-  GetRawReturnType, 
-  GetRuntimeScalarType, 
-  GetUnderlyingType, 
-  IsCompileTimeScalar, 
-  IsNonNullCompileTimeScalar,
-  IsRuntimeScalar,
-  ScalarTypes
+  GenerateNullabilityAndArrayRuntimeOptions,
+  GetRawReturnType,
+  GetRuntimeScalarType,
+  GetUnderlyingType,
+  IsCompileTimeScalar,
+  IsNonNullCompileTimeScalar
 } from "./types";
-
-// export type Name<X extends string, C> = Name<X, C> | null;
-
-// export type ValidateResolvers<Resolvers, Root, Context> =
-//   {
-//     [Key in keyof Resolvers]:
-//       [Key] extends [keyof Root]
-//         ? ValidateResolver<Resolvers[Key], Root, Root[Key], Context>
-//         : "Unknown key on root type"
-//   }
 
 export type ValidateResolver<Resolver, Root, RootFieldType, Context> =
   [Resolver] extends [{
-    type?: infer ScalarType
+    type?: infer Type
     alias?: infer Alias,
-    objectName?: infer ObjectName,
     description?: infer Description,
     deprecationReason?: infer DeprecationReason,
     nullable?: infer Nullability,
     array?: infer ArrayType,
     argsFields?: infer ArgsRuntimeTypes,
     resolve?: infer ResolverFunction
-    objectFields?: infer ObjectFields
   }]
     ? { description?: Description, deprecationReason?: DeprecationReason, alias?: Alias }
         & ValidateResolverFunction<
             ResolverFunction, 
             Root, 
             ReturnTypeForRoot<ResolverFunction, RootFieldType>, 
-            ObjectFields, 
+            GetObjectFieldsFromType<Type>, 
             Context
           >
-        & GenerateNullabilityAndArrayRuntimeOptions<ReturnTypeForRoot<ResolverFunction, RootFieldType>> 
+         
     : [Resolver] extends [infer OnlyScalar]
       ? [IsNonNullCompileTimeScalar<RootFieldType>] extends [true]
         ? GetRuntimeScalarType<RootFieldType>
@@ -51,16 +37,14 @@ export type ValidateResolver<Resolver, Root, RootFieldType, Context> =
 
 export type ValidateAdditionalResolver<Resolver, Root, Context> =
   [Resolver] extends [{
-    type?: infer ScalarType
+    type?: infer Type
     alias?: infer Alias,
-    objectName?: infer ObjectName,
     description?: infer Description,
     deprecationReason?: infer DeprecationReason,
     nullable?: infer Nullability,
     array?: infer ArrayType,
     argsFields?: infer ArgsRuntimeTypes,
     resolve?: infer ResolverFunction
-    objectFields?: infer ObjectFields
   }]
     ? [ResolverFunction] extends [(...args: infer X) => infer RT]
       ? { description?: Description, deprecationReason?: DeprecationReason, alias?: Alias }
@@ -68,10 +52,9 @@ export type ValidateAdditionalResolver<Resolver, Root, Context> =
               ResolverFunction, 
               Root, 
               ReturnTypeForResolver<ResolverFunction>, 
-              ObjectFields, 
+              GetObjectFieldsFromType<Type>, 
               Context
             >
-          & GenerateNullabilityAndArrayRuntimeOptions<ReturnTypeForResolver<ResolverFunction>> 
       : "Resolve function is required on additional fields"
     : "Resolve function is required on additional fields"
 
@@ -147,31 +130,39 @@ export type ValidateResolverFunction<ResolverFunction, Root, RootFieldType, Obje
                 resolve: "Resolver function invalid"
               }
 
-export type ScalarOrObjectType<RootFieldType, RuntimeTypes, Context> =
+export type ScalarOrObjectType<RootFieldType, ObjectFields, Context> =
   [IsCompileTimeScalar<RootFieldType>] extends [true]
     ? {
-        type: GetRuntimeScalarType<RootFieldType>,
-        objectName?: never,
-        objectFields?: never
+        type: 
+          NonNullScalar<
+            RootFieldType, 
+            {
+              scalar: GetRuntimeScalarType<RootFieldType>,
+              objectName?: never,
+              objectFields?: never
+            } & GenerateNullabilityAndArrayRuntimeOptions<RootFieldType>
+        >
       }
     : {
-        objectName: string,
-        objectFields: {
-          [Key in keyof RuntimeTypes]:
-            [Key] extends [keyof GetUnderlyingType<RootFieldType>]
-              ? ValidateResolver<
-                  RuntimeTypes[Key],
-                  GetUnderlyingType<RootFieldType>, 
-                  GetUnderlyingType<RootFieldType>[Key], 
-                  Context
-                >
-                // Additional properties on object fields are possible.
-              : ValidateAdditionalResolver<
-                  RuntimeTypes[Key],
-                  GetUnderlyingType<RootFieldType>, 
-                  Context
-                >
-        }
+        type: {
+          objectName: string,
+          objectFields: {
+            [Key in keyof ObjectFields]:
+              [Key] extends [keyof GetUnderlyingType<RootFieldType>]
+                ? ValidateResolver<
+                    ObjectFields[Key],
+                    GetUnderlyingType<RootFieldType>, 
+                    GetUnderlyingType<RootFieldType>[Key], 
+                    Context
+                  >
+                  // Additional properties on object fields are possible.
+                : ValidateAdditionalResolver<
+                    ObjectFields[Key],
+                    GetUnderlyingType<RootFieldType>, 
+                    Context
+                  >
+          }
+        } & GenerateNullabilityAndArrayRuntimeOptions<RootFieldType>
       }
 
 export type NonNullScalar<Scalar, Resolver> =
@@ -190,3 +181,8 @@ export type ReturnTypeForResolver<ResolverFunction> =
   [ResolverFunction] extends [(...args: infer Args) => infer ReturnType]
     ? GetRawReturnType<ReturnType>
     : "Unable to determine return type for root query"
+
+export type GetObjectFieldsFromType<Type> = 
+  [Type] extends [{
+    objectFields: infer ObjectFields
+  }] ? ObjectFields : unknown

@@ -209,92 +209,113 @@ schema(
   {
   queries: {
     testQuery: {
-      objectName: "Test",
       resolve: test,
       argsFields: registeredArgs,
-      objectFields: {
-        additionalFieldScalar: {
-          objectName: "AdditionalRelatedClass",
-          objectFields: {
-            testField: ScalarTypes.STRING
-          },
-          resolve: async () => {
-            return new RelatedClass("additional field test");
-          }
-        },
-        additionalFieldScalarObject: {
-          type: ScalarTypes.STRING,
-          resolve: async () => {
-            return "asdf"
-          }
-        },
-        // stringField: resolver(Test, Context, {
-        //   type: ScalarTypes.STRING,
-        //   resolve: async (root: Test) => {
-        //     return `${root.stringField} is being resolved`;
-        //   }
-        // }),
-        booleanField: ScalarTypes.BOOLEAN,
-        dateField: { type: ScalarTypes.DATE, nullable: true },
-        // stringEnumField: { type: registerEnum(StringEnum) },
-        // numberEnumField: { type: registerEnum(IntEnum) },
-        intField: { type: ScalarTypes.INT },
-        floatField: { type: ScalarTypes.FLOAT },
-        relatedField: {
-          objectName: "RelatedClass",
-          objectFields: {
-            testField: {
-              type: ScalarTypes.STRING
+      type: {
+        objectName: "Test",
+        objectFields: {
+          additionalFieldScalar: {
+            type: {
+              objectName: "AdditionalRelatedClass",
+              objectFields: {
+                testField: ScalarTypes.STRING
+              },
+            },
+            resolve: async () => {
+              return new RelatedClass("additional field test");
             }
           },
-          resolve: async (root: Test) => {
-            return new RelatedClass(`${root.intField} times`);
+          additionalFieldScalarObject: {
+            type: ScalarTypes.STRING,
+            resolve: async () => {
+              return "asdf"
+            }
           },
-        },
-        arrayRelatedField: {
-          objectName: "ArrayRelatedClass",
-          objectFields: {
-            asdfField: { type: ScalarTypes.STRING }
+          // stringField: resolver(Test, Context, {
+          //   type: ScalarTypes.STRING,
+          //   resolve: async (root: Test) => {
+          //     return `${root.stringField} is being resolved`;
+          //   }
+          // }),
+          booleanField: ScalarTypes.BOOLEAN,
+          dateField: { 
+            type: {
+              scalar: ScalarTypes.DATE, 
+              nullable: true 
+            }
           },
-          array: true,
-          resolve: async () => {
-            return [new ArrayRelatedClass("array related")];
+          // stringEnumField: { type: registerEnum(StringEnum) },
+          // numberEnumField: { type: registerEnum(IntEnum) },
+          intField: { type: ScalarTypes.INT },
+          floatField: { type: ScalarTypes.FLOAT },
+          relatedField: {
+            type: {
+              objectName: "RelatedClass",
+              objectFields: {
+                testField: {
+                  type: ScalarTypes.STRING
+                }
+              },
+            },
+            resolve: async (root: Test) => {
+              return new RelatedClass(`${root.intField} times`);
+            },
           },
-        },
-        arrayField: {
-          type: ScalarTypes.STRING,
-          array: true,
-          resolve: async (root: Test) => {
-            return root.arrayField;
+          arrayRelatedField: {
+            type: {
+              objectName: "ArrayRelatedClass",
+              objectFields: {
+                asdfField: { type: ScalarTypes.STRING }
+              },
+              array: true,
+            },
+            resolve: async () => {
+              return [new ArrayRelatedClass("array related")];
+            },
+          },
+          arrayField: {
+            type: {
+              scalar: ScalarTypes.STRING,
+              array: true
+            },
+            resolve: async (root: Test) => {
+              return root.arrayField;
+            }
+          },
+          nullableArrayField: {
+            type: {
+              scalar: ScalarTypes.STRING,
+              nullable: true,
+              array: true,
+            },
+            resolve: async (root: Test): Promise<string[] | null> => {
+              return root.nullableArrayField
+            }
+          },
+          queriedField: {
+            type: {
+              objectName: "RelatedClass",
+              objectFields: {
+                testField: { type: ScalarTypes.STRING }
+              },
+            },
+            argsFields: registeredArgs,
+            resolve: async (args: Args, root: Test): Promise<RelatedClass> => {
+              return root.queriedField;
+            }
+          },
+          nullableRelatedField: {
+            type: {
+              objectName: "RelatedClass",
+              objectFields: {
+                testField: { type: ScalarTypes.STRING }
+              },
+              nullable: true,
+            },
+            resolve: async (root: Test) => {
+              return root.nullableRelatedField;
+            },
           }
-        },
-        nullableArrayField: {
-          type: ScalarTypes.STRING,
-          nullable: true,
-          array: true,
-          resolve: async (root: Test): Promise<string[] | null> => {
-            return root.nullableArrayField
-          }
-        },
-        queriedField: {
-          objectName: "RelatedClass",
-          objectFields: {
-            testField: { type: ScalarTypes.STRING }
-          },
-          argsFields: registeredArgs,
-          resolve: async (args: Args, root: Test): Promise<RelatedClass> => {
-            return root.queriedField;
-          }
-        },
-        nullableRelatedField: {
-          objectName: "RelatedClass",
-          objectFields: {
-            testField: { type: ScalarTypes.STRING }
-          },
-          nullable: true,
-          resolve: async (root: Test) => {
-            return root.nullableRelatedField;
-          },
         }
       }
     }
