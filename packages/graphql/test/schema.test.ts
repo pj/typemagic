@@ -1,4 +1,4 @@
-import { resolver, ScalarTypes, schema } from "../src";
+import { ScalarTypes, schema } from "../src";
 
 export class Test {
   constructor(
@@ -213,14 +213,14 @@ schema(
       resolve: test,
       argsFields: registeredArgs,
       objectFields: {
-        stringField: resolver(Test, Context, {
-          type: ScalarTypes.STRING,
-          resolve: async (root: Test) => {
-            return `${root.stringField} is being resolved`;
-          }
-        }),
-        booleanField: { type: ScalarTypes.BOOLEAN },
-        dateField: { type: ScalarTypes.DATE },
+        // stringField: resolver(Test, Context, {
+        //   type: ScalarTypes.STRING,
+        //   resolve: async (root: Test) => {
+        //     return `${root.stringField} is being resolved`;
+        //   }
+        // }),
+        booleanField: ScalarTypes.BOOLEAN,
+        dateField: { type: ScalarTypes.DATE, nullable: true },
         // stringEnumField: { type: registerEnum(StringEnum) },
         // numberEnumField: { type: registerEnum(IntEnum) },
         intField: { type: ScalarTypes.INT },

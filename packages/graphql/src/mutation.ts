@@ -1,4 +1,4 @@
-import { ValidateArgs, ValidateRuntimeTypes } from "./common"
+import { ValidateArgs } from "./common"
 import { CompileTimeTypeFromConstructor, GenerateNullabilityAndArrayRuntimeOptions } from "./types"
 
 // export type ValidateMutationFunction<ResolverFunction, ArgsConstructor, Context> =
@@ -16,49 +16,50 @@ import { CompileTimeTypeFromConstructor, GenerateNullabilityAndArrayRuntimeOptio
 export type ValidateMutations<Mutations, Context> =
   {
     [Key in keyof Mutations]:
-      ValidateMutation<Mutations[Key], Context>
+    undefined
+      // ValidateMutation<Mutations[Key], Context>
   }
 
 
-export type ValidateMutation<Resolver, Context> =
-  [Resolver] extends [{
-    type?: infer Type,
-    alias?: infer Alias,
-    objectName?: infer ObjectName,
-    description?: infer Description,
-    deprecationReason?: infer DeprecationReason,
-    nullable?: infer Nullability,
-    array?: infer ArrayType,
-    argsFields?: infer ArgsRuntimeTypes
-    mutate?: infer MutationFunction
-    objectFields?: infer RuntimeTypes
-  }]
-    ? 
-      { description?: Description, deprecationReason?: DeprecationReason, alias?: Alias }
-      & ValidateRuntimeTypes<RuntimeTypes, MutationFunction, Context, Type>
-      & ValidateMutationFunction<MutationFunction, Context> 
-      & GenerateNullabilityAndArrayRuntimeOptions<
-          [MutationFunction] extends [(...args: infer X) => infer ReturnType] ? ReturnType : unknown
-        >
-    : {resolve: ["Can't infer type", Resolver, Context]}
+// export type ValidateMutation<Resolver, Context> =
+//   [Resolver] extends [{
+//     type?: infer Type,
+//     alias?: infer Alias,
+//     objectName?: infer ObjectName,
+//     description?: infer Description,
+//     deprecationReason?: infer DeprecationReason,
+//     nullable?: infer Nullability,
+//     array?: infer ArrayType,
+//     argsFields?: infer ArgsRuntimeTypes
+//     mutate?: infer MutationFunction
+//     objectFields?: infer RuntimeTypes
+//   }]
+//     ? 
+//       { description?: Description, deprecationReason?: DeprecationReason, alias?: Alias }
+//       & ValidateRuntimeTypes<RuntimeTypes, MutationFunction, Context, Type>
+//       & ValidateMutationFunction<MutationFunction, Context> 
+//       & GenerateNullabilityAndArrayRuntimeOptions<
+//           [MutationFunction] extends [(...args: infer X) => infer ReturnType] ? ReturnType : unknown
+//         >
+//     : {resolve: ["Can't infer type", Resolver, Context]}
 
-export type ValidateMutationFunction<MutationFunction, Context> =
-  [unknown] extends [MutationFunction]
-    ? {mutate?: never, argsFields?: never}
-    : [MutationFunction] extends [
-        ((context: Context) => infer ReturnType) 
-        | (() => infer ReturnType)
-      ]
-        ? {
-            mutate: MutationFunction,
-            argsFields?: never
-          }
-          : [MutationFunction] extends [
-              ((args: infer Args, context: Context) => infer ReturnType) 
-              | ((args: infer Args) => infer ReturnType) 
-            ]
-              ? {
-                  resolve: MutationFunction,
-                }
-                & ValidateArgs<Args>
-              : {resolve: "Mutate function exists, but doesn't not match expected type: (args: Args, context: Contest) => Promise<Outupt>"}
+// export type ValidateMutationFunction<MutationFunction, Context> =
+//   [unknown] extends [MutationFunction]
+//     ? {mutate?: never, argsFields?: never}
+//     : [MutationFunction] extends [
+//         ((context: Context) => infer ReturnType) 
+//         | (() => infer ReturnType)
+//       ]
+//         ? {
+//             mutate: MutationFunction,
+//             argsFields?: never
+//           }
+//           : [MutationFunction] extends [
+//               ((args: infer Args, context: Context) => infer ReturnType) 
+//               | ((args: infer Args) => infer ReturnType) 
+//             ]
+//               ? {
+//                   resolve: MutationFunction,
+//                 }
+//                 & ValidateArgs<Args>
+//               : {resolve: "Mutate function exists, but doesn't not match expected type: (args: Args, context: Contest) => Promise<Outupt>"}

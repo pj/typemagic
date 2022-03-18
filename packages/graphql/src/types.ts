@@ -56,11 +56,14 @@ export type GetRuntimeScalarType<Scalar> =
       : [Item] extends [boolean]
         ? ScalarTypes.BOOLEAN
         : [Item] extends [string]
-          ? [string] extends [Item] 
-            ? ScalarTypes.STRING
-            : RegisteredEnum<{[key: string]: string}>
+          ? ScalarTypes.STRING
           : [Item] extends [number]
-            ? ScalarTypes.FLOAT | ScalarTypes.INT | RegisteredEnum<{[key: number]: string}>
+            ? ScalarTypes.INT | ScalarTypes.FLOAT
+          // ? [string] extends [Item] 
+          //   ? ScalarTypes.STRING
+          //   : RegisteredEnum<{[key: string]: string}>
+          // : [Item] extends [number]
+          //   ? ScalarTypes.FLOAT | ScalarTypes.INT | RegisteredEnum<{[key: number]: string}>
             : "Scalar Type not found"
     : "Should not happen"
 
