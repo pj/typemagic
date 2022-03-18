@@ -23,7 +23,7 @@ import {
 import { GraphQLISODateTime } from "type-graphql";
 import { ValidateMutations } from "./mutation";
 import { ArrayTrilean, Constructor, ScalarTypes } from "./types";
-import { ValidateResolver, ValidateResolvers } from "./resolvers"
+import { ValidateResolver } from "./resolvers"
 
 export class QueryRoot {
 

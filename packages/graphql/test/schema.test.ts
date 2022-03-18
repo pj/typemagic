@@ -213,6 +213,21 @@ schema(
       resolve: test,
       argsFields: registeredArgs,
       objectFields: {
+        additionalFieldScalar: {
+          objectName: "AdditionalRelatedClass",
+          objectFields: {
+            testField: ScalarTypes.STRING
+          },
+          resolve: async () => {
+            return new RelatedClass("additional field test");
+          }
+        },
+        additionalFieldScalarObject: {
+          type: ScalarTypes.STRING,
+          resolve: async () => {
+            return "asdf"
+          }
+        },
         // stringField: resolver(Test, Context, {
         //   type: ScalarTypes.STRING,
         //   resolve: async (root: Test) => {

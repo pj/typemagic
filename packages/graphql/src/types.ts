@@ -84,12 +84,12 @@ export type GetRawReturnType<P> =
     ? T
     : P
 
-export type GetRuntimeType<Item> =
-  [GetUnderlyingType<Item>] extends [infer Type]
-    ? [GetRuntimeScalarType<Type>] extends ["Scalar Type not found"]
-      ? Constructor<Type>
-      : GetRuntimeScalarType<Type> 
-    : "Should not happen"
+// export type GetRuntimeType<Item> =
+//   [GetUnderlyingType<Item>] extends [infer Type]
+//     ? [GetRuntimeScalarType<Type>] extends ["Scalar Type not found"]
+//       ? Constructor<Type>
+//       : GetRuntimeScalarType<Type> 
+//     : "Should not happen"
 
 export type IsRuntimeScalar<Item> =
   [GetUnderlyingType<Item>] extends [infer Type]

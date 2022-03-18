@@ -1,6 +1,11 @@
-- Verify root properties.
-- Generation code
+- Additional properties on output
+- Fix mutations.
+- Handle enums
 - Interfaces
 - Unions
+- Type checking functions and prelude types.
+- Generation code
+- Test Generated code
 - Test multi level input and output objects.
-- Additional properties on output
+- Client generation
+- Clean up giant resolve function type.

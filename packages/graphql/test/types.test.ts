@@ -1,4 +1,4 @@
-import { GenerateArrayTrilean, GenerateReturnType, GetRuntimeType, IsEnum, ScalarTypes } from "../src/types";
+import { GenerateArrayTrilean, GenerateReturnType, IsEnum, ScalarTypes } from "../src/types";
 import { TestInputObject } from "./schema.test";
 
 type Extends<A, B> = A extends B ? true : false;
@@ -88,50 +88,50 @@ type GSUN = GenerateArrayTrilean<(string | null)[] | undefined>
 testType<GSUN>("nullable_items");
 
 // Test underlying runtime type
-type SANU = GetRuntimeType<string[] | null | undefined>
-testType<SANU>(ScalarTypes.STRING);
-type SAU = GetRuntimeType<string[] | undefined>
-testType<SAU>(ScalarTypes.STRING);
-type SAN = GetRuntimeType<string[] | null>
-testType<SAN>(ScalarTypes.STRING);
-type SA = GetRuntimeType<string[]>
-testType<SA>(ScalarTypes.STRING);
-type SNU = GetRuntimeType<string | null | undefined>
-testType<SNU>(ScalarTypes.STRING);
-type SN = GetRuntimeType<string | null>
-testType<SN>(ScalarTypes.STRING);
-type S = GetRuntimeType<string>
-testType<S>(ScalarTypes.STRING);
-type SINU = GetRuntimeType<(string | null)[] | null | undefined>
-testType<SINU>(ScalarTypes.STRING);
-type SIN = GetRuntimeType<(string | null)[] | null>
-testType<SIN>(ScalarTypes.STRING);
-type SIU = GetRuntimeType<(string | null)[] | undefined>
-testType<SIU>(ScalarTypes.STRING);
-type SI = GetRuntimeType<(string | null)[]>
-testType<SI>(ScalarTypes.STRING);
+// type SANU = GetRuntimeType<string[] | null | undefined>
+// testType<SANU>(ScalarTypes.STRING);
+// type SAU = GetRuntimeType<string[] | undefined>
+// testType<SAU>(ScalarTypes.STRING);
+// type SAN = GetRuntimeType<string[] | null>
+// testType<SAN>(ScalarTypes.STRING);
+// type SA = GetRuntimeType<string[]>
+// testType<SA>(ScalarTypes.STRING);
+// type SNU = GetRuntimeType<string | null | undefined>
+// testType<SNU>(ScalarTypes.STRING);
+// type SN = GetRuntimeType<string | null>
+// testType<SN>(ScalarTypes.STRING);
+// type S = GetRuntimeType<string>
+// testType<S>(ScalarTypes.STRING);
+// type SINU = GetRuntimeType<(string | null)[] | null | undefined>
+// testType<SINU>(ScalarTypes.STRING);
+// type SIN = GetRuntimeType<(string | null)[] | null>
+// testType<SIN>(ScalarTypes.STRING);
+// type SIU = GetRuntimeType<(string | null)[] | undefined>
+// testType<SIU>(ScalarTypes.STRING);
+// type SI = GetRuntimeType<(string | null)[]>
+// testType<SI>(ScalarTypes.STRING);
 
-type IANU = GetRuntimeType<TestInputObject[] | null | undefined>
-testType<IANU>(TestInputObject);
-type IAU = GetRuntimeType<TestInputObject[] | undefined>
-testType<IAU>(TestInputObject);
-type IAN = GetRuntimeType<TestInputObject[] | null>
-testType<IAN>(TestInputObject);
-type IA = GetRuntimeType<TestInputObject[]>
-testType<IA>(TestInputObject);
-type INU = GetRuntimeType<TestInputObject | null | undefined>
-testType<INU>(TestInputObject);
-type IN = GetRuntimeType<TestInputObject | null>
-testType<IN>(TestInputObject);
-type I = GetRuntimeType<TestInputObject>
-testType<I>(TestInputObject);
-type IINU = GetRuntimeType<(TestInputObject | null)[] | null | undefined>
-testType<IINU>(TestInputObject);
-type IIU = GetRuntimeType<(TestInputObject | null)[] | undefined>
-testType<IIU>(TestInputObject);
-type IIN = GetRuntimeType<(TestInputObject | null)[] | null>
-testType<IIN>(TestInputObject);
-type II = GetRuntimeType<(TestInputObject | null)[]>
-testType<II>(TestInputObject);
+// type IANU = GetRuntimeType<TestInputObject[] | null | undefined>
+// testType<IANU>(TestInputObject);
+// type IAU = GetRuntimeType<TestInputObject[] | undefined>
+// testType<IAU>(TestInputObject);
+// type IAN = GetRuntimeType<TestInputObject[] | null>
+// testType<IAN>(TestInputObject);
+// type IA = GetRuntimeType<TestInputObject[]>
+// testType<IA>(TestInputObject);
+// type INU = GetRuntimeType<TestInputObject | null | undefined>
+// testType<INU>(TestInputObject);
+// type IN = GetRuntimeType<TestInputObject | null>
+// testType<IN>(TestInputObject);
+// type I = GetRuntimeType<TestInputObject>
+// testType<I>(TestInputObject);
+// type IINU = GetRuntimeType<(TestInputObject | null)[] | null | undefined>
+// testType<IINU>(TestInputObject);
+// type IIU = GetRuntimeType<(TestInputObject | null)[] | undefined>
+// testType<IIU>(TestInputObject);
+// type IIN = GetRuntimeType<(TestInputObject | null)[] | null>
+// testType<IIN>(TestInputObject);
+// type II = GetRuntimeType<(TestInputObject | null)[]>
+// testType<II>(TestInputObject);
 
-// Resolver
+// // Resolver
