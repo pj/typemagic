@@ -1,9 +1,10 @@
 - [x] Additional properties on output
-- [ ] Move object details back into type field.
+- [x] Move object details back into type field.
 - [ ] Handle enums
 - [ ] Interfaces
 - [ ] Unions
 - [ ] Fix mutations.
+- [ ] Fix descriptions and deprecation reasons.
 - Helper functions for checking types outside using schema.
 - Generation code
 - Test Generated code

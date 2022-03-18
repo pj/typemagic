@@ -135,3 +135,10 @@ testType<GSUN>("nullable_items");
 // testType<II>(TestInputObject);
 
 // // Resolver
+
+enum TestEnum {
+  ASDF = "ASDF",
+  QWER = "QWER"
+}
+
+type X = typeof TestEnum extends {[key: string]: string} ? true : false

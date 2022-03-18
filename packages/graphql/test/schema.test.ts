@@ -9,8 +9,8 @@ export class Test {
     public floatField: number,
     public relatedField: RelatedClass,
     public arrayRelatedField: ArrayRelatedClass[],
-    // public stringEnumField: StringEnum,
-    // public numberEnumField: IntEnum,
+    public stringEnumField: StringEnum,
+    public numberEnumField: IntEnum,
     public arrayField: string[],
     public nullableArrayField: string[] | null,
     public queriedField: RelatedClass,
@@ -64,6 +64,16 @@ export class Args {
   }
 }
 
+enum StringEnum {
+  erer = "erer",
+  asdf = "asdf"
+}
+
+enum IntEnum {
+  first,
+  second
+}
+
 const testObject = new Test(
   "asdf",
   false,
@@ -72,8 +82,8 @@ const testObject = new Test(
   1.0,
   new RelatedClass("qwer"),
   [new ArrayRelatedClass("test")],
-  // StringEnum.asdf,
-  // IntEnum.second,
+  StringEnum.asdf,
+  IntEnum.second,
   ["goodbye"],
   ["hello", "world"],
   new RelatedClass("hello"),
@@ -83,16 +93,6 @@ const testObject = new Test(
 
 export async function test(args: Args): Promise<Test> {
   return testObject;
-}
-
-enum StringEnum {
-  erer = "erer",
-  asdf = "asdf"
-}
-
-enum IntEnum {
-  first,
-  second
 }
 
 export class ChildArgs {
@@ -244,8 +244,13 @@ schema(
               nullable: true 
             }
           },
-          // stringEnumField: { type: registerEnum(StringEnum) },
-          // numberEnumField: { type: registerEnum(IntEnum) },
+          stringEnumField: { type: {enum: StringEnum} },
+          numberEnumField: { 
+            type: {enum: IntEnum},
+            resolve: (): IntEnum => {
+              return IntEnum.first;
+            }
+          },
           intField: { type: ScalarTypes.INT },
           floatField: { type: ScalarTypes.FLOAT },
           relatedField: {
