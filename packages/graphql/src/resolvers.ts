@@ -11,7 +11,8 @@ import {
 
 export type ValidateResolver<Resolver, Root, RootFieldType, Context> =
   [Resolver] extends [{
-    type?: infer Type
+    type?: infer Type,
+    enum?: infer Enum,
     alias?: infer Alias,
     description?: infer Description,
     deprecationReason?: infer DeprecationReason,
@@ -19,14 +20,17 @@ export type ValidateResolver<Resolver, Root, RootFieldType, Context> =
     resolve?: infer ResolverFunction
   }]
     ? { description?: Description, deprecationReason?: DeprecationReason, alias?: Alias }
-        & ValidateResolverFunction<
-            ResolverFunction, 
-            Root, 
-            ReturnTypeForRoot<ResolverFunction, RootFieldType>, 
-            GetObjectFieldsFromType<Type>, 
-            Context
+        & NonNullEnum<
+            RootFieldType, 
+            Enum,
+            ValidateResolverFunction<
+              ResolverFunction, 
+              Root, 
+              ReturnTypeForRoot<ResolverFunction, RootFieldType>, 
+              GetObjectFieldsOrEnumFromType<Type>, 
+              Context
+            >
           >
-         
     : [IsNonNullCompileTimeScalar<RootFieldType>] extends [true]
       ? GetRuntimeScalarType<RootFieldType>
       : "Can't infer resolver type"
@@ -46,7 +50,7 @@ export type ValidateAdditionalResolver<Resolver, Root, Context> =
               ResolverFunction, 
               Root, 
               ReturnTypeForResolver<ResolverFunction>, 
-              GetObjectFieldsFromType<Type>, 
+              GetObjectFieldsOrEnumFromType<Type>, 
               Context
             >
       : "Resolve function is required on additional fields"
@@ -126,7 +130,7 @@ export type ValidateResolverFunction<ResolverFunction, Root, RootFieldType, Obje
 
 export type ScalarOrObjectType<RootFieldType, ObjectFields, Context> =
   [ObjectFields] extends [{enum: infer Enum}] 
-    ? { 
+    ?  { 
         type: {
           enum: Enum 
         } & GenerateNullabilityAndArrayRuntimeOptions<RootFieldType>
@@ -170,6 +174,13 @@ export type NonNullScalar<Scalar, Resolver> =
     ? GetRuntimeScalarType<Scalar> | Resolver
     : Resolver
 
+export type NonNullEnum<RootFieldType, Enum, EnumType> =
+  [unknown] extends [Enum] 
+    ? EnumType
+    : [IsNonNullCompileTimeScalar<RootFieldType>] extends [true]
+        ? {enum: Enum} | EnumType
+        : EnumType
+
 export type ReturnTypeForRoot<ResolverFunction, RootFieldType> =
   [unknown] extends [RootFieldType]
     ? [ResolverFunction] extends [(...args: infer Args) => infer ReturnType]
@@ -182,7 +193,7 @@ export type ReturnTypeForResolver<ResolverFunction> =
     ? GetRawReturnType<ReturnType>
     : "Unable to determine return type for root query"
 
-export type GetObjectFieldsFromType<Type> = 
+export type GetObjectFieldsOrEnumFromType<Type> = 
   [Type] extends [{ objectFields: infer ObjectFields }] 
     ? ObjectFields 
     : [Type] extends [{enum: infer Enum}] 

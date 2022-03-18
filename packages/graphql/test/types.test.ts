@@ -136,9 +136,6 @@ testType<GSUN>("nullable_items");
 
 // // Resolver
 
-enum TestEnum {
-  ASDF = "ASDF",
-  QWER = "QWER"
-}
-
-type X = typeof TestEnum extends {[key: string]: string} ? true : false
+test('Stuff', () => {
+  expect(true).toBe(true)
+});

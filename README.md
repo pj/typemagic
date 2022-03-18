@@ -1,8 +1,9 @@
 - [x] Additional properties on output
 - [x] Move object details back into type field.
-- [ ] Handle enums
+- [x] Handle enums
 - [ ] Interfaces
 - [ ] Unions
+- [ ] Typecheck enums properly
 - [ ] Fix mutations.
 - [ ] Fix descriptions and deprecation reasons.
 - Helper functions for checking types outside using schema.

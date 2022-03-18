@@ -91,7 +91,7 @@ const testObject = new Test(
 );
 
 
-export async function test(args: Args): Promise<Test> {
+export async function getTest(args: Args): Promise<Test> {
   return testObject;
 }
 
@@ -209,7 +209,7 @@ schema(
   {
   queries: {
     testQuery: {
-      resolve: test,
+      resolve: getTest,
       argsFields: registeredArgs,
       type: {
         objectName: "Test",
@@ -244,7 +244,7 @@ schema(
               nullable: true 
             }
           },
-          stringEnumField: { type: {enum: StringEnum} },
+          stringEnumField: { enum: StringEnum },
           numberEnumField: { 
             type: {enum: IntEnum},
             resolve: (): IntEnum => {
@@ -325,4 +325,8 @@ schema(
       }
     }
   }
+});
+
+test('Stuff', () => {
+  expect(true).toBe(true)
 });
