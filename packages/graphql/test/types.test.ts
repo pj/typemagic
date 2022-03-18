@@ -1,5 +1,5 @@
 import { GenerateArrayTrilean, GenerateReturnType, IsEnum, ScalarTypes } from "../src/types";
-import { TestInputObject } from "./schema.test";
+// import { TestInputObject } from "./schema.test";
 
 type Extends<A, B> = A extends B ? true : false;
 

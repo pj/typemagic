@@ -1,7 +1,6 @@
 - [x] Additional properties on output
 - [x] Move object details back into type field.
 - [x] Handle enums
-- [ ] Generation code
 - [ ] Test Generated code
 - [ ] Interfaces
 - [ ] Unions

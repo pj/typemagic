@@ -1,356 +1,110 @@
-import express from "express";
+import express, {Express} from "express";
 import { graphqlHTTP } from "express-graphql";
 import { printSchema } from "graphql";
 import { ScalarTypes, schema } from "../src";
 import { QueryRoot } from "../src/schema";
 import request from 'supertest';
 
-export class Test {
+class OutputType {
   constructor(
-    public stringField: string,
-    public booleanField: boolean,
-    public dateField: Date | null,
-    public intField: number,
-    public floatField: number,
-    public relatedField: RelatedClass,
-    public arrayRelatedField: ArrayRelatedClass[],
-    public stringEnumField: StringEnum,
-    public numberEnumField: IntEnum,
-    public arrayField: string[],
-    public nullableArrayField: string[] | null,
-    public queriedField: RelatedClass,
-    public nullableRelatedField: RelatedClass | null
-  ) {
-  }
+    public testField: string
+  ) {}
 }
 
-export class RelatedClass {
-  constructor(public testField: string) {
-  }
-}
-
-export class ArrayRelatedClass {
-  asdfField: string;
-
-  constructor(asdfField: string) {
-    this.asdfField = asdfField;
-  }
-}
-
-export class TestInputObject {
-  constructor(
-    public stringField: string,
-    public booleanField: boolean,
-    public dateField: Date,
-    public numberField: number,
-    public nullableField: string | null,
-    public arrayField: string[],
-    public nullableArrayField: string[] | null,
-    public nullableItemsField: (string | null)[]
-  ) { }
-}
-
-export class Args {
-  constructor(
-    public stringField: string,
-    public booleanField: boolean,
-    public dateField: Date,
-    public numberField: number,
-    public nullableField: string | null,
-    public arrayField: string[],
-    public nullableArrayField: string[] | null,
-    public nullableItemsField: (string | null)[],
-    public inputObjectField: TestInputObject,
-    public nullableInputObjectField: TestInputObject | null,
-    public inputObjectArray: TestInputObject[],
-    public inputObjectNullableItems: (TestInputObject | null)[],
-    public nullableInputObjectNullableItems: (TestInputObject | null)[] | null,
-  ) {
-  }
-}
-
-enum StringEnum {
-  erer = "erer",
-  asdf = "asdf"
-}
-
-enum IntEnum {
-  first,
-  second
-}
-
-const testObject = new Test(
-  "asdf",
-  false,
-  new Date(),
-  1,
-  1.0,
-  new RelatedClass("qwer"),
-  [new ArrayRelatedClass("test")],
-  StringEnum.asdf,
-  IntEnum.second,
-  ["goodbye"],
-  ["hello", "world"],
-  new RelatedClass("hello"),
-  null
-);
-
-
-export async function getTest(args: Args): Promise<Test> {
-  return testObject;
-}
-
-export class ChildArgs {
-  constructor(
-    public field: string
-  ) {
-
-  }
-}
-
-export class NestedChildArgs {
-  constructor(
-    public field: string,
-    public nullableField: string | null,
-    public arrayField: string[] | null,
-    public childArgs: ChildArgs,
-    public arrayOfChildArgs: (ChildArgs | null)[] | null
-  ) {
-
-  }
-}
-
-const registeredArgs =
-{
-      stringField: { type: ScalarTypes.STRING },
-      booleanField: { type: ScalarTypes.BOOLEAN },
-      dateField: { type: ScalarTypes.DATE },
-      numberField: { type: ScalarTypes.INT },
-      nullableField: { type: ScalarTypes.STRING, nullable: true },
-      arrayField: { type: ScalarTypes.STRING, array: true },
-      nullableArrayField: { type: ScalarTypes.STRING, nullable: true, array: true },
-      nullableItemsField: { type: ScalarTypes.STRING, array: "nullable_items" },
-      inputObjectField: {
-        inputName: 'TestInputObject',
-        inputFields: {
-          stringField: { type: ScalarTypes.STRING },
-          booleanField: { type: ScalarTypes.BOOLEAN },
-          dateField: { type: ScalarTypes.DATE },
-          numberField: { type: ScalarTypes.INT },
-          nullableField: { type: ScalarTypes.STRING, nullable: true },
-          arrayField: { type: ScalarTypes.STRING, array: true },
-          nullableArrayField: { type: ScalarTypes.STRING, nullable: true, array: true },
-          nullableItemsField: { type: ScalarTypes.STRING, array: "nullable_items" },
-        }
-      },
-      inputObjectArray: {
-        array: true,
-        inputName: 'TestInputObject',
-        inputFields: {
-          stringField: { type: ScalarTypes.STRING },
-          booleanField: { type: ScalarTypes.BOOLEAN },
-          dateField: { type: ScalarTypes.DATE },
-          numberField: { type: ScalarTypes.INT },
-          nullableField: { type: ScalarTypes.STRING, nullable: true },
-          arrayField: { type: ScalarTypes.STRING, array: true },
-          nullableArrayField: { type: ScalarTypes.STRING, nullable: true, array: true },
-          nullableItemsField: { type: ScalarTypes.STRING, array: "nullable_items" },
-        }
-      },
-      inputObjectNullableItems: {
-        array: "nullable_items",
-        inputName: 'TestInputObject',
-        inputFields: {
-          stringField: { type: ScalarTypes.STRING },
-          booleanField: { type: ScalarTypes.BOOLEAN },
-          dateField: { type: ScalarTypes.DATE },
-          numberField: { type: ScalarTypes.FLOAT },
-          nullableField: { type: ScalarTypes.STRING, nullable: true },
-          arrayField: { type: ScalarTypes.STRING, array: true },
-          nullableArrayField: { type: ScalarTypes.STRING, nullable: true, array: true },
-          nullableItemsField: { type: ScalarTypes.STRING, array: "nullable_items" },
-        }
-      },
-      nullableInputObjectField: {
-        nullable: true,
-        inputName: 'TestInputObject',
-        inputFields: {
-          stringField: { type: ScalarTypes.STRING },
-          booleanField: { type: ScalarTypes.BOOLEAN },
-          dateField: { type: ScalarTypes.DATE },
-          numberField: { type: ScalarTypes.INT },
-          nullableField: { type: ScalarTypes.STRING, nullable: true },
-          arrayField: { type: ScalarTypes.STRING, array: true },
-          nullableArrayField: { type: ScalarTypes.STRING, nullable: true, array: true },
-          nullableItemsField: { type: ScalarTypes.STRING, array: "nullable_items" }
-        }
-      },
-      nullableInputObjectNullableItems: {
-        nullable: true,
-        array: "nullable_items",
-        inputName: 'TestInputObject',
-        inputFields: {
-          stringField: { type: ScalarTypes.STRING },
-          booleanField: { type: ScalarTypes.BOOLEAN },
-          dateField: { type: ScalarTypes.DATE },
-          numberField: { type: ScalarTypes.INT },
-          nullableField: { type: ScalarTypes.STRING, nullable: true },
-          arrayField: { type: ScalarTypes.STRING, array: true },
-          nullableArrayField: { type: ScalarTypes.STRING, nullable: true, array: true },
-          nullableItemsField: { type: ScalarTypes.STRING, array: "nullable_items" }
-        }
-      }
-    } as const
-  ;
-
-const context = {} as any;
-
-class Context {
-
-}
-
-const relatedObject = 
+const outputTypeSchema = 
   {
-    objectName: "RelatedClass",
+    objectName: OutputType.name,
     objectFields: {
-      testField: {
-        type: ScalarTypes.STRING
-      }
-    },
+      testField: ScalarTypes.STRING
+    }
   } as const;
 
-// schema(
-//   context, 
-//   {
-//   queries: {
-//     testQuery: {
-//       resolve: getTest,
-//       argsFields: registeredArgs,
-//       type: {
-//         objectName: "Test",
-//         objectFields: {
-//           additionalFieldScalar: {
-//             type: {
-//               objectName: "AdditionalRelatedClass",
-//               objectFields: {
-//                 testField: ScalarTypes.STRING
-//               },
-//             },
-//             resolve: async () => {
-//               return new RelatedClass("additional field test");
-//             }
-//           },
-//           additionalFieldScalarObject: {
-//             type: ScalarTypes.STRING,
-//             resolve: async () => {
-//               return "asdf"
-//             }
-//           },
-//           // stringField: resolver(Test, Context, {
-//           //   type: ScalarTypes.STRING,
-//           //   resolve: async (root: Test) => {
-//           //     return `${root.stringField} is being resolved`;
-//           //   }
-//           // }),
-//           booleanField: ScalarTypes.BOOLEAN,
-//           dateField: { 
-//             type: ScalarTypes.DATE, 
-//             nullable: true 
-//           },
-//           stringEnumField: { enum: StringEnum },
-//           numberEnumField: { 
-//             type: {enum: IntEnum},
-//             resolve: (): IntEnum => {
-//               return IntEnum.first;
-//             }
-//           },
-//           intField: { type: ScalarTypes.INT },
-//           floatField: { type: ScalarTypes.FLOAT },
-//           relatedField: {
-//             type: {
-//               objectName: "RelatedClass",
-//               objectFields: {
-//                 testField: {
-//                   type: ScalarTypes.STRING
-//                 }
-//               },
-//             },
-//             resolve: async (root: Test) => {
-//               return new RelatedClass(`${root.intField} times`);
-//             },
-//           },
-//           arrayRelatedField: {
-//             type: {
-//               objectName: "ArrayRelatedClass",
-//               objectFields: {
-//                 asdfField: { type: ScalarTypes.STRING }
-//               },
-//             },
-//             array: true,
-//             resolve: async () => {
-//               return [new ArrayRelatedClass("array related")];
-//             },
-//           },
-//           arrayField: {
-//             type: ScalarTypes.STRING,
-//             array: true,
-//             resolve: async (root: Test) => {
-//               return root.arrayField;
-//             }
-//           },
-//           nullableArrayField: {
-//             type: ScalarTypes.STRING,
-//             nullable: true,
-//             array: true,
-//             resolve: async (root: Test): Promise<string[] | null> => {
-//               return root.nullableArrayField
-//             }
-//           },
-//           queriedField: {
-//             type: {
-//               objectName: "RelatedClass",
-//               objectFields: {
-//                 testField: { type: ScalarTypes.STRING }
-//               },
-//             },
-//             argsFields: registeredArgs,
-//             resolve: async (args: Args, root: Test): Promise<RelatedClass> => {
-//               return root.queriedField;
-//             }
-//           },
-//           nullableRelatedField: {
-//             type: relatedObject,
-//             nullable: true,
-//             resolve: async (root: Test) => {
-//               return root.nullableRelatedField;
-//             },
-//           }
-//         }
-//       }
-//     }
-//   }
-// });
+class Args {
+  constructor(
+    public argField: string
+  ) {}
+}
 
-test('Test basic field', async () => {
-  class OutputType {
-    constructor(
-      public testField: string
-    ) {}
-  }
-  
+const argSchema = 
+  {
+    argField: ScalarTypes.STRING
+  } as const;
+
+class RootType {
+  constructor(
+    public rootField: string,
+    public outputType: OutputType[] | null
+  ) {}
+}
+
+const rootSchema = 
+  {
+    objectName: RootType.name,
+    objectFields: {
+      rootField: ScalarTypes.STRING,
+      outputType: {
+        type: outputTypeSchema,
+        array: true,
+        nullable: true,
+        resolve: (root: RootType): OutputType[] | null => {
+          return root.outputType;
+        }
+      }
+    }
+  } as const;
+
+let app: Express;
+beforeAll(async () => {
+
   const generatedSchema = schema(
     {} as any, 
     {
       queries: {
-        testQuery: {
-          type: {
-            objectName: OutputType.name,
-            objectFields: {
-              testField: ScalarTypes.STRING
-            }
-          },
+        scalarTypeNonNull: {
+          type: ScalarTypes.BOOLEAN,
+          resolve: () => {
+            return true
+          }
+        },
+        scalarTypeArray: {
+          type: ScalarTypes.STRING,
+          array: "nullable_items",
+          resolve: (): (string | null)[] => {
+            return ["Hello", null, "World!"]
+          }
+        },
+        objectTypeNonNull: {
+          type: outputTypeSchema,
           resolve: () => {
             return new OutputType("Hello World!");
+          }
+        },
+        objectTypeNull: {
+          type: outputTypeSchema,
+          nullable: true,
+          resolve: (): OutputType | null => {
+            return null;
+          }
+        },
+        objectTypeArray: {
+          type: outputTypeSchema,
+          array: true,
+          resolve: (): OutputType[] => {
+            return [new OutputType("Hello World!")];
+          }
+        },
+        objectTypeWithArgs: {
+          type: outputTypeSchema,
+          array: "nullable_items",
+          argsFields: argSchema,
+          resolve: (args: Args): (OutputType | null)[] => {
+            return [new OutputType(args.argField), new OutputType("Hello World!"), null];
+          }
+        },
+        rootType: {
+          type: rootSchema,
+          resolve: ()  => {
+            return new RootType("Root Type", [new OutputType("Output Type")]);
           }
         }
       }
@@ -358,24 +112,127 @@ test('Test basic field', async () => {
   );
 
   // console.debug(printSchema(generatedSchema));
-  const app = express();
+  app = express();
   app.use('/graphql', graphqlHTTP({
     schema: generatedSchema,
     rootValue: new QueryRoot(),
   }));
+});
 
-  const response = 
-    await request(app)
+async function runQuery(query: string, variables?: {[key: string]: any}) {
+  return await request(app)
       .post('/graphql')
       // .set('Accept', 'application/json')
-      .set('Content-Type', 'application/graphql')
+      .set('Content-Type', 'application/json')
       .send(
-        `query TestQuery {
-          testQuery {
-            testField
-          } 
-        }`
+        {
+          query,
+          variables
+        }
       );
+}
+
+test('scalarTypeNonNull', async () => {
+  const response = 
+    await runQuery(
+      `query TestQuery {
+        scalarTypeNonNull
+      }`
+    );
   expect(response.status).toEqual(200);
-  expect(response.body.data.testQuery.testField).toEqual("Hello World!");
+  expect(response.body.data.scalarTypeNonNull).toBeTruthy();
+});
+
+test('scalarTypeArray', async () => {
+  const response = 
+    await runQuery(
+      `query TestQuery {
+        scalarTypeArray
+      }`
+    );
+  expect(response.status).toEqual(200);
+  expect(response.body.data.scalarTypeArray).toStrictEqual(["Hello", null, "World!"]);
+});
+
+test('objectTypeNonNull', async () => {
+  const response = 
+    await runQuery(
+      `query TestQuery {
+        objectTypeNonNull {
+          testField
+        } 
+      }`
+    );
+  expect(response.status).toEqual(200);
+  expect(response.body.data.objectTypeNonNull.testField).toEqual("Hello World!");
+});
+
+test('objectTypeNull', async () => {
+  const response = 
+    await runQuery(
+      `query TestQuery {
+        objectTypeNull {
+          testField
+        } 
+      }`
+    );
+  expect(response.status).toEqual(200);
+  expect(response.body.data.objectTypeNull).toBeNull();
+});
+
+test('objectTypeArray', async () => {
+  const response = 
+    await runQuery(
+      `query TestQuery {
+        objectTypeArray {
+          testField
+        } 
+      }`
+    );
+  expect(response.status).toEqual(200);
+  expect(response.body.data.objectTypeArray).toStrictEqual([{"testField": "Hello World!"}]);
+});
+
+test('objectTypeWithArgs', async () => {
+  const response = 
+    await runQuery(
+      `query TestQuery($argField: String!) {
+        objectTypeWithArgs(argField: $argField) {
+          testField
+        } 
+      }`,
+      {argField: "test"}
+    );
+  expect(response.status).toEqual(200);
+  expect(response.body.data.objectTypeWithArgs).toStrictEqual(
+    [
+      {"testField": "test"}, 
+      {"testField": "Hello World!"}, 
+      null
+    ]
+  );
+});
+
+test('rootType', async () => {
+  const response = 
+    await runQuery(
+      `query TestQuery {
+        rootType {
+          rootField
+          outputType {
+            testField
+          }
+        } 
+      }`,
+      {argField: "test"}
+    );
+  expect(response.status).toEqual(200);
+  expect(response.body.data.rootType).toStrictEqual(
+    {
+      "rootField": "Root Type",
+      "outputType": [
+        {"testField": "Output Type"}
+      ]
+    }
+  );
 });

@@ -9,7 +9,7 @@ import {
   RegisteredEnum, 
   ScalarTypes 
 } from "./types"
-import { ValidateResolver } from "./resolvers"
+import { NonNullScalar, ValidateResolver } from "./resolvers"
 
 export type ValidateInputRuntimeType<FunctionArg> =
   {
@@ -30,7 +30,7 @@ export type ValidateInputRuntimeType<FunctionArg> =
 export type ValidateInputRuntimeTypes<FunctionArgs> =
   {
     [Key in keyof FunctionArgs]:
-      ValidateInputRuntimeType<FunctionArgs[Key]>
+      NonNullScalar<FunctionArgs[Key], ValidateInputRuntimeType<FunctionArgs[Key]>>
   }
 
 export type ValidateArgs<FunctionArgs> =
@@ -43,36 +43,3 @@ export type ValidateArgs<FunctionArgs> =
 export function argsFields<FunctionArgs extends ValidateArgs<FunctionArgs>>(args: FunctionArgs) {
   return args;
 }
-
-// export type ValidateRuntimeTypes<RuntimeTypes, ResolverFunction, Context, ScalarType> =
-//   [ResolverFunction] extends [(first: infer First, second: infer Second, third: infer Third) => infer ReturnType]
-//     ? [IsCompileTimeScalar<ReturnType>] extends [true]
-//       ? {
-//           type: GetRuntimeScalarType<ReturnType>,
-//           objectFields?: "Runtime types not used when return type is scalar."
-//           objectName?: never
-//         }
-//       : {
-//           objectName: string
-//           objectFields: {
-//             [Key in keyof RuntimeTypes]:
-//               [Key] extends [keyof GetUnderlyingType<ReturnType>]
-//                 ? ValidateResolver<
-//                     RuntimeTypes[Key],
-//                     GetUnderlyingType<ReturnType>, 
-//                     GetUnderlyingType<ReturnType>[Key], 
-//                     Context
-//                   >
-//                 : ["here", ReturnType]
-//           }
-//         }
-//     : [ScalarType] extends [ScalarTypes]
-//       ? {
-//           type: ScalarType,
-//           objectFields?: never,
-//           objectName?: never
-//         }
-//       : {
-//           objectFields: "Unable to infer return type of function",
-//           objectName: "Unable to infer return type of function"
-//         }

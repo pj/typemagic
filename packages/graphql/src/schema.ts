@@ -84,11 +84,16 @@ export function schema<Schema extends ValidateSchema<Schema, Context>, Context>(
   schema: Schema
 ) {
   const config: GraphQLSchemaConfig = {};
+  const seenObjectsByName = new Map<string, any>();
+  const seenObjectsByIdentity = new Map<any, any>();
+
+  const seenInputByName = new Map<string, any>();
+  const seenInputByIdentity = new Map<any, any>();
 
   if (schema.queries) {
     const fields: GraphQLFieldConfigMap<any, any> = {};
     for (let [fieldName, field] of Object.entries<SchemaResolver>(schema.queries)) {
-      fields[field.alias || fieldName] = mapToGraphQLOutputField(field)
+      fields[field.alias || fieldName] = mapToGraphQLOutputField(field, seenObjectsByName, seenObjectsByIdentity, seenInputByIdentity);
     }
     config.query =
       new GraphQLObjectType({
@@ -153,7 +158,7 @@ function getScalarFromResolver(resolver: SchemaResolver) {
     case ScalarTypes.DATE:
       return GraphQLISODateTime;
     default:
-      switch (resolver.type.scalar) {
+      switch (resolver.type) {
         case ScalarTypes.BOOLEAN:
           return GraphQLBoolean;
         case ScalarTypes.STRING:
@@ -170,32 +175,55 @@ function getScalarFromResolver(resolver: SchemaResolver) {
   return null;
 }
 
-function mapToGraphQLOutputType(resolver: SchemaResolver): GraphQLOutputType {
-  let output: GraphQLOutputType | null = getScalarFromResolver(resolver);
+function mapToGraphQLOutputType(
+  resolver: SchemaResolver, 
+  seenObjectByName: Map<string, any>, 
+  seenObjectsByIdentity: Map<any, any>, 
+  seenInputByIdentity: Map<any, any>
+): GraphQLOutputType {
+  let scalar: GraphQLOutputType | null = getScalarFromResolver(resolver);
 
-  if (output === null) {
-    const fields: GraphQLFieldConfigMap<any, any> = {};
-    if (resolver.type.objectFields) {
-      for (let [fieldName, field] of Object.entries<SchemaResolver>(resolver.type.objectFields)) {
-        fields[field.alias || fieldName] = mapToGraphQLOutputField(field)
+  if (scalar !== null) {
+    return mapOutputNullableAndArray(scalar, resolver);
+  } else {
+    let output: GraphQLObjectType;
+    if (seenObjectsByIdentity.has(resolver.type)) {
+      output = seenObjectsByIdentity.get(resolver.type);
+    } else {
+      const fields: GraphQLFieldConfigMap<any, any> = {};
+      if (resolver.type.objectFields) {
+        for (let [fieldName, field] of Object.entries<SchemaResolver>(resolver.type.objectFields)) {
+          fields[field.alias || fieldName] = mapToGraphQLOutputField(
+            field, 
+            seenObjectByName, 
+            seenObjectsByIdentity, 
+            seenInputByIdentity
+          );
+        }
       }
+
+      output = new GraphQLObjectType({
+        name: resolver.type.objectName,
+        description: resolver.description,
+        fields
+      });
+
+      seenObjectsByIdentity.set(resolver.type, output);
     }
-
-    output = new GraphQLObjectType({
-      name: resolver.type.objectName,
-      description: resolver.description,
-      fields
-    });
+    return mapOutputNullableAndArray(output, resolver);
   }
-
-  return mapOutputNullableAndArray(output, resolver);
 }
 
-function mapToGraphQLOutputField(field: SchemaResolver): GraphQLFieldConfig<any, any, any> {
+function mapToGraphQLOutputField(
+  field: SchemaResolver, 
+  seenObjectsByName: Map<string, any>, 
+  seenObjectByIdentity: Map<any, any>,
+  seenInputByIdentity: Map<any, any>,
+): GraphQLFieldConfig<any, any, any> {
   const config: GraphQLFieldConfig<any, any, any> = {
     description: field.description,
     deprecationReason: field.deprecationReason,
-    type: mapToGraphQLOutputType(field),
+    type: mapToGraphQLOutputType(field, seenObjectsByName, seenObjectByIdentity, seenInputByIdentity),
   };
   if (field.argsFields) {
     const args: GraphQLFieldConfigArgumentMap = {}
@@ -203,7 +231,7 @@ function mapToGraphQLOutputField(field: SchemaResolver): GraphQLFieldConfig<any,
     for (let [argName, arg] of Object.entries<InputResolver>(field.argsFields)) {
       args[field.alias || argName] = {
         description: arg.description,
-        type: mapToGraphQLInputType(arg),
+        type: mapToGraphQLInputType(arg, seenInputByIdentity),
         defaultValue: arg.defaultValue,
         deprecationReason: arg.deprecationReason
       }
@@ -226,43 +254,35 @@ function mapToGraphQLOutputField(field: SchemaResolver): GraphQLFieldConfig<any,
   return config;
 }
 
-function mapToGraphQLInputType(input: InputResolver): GraphQLInputType {
-  let output;
-  switch (input.type) {
-    case ScalarTypes.BOOLEAN:
-      output = GraphQLBoolean;
-      break;
-    case ScalarTypes.STRING:
-      output = GraphQLString;
-      break;
-    case ScalarTypes.FLOAT:
-      output = GraphQLFloat;
-      break;
-    case ScalarTypes.INT:
-      output = GraphQLInt;
-      break;
-    case ScalarTypes.DATE:
-      output = GraphQLISODateTime;
-      break;
-    default:
+function mapToGraphQLInputType(input: InputResolver, seenInputByIdentity: Map<any, any>): GraphQLInputType {
+  let scalar: GraphQLOutputType | null = getScalarFromResolver(input);
+
+  if (scalar !== null) {
+    return mapInputToNullableAndArray(scalar, input);
+  } else {
+    let graphqlInput: GraphQLInputType;
+    if (seenInputByIdentity.has(input.type)) {
+      graphqlInput = seenInputByIdentity.get(input.type);
+    } else {
       const fields: GraphQLInputFieldConfigMap = {};
       if (input.inputFields) {
         for (let [fieldName, field] of Object.entries<InputResolver>(input.inputFields)) {
           fields[field.alias || fieldName] = {
             description: field.description,
-            type: mapToGraphQLInputType(field),
+            type: mapToGraphQLInputType(field, seenInputByIdentity),
             defaultValue: field.defaultValue,
             deprecationReason: field.deprecationReason,
           }
         }
       }
 
-      output = new GraphQLInputObjectType({
+      graphqlInput = new GraphQLInputObjectType({
         name: input.inputName,
         description: input.description,
         fields
       });
+    }
+    return mapInputToNullableAndArray(graphqlInput, input);
   }
 
-  return mapInputToNullableAndArray(output, input);
 }
