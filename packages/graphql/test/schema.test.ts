@@ -1,4 +1,9 @@
+import express from "express";
+import { graphqlHTTP } from "express-graphql";
+import { printSchema } from "graphql";
 import { ScalarTypes, schema } from "../src";
+import { QueryRoot } from "../src/schema";
+import request from 'supertest';
 
 export class Test {
   constructor(
@@ -204,129 +209,173 @@ class Context {
 
 }
 
-schema(
-  context, 
+const relatedObject = 
   {
-  queries: {
-    testQuery: {
-      resolve: getTest,
-      argsFields: registeredArgs,
-      type: {
-        objectName: "Test",
-        objectFields: {
-          additionalFieldScalar: {
-            type: {
-              objectName: "AdditionalRelatedClass",
-              objectFields: {
-                testField: ScalarTypes.STRING
-              },
-            },
-            resolve: async () => {
-              return new RelatedClass("additional field test");
+    objectName: "RelatedClass",
+    objectFields: {
+      testField: {
+        type: ScalarTypes.STRING
+      }
+    },
+  } as const;
+
+// schema(
+//   context, 
+//   {
+//   queries: {
+//     testQuery: {
+//       resolve: getTest,
+//       argsFields: registeredArgs,
+//       type: {
+//         objectName: "Test",
+//         objectFields: {
+//           additionalFieldScalar: {
+//             type: {
+//               objectName: "AdditionalRelatedClass",
+//               objectFields: {
+//                 testField: ScalarTypes.STRING
+//               },
+//             },
+//             resolve: async () => {
+//               return new RelatedClass("additional field test");
+//             }
+//           },
+//           additionalFieldScalarObject: {
+//             type: ScalarTypes.STRING,
+//             resolve: async () => {
+//               return "asdf"
+//             }
+//           },
+//           // stringField: resolver(Test, Context, {
+//           //   type: ScalarTypes.STRING,
+//           //   resolve: async (root: Test) => {
+//           //     return `${root.stringField} is being resolved`;
+//           //   }
+//           // }),
+//           booleanField: ScalarTypes.BOOLEAN,
+//           dateField: { 
+//             type: ScalarTypes.DATE, 
+//             nullable: true 
+//           },
+//           stringEnumField: { enum: StringEnum },
+//           numberEnumField: { 
+//             type: {enum: IntEnum},
+//             resolve: (): IntEnum => {
+//               return IntEnum.first;
+//             }
+//           },
+//           intField: { type: ScalarTypes.INT },
+//           floatField: { type: ScalarTypes.FLOAT },
+//           relatedField: {
+//             type: {
+//               objectName: "RelatedClass",
+//               objectFields: {
+//                 testField: {
+//                   type: ScalarTypes.STRING
+//                 }
+//               },
+//             },
+//             resolve: async (root: Test) => {
+//               return new RelatedClass(`${root.intField} times`);
+//             },
+//           },
+//           arrayRelatedField: {
+//             type: {
+//               objectName: "ArrayRelatedClass",
+//               objectFields: {
+//                 asdfField: { type: ScalarTypes.STRING }
+//               },
+//             },
+//             array: true,
+//             resolve: async () => {
+//               return [new ArrayRelatedClass("array related")];
+//             },
+//           },
+//           arrayField: {
+//             type: ScalarTypes.STRING,
+//             array: true,
+//             resolve: async (root: Test) => {
+//               return root.arrayField;
+//             }
+//           },
+//           nullableArrayField: {
+//             type: ScalarTypes.STRING,
+//             nullable: true,
+//             array: true,
+//             resolve: async (root: Test): Promise<string[] | null> => {
+//               return root.nullableArrayField
+//             }
+//           },
+//           queriedField: {
+//             type: {
+//               objectName: "RelatedClass",
+//               objectFields: {
+//                 testField: { type: ScalarTypes.STRING }
+//               },
+//             },
+//             argsFields: registeredArgs,
+//             resolve: async (args: Args, root: Test): Promise<RelatedClass> => {
+//               return root.queriedField;
+//             }
+//           },
+//           nullableRelatedField: {
+//             type: relatedObject,
+//             nullable: true,
+//             resolve: async (root: Test) => {
+//               return root.nullableRelatedField;
+//             },
+//           }
+//         }
+//       }
+//     }
+//   }
+// });
+
+test('Test basic field', async () => {
+  class OutputType {
+    constructor(
+      public testField: string
+    ) {}
+  }
+  
+  const generatedSchema = schema(
+    {} as any, 
+    {
+      queries: {
+        testQuery: {
+          type: {
+            objectName: OutputType.name,
+            objectFields: {
+              testField: ScalarTypes.STRING
             }
           },
-          additionalFieldScalarObject: {
-            type: ScalarTypes.STRING,
-            resolve: async () => {
-              return "asdf"
-            }
-          },
-          // stringField: resolver(Test, Context, {
-          //   type: ScalarTypes.STRING,
-          //   resolve: async (root: Test) => {
-          //     return `${root.stringField} is being resolved`;
-          //   }
-          // }),
-          booleanField: ScalarTypes.BOOLEAN,
-          dateField: { 
-            type: {
-              scalar: ScalarTypes.DATE, 
-              nullable: true 
-            }
-          },
-          stringEnumField: { enum: StringEnum },
-          numberEnumField: { 
-            type: {enum: IntEnum},
-            resolve: (): IntEnum => {
-              return IntEnum.first;
-            }
-          },
-          intField: { type: ScalarTypes.INT },
-          floatField: { type: ScalarTypes.FLOAT },
-          relatedField: {
-            type: {
-              objectName: "RelatedClass",
-              objectFields: {
-                testField: {
-                  type: ScalarTypes.STRING
-                }
-              },
-            },
-            resolve: async (root: Test) => {
-              return new RelatedClass(`${root.intField} times`);
-            },
-          },
-          arrayRelatedField: {
-            type: {
-              objectName: "ArrayRelatedClass",
-              objectFields: {
-                asdfField: { type: ScalarTypes.STRING }
-              },
-              array: true,
-            },
-            resolve: async () => {
-              return [new ArrayRelatedClass("array related")];
-            },
-          },
-          arrayField: {
-            type: {
-              scalar: ScalarTypes.STRING,
-              array: true
-            },
-            resolve: async (root: Test) => {
-              return root.arrayField;
-            }
-          },
-          nullableArrayField: {
-            type: {
-              scalar: ScalarTypes.STRING,
-              nullable: true,
-              array: true,
-            },
-            resolve: async (root: Test): Promise<string[] | null> => {
-              return root.nullableArrayField
-            }
-          },
-          queriedField: {
-            type: {
-              objectName: "RelatedClass",
-              objectFields: {
-                testField: { type: ScalarTypes.STRING }
-              },
-            },
-            argsFields: registeredArgs,
-            resolve: async (args: Args, root: Test): Promise<RelatedClass> => {
-              return root.queriedField;
-            }
-          },
-          nullableRelatedField: {
-            type: {
-              objectName: "RelatedClass",
-              objectFields: {
-                testField: { type: ScalarTypes.STRING }
-              },
-              nullable: true,
-            },
-            resolve: async (root: Test) => {
-              return root.nullableRelatedField;
-            },
+          resolve: () => {
+            return new OutputType("Hello World!");
           }
         }
       }
     }
-  }
-});
+  );
 
-test('Stuff', () => {
-  expect(true).toBe(true)
+  // console.debug(printSchema(generatedSchema));
+  const app = express();
+  app.use('/graphql', graphqlHTTP({
+    schema: generatedSchema,
+    rootValue: new QueryRoot(),
+  }));
+
+  const response = 
+    await request(app)
+      .post('/graphql')
+      // .set('Accept', 'application/json')
+      .set('Content-Type', 'application/graphql')
+      .send(
+        `query TestQuery {
+          testQuery {
+            testField
+          } 
+        }`
+      );
+  expect(response.status).toEqual(200);
+  expect(response.body.data.testQuery.testField).toEqual("Hello World!");
 });

@@ -15,11 +15,10 @@ export type ValidateResolver<Resolver, Root, RootFieldType, Context> =
     enum?: infer Enum,
     alias?: infer Alias,
     description?: infer Description,
-    deprecationReason?: infer DeprecationReason,
     argsFields?: infer ArgsRuntimeTypes,
     resolve?: infer ResolverFunction
   }]
-    ? { description?: Description, deprecationReason?: DeprecationReason, alias?: Alias }
+    ? { description?: Description, alias?: Alias }
         & NonNullEnum<
             RootFieldType, 
             Enum,
@@ -130,26 +129,20 @@ export type ValidateResolverFunction<ResolverFunction, Root, RootFieldType, Obje
 
 export type ScalarOrObjectType<RootFieldType, ObjectFields, Context> =
   [ObjectFields] extends [{enum: infer Enum}] 
-    ?  { 
+    ? { 
         type: {
           enum: Enum 
-        } & GenerateNullabilityAndArrayRuntimeOptions<RootFieldType>
-      }
+        }
+      } & GenerateNullabilityAndArrayRuntimeOptions<RootFieldType>
     : [IsCompileTimeScalar<RootFieldType>] extends [true]
       ? {
-          type: 
-            NonNullScalar<
-              RootFieldType, 
-              {
-                scalar: GetRuntimeScalarType<RootFieldType>,
-                objectName?: never,
-                objectFields?: never
-              } & GenerateNullabilityAndArrayRuntimeOptions<RootFieldType>
-          >
-        }
+          type: GetRuntimeScalarType<RootFieldType>
+        } & GenerateNullabilityAndArrayRuntimeOptions<RootFieldType>
       : {
           type: {
             objectName: string,
+            description?: string,
+            deprecationReason?: string,
             objectFields: {
               [Key in keyof ObjectFields]:
                 [Key] extends [keyof GetUnderlyingType<RootFieldType>]
@@ -166,8 +159,8 @@ export type ScalarOrObjectType<RootFieldType, ObjectFields, Context> =
                       Context
                     >
             }
-          } & GenerateNullabilityAndArrayRuntimeOptions<RootFieldType>
-        }
+          }
+        } & GenerateNullabilityAndArrayRuntimeOptions<RootFieldType>
 
 export type NonNullScalar<Scalar, Resolver> =
   [IsNonNullCompileTimeScalar<Scalar>] extends [true]
