@@ -1,9 +1,9 @@
 - [x] Additional properties on output
 - [x] Move object details back into type field.
 - [x] Handle enums
-- [ ] Test Generated code
-- [ ] Interfaces
+- [x] Test Generated code
 - [ ] Unions
+- [ ] Interfaces
 - [ ] Typecheck enums properly
 - [ ] Fix mutations.
 - [ ] Fix descriptions and deprecation reasons.

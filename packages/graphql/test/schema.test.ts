@@ -106,7 +106,13 @@ beforeAll(async () => {
           resolve: ()  => {
             return new RootType("Root Type", [new OutputType("Output Type")]);
           }
-        }
+        },
+        // objectUnion: {
+        //   type: [ScalarTypes.BOOLEAN, ScalarTypes.STRING],
+        //   resolve: (): OutputType | RootType | null => {
+        //     return "Hello World"
+        //   }
+        // }
       }
     }
   );

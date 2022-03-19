@@ -31,6 +31,11 @@ export type IsCompileTimeScalar<Type> =
     ? true
     : false
 
+export type IsUnion<Type> = 
+  [GetUnderlyingType<Type>] extends [string | number | Date | boolean]
+    ? true
+    : false
+
 export type Constructor<T> = Function & { prototype: T };
 export type ConstructorFromArray<T> = T extends Array<infer C> ? Constructor<C> : Constructor<T>;
 
