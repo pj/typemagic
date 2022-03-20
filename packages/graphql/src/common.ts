@@ -1,15 +1,10 @@
-import { 
-  CompileTimeTypeFromConstructor, 
-  Constructor, 
-  GenerateNullabilityAndArrayRuntimeOptions, 
-  GetRuntimeScalarType, 
-  GetUnderlyingType, 
-  IsCompileTimeScalar, 
-  IsEnum, 
-  RegisteredEnum, 
-  ScalarTypes 
+import { HandleNonNullNonArrayTypeScalar } from "./resolvers"
+import {
+  CreateSchemaOptions,
+  GetSchemaScalar,
+  GetUnderlyingType,
+  IsTypeScalar
 } from "./types"
-import { NonNullScalar, ValidateResolver } from "./resolvers"
 
 export type ValidateInputRuntimeType<FunctionArg> =
   {
@@ -17,20 +12,20 @@ export type ValidateInputRuntimeType<FunctionArg> =
     defaultValue?: string,
   }
   & (
-      [IsCompileTimeScalar<FunctionArg>] extends [true]
-        ? { type: GetRuntimeScalarType<FunctionArg> }
+      [IsTypeScalar<FunctionArg>] extends [true]
+        ? { type: GetSchemaScalar<FunctionArg> }
         : {
           inputFields: ValidateInputRuntimeTypes<GetUnderlyingType<FunctionArg>>,
           inputName: string
         }
     )
-  & GenerateNullabilityAndArrayRuntimeOptions<FunctionArg>
+  & CreateSchemaOptions<FunctionArg>
 
 
 export type ValidateInputRuntimeTypes<FunctionArgs> =
   {
     [Key in keyof FunctionArgs]:
-      NonNullScalar<FunctionArgs[Key], ValidateInputRuntimeType<FunctionArgs[Key]>>
+      HandleNonNullNonArrayTypeScalar<FunctionArgs[Key], ValidateInputRuntimeType<FunctionArgs[Key]>>
   }
 
 export type ValidateArgs<FunctionArgs> =

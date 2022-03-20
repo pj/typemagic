@@ -4,6 +4,7 @@ import { printSchema } from "graphql";
 import { ScalarTypes, schema } from "../src";
 import { QueryRoot } from "../src/schema";
 import request from 'supertest';
+import { HandleUnion } from "../src/resolvers";
 
 class OutputType {
   constructor(
@@ -42,6 +43,52 @@ const rootSchema =
     objectName: RootType.name,
     objectFields: {
       rootField: ScalarTypes.STRING,
+      outputType: {
+        type: outputTypeSchema,
+        array: true,
+        nullable: true,
+        resolve: (root: RootType): OutputType[] | null => {
+          return root.outputType;
+        }
+      }
+    }
+  } as const;
+
+class UnionTypeA {
+  constructor(
+    public typeAField: string,
+    public outputType: OutputType[] | null
+  ) {}
+}
+
+const unionTypeA = 
+  {
+    objectName: UnionTypeA.name,
+    objectFields: {
+      typeAField: ScalarTypes.STRING,
+      outputType: {
+        type: outputTypeSchema,
+        array: true,
+        nullable: true,
+        resolve: (root: RootType): OutputType[] | null => {
+          return root.outputType;
+        }
+      }
+    }
+  } as const;
+
+class UnionTypeB {
+  constructor(
+    public typeBField: boolean,
+    public outputType: OutputType[] | null
+  ) {}
+}
+
+const unionTypeB = 
+  {
+    objectName: UnionTypeB.name,
+    objectFields: {
+      typeBField: ScalarTypes.BOOLEAN,
       outputType: {
         type: outputTypeSchema,
         array: true,
@@ -107,12 +154,12 @@ beforeAll(async () => {
             return new RootType("Root Type", [new OutputType("Output Type")]);
           }
         },
-        // objectUnion: {
-        //   type: [ScalarTypes.BOOLEAN, ScalarTypes.STRING],
-        //   resolve: (): OutputType | RootType | null => {
-        //     return "Hello World"
-        //   }
-        // }
+        objectUnion: {
+          type: [unionTypeA, unionTypeB] as const,
+          resolve: (): UnionTypeA | UnionTypeB => {
+            return new UnionTypeB(false, null);
+          }
+        }
       }
     }
   );

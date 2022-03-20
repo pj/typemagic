@@ -1,4 +1,3 @@
-import { GenerateArrayTrilean, GenerateReturnType, IsEnum, ScalarTypes } from "../src/types";
 // import { TestInputObject } from "./schema.test";
 
 type Extends<A, B> = A extends B ? true : false;
@@ -139,3 +138,15 @@ function testType<X>(x: X): void { }
 test('Stuff', () => {
   expect(true).toBe(true)
 });
+
+type X<Y> = Y extends (a: infer A, b: infer B, c: infer C) => infer R 
+  ? [A, B, C, R]
+  : unknown
+
+type A = X<(a: string) => string>
+
+const x = [{objectName: "Test", objectFields: {}}, {objectName: "Blah", objectFields: {}}] as const;
+
+// type B = (typeof x) extends infer D ? D[number] : unknown
+
+// type C = UnionOfArrayElements<(typeof x)>

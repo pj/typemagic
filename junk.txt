@@ -1468,3 +1468,6 @@ const relatedObject =
 //     }
 //   }
 // });
+
+Type '{ type: ({ readonly objectName: string; readonly objectFields: { readonly typeAField: ScalarTypes.STRING; readonly outputType: { readonly type: { readonly objectName: string; readonly objectFields: { readonly testField: ScalarTypes.STRING; }; }; readonly array: true; readonly nullable: true; readonly resolve: (root:...' is not assignable to type '{ description?: unknown; alias?: unknown; } & (["Union type does not extend return type.", { readonly typeAField: string; readonly outputType: "Unknown scalar type"[] | null; }, { readonly typeAField: string; readonly outputType: "Unknown scalar type"[] | null; } & ({ ...; } | { ...; })] | [...])'.
+  Object literal may only specify known properties, and 'type' does not exist in type '{ description?: unknown; alias?: unknown; } & (["Union type does not extend return type.", { readonly typeAField: string; readonly outputType: "Unknown scalar type"[] | null; }, { readonly typeAField: string; readonly outputType: "Unknown scalar type"[] | null; } & ({ ...; } | { ...; })] | [...])'.
