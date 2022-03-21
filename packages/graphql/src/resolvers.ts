@@ -109,12 +109,14 @@ export type ScalarOrObjectType<RootFieldType, ObjectFields, Context, Type> =
     ? {
         type: GetSchemaScalar<RootFieldType>
       }
-    : [Type] extends [Readonly<unknown[]>]
-      ? UnionItemToReturnType<Type[number]> extends infer Unionized
-        ? Exact<Unionized, RootFieldType> extends true
-          ? {type: Type}
-          : {type: "Union type does not match return type"}
-        : never
+    : Type extends {unionName: infer UnionName, unionTypes: infer UnionTypes}
+      ? [UnionTypes] extends [Readonly<unknown[]>]
+        ? UnionItemToReturnType<UnionTypes[number]> extends infer Unionized
+          ? Exact<Unionized, RootFieldType> extends true
+            ? {type: Type}
+            : {type: "Union type does not match return type"}
+          : never
+        : {type: {unionName: UnionName, unionTypes: "Union types should be an array"}}
       : {
           type: {
             objectName: string,
@@ -208,12 +210,3 @@ export type UnionItemToReturnType<Item> =
     : never
 
 export type UnionOfArrayElements<ARR_T extends Readonly<unknown[]>> = ARR_T[number];
-
-export type HandleUnion<RootFieldType, Type, ResolverFunction, NotUnion> =
-  [Type] extends [Readonly<unknown[]>]
-    ? UnionItemToReturnType<Type[number]> extends infer Unionized
-      ? RootFieldType extends Unionized
-        ? {type: Type} & CreateSchemaOptions<RootFieldType>
-        : ["Union type does not extend return type.", Unionized, UnionItemToReturnType<Type[number]>]
-      : "Can't infer union type"
-    : NotUnion

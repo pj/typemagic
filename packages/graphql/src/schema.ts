@@ -79,21 +79,32 @@ type SchemaResolver = {
   resolve?: (args: any, root: any, context?: any) => any,
 }
 
+class SchemaObjects {
+  constructor(
+    public outputObjects: Map<any, any> = new Map(),
+    public inputObjects: Map<any, any> = new Map(),
+    public unions: Map<any, any> = new Map(),
+  ) {}
+}
+
 export function schema<Schema extends ValidateSchema<Schema, Context>, Context>(
   context: Context | Constructor<Context>,
   schema: Schema
 ) {
   const config: GraphQLSchemaConfig = {};
-  const seenObjectsByName = new Map<string, any>();
-  const seenObjectsByIdentity = new Map<any, any>();
+  // const seenObjectsByName = new Map<string, any>();
+  // const seenObjectsByIdentity = new Map<any, any>();
 
-  const seenInputByName = new Map<string, any>();
-  const seenInputByIdentity = new Map<any, any>();
+  // const seenInputByName = new Map<string, any>();
+  // const seenInputByIdentity = new Map<any, any>();
+
+  // const seenUnionBy
+  const schemaObjects = new SchemaObjects();
 
   if (schema.queries) {
     const fields: GraphQLFieldConfigMap<any, any> = {};
     for (let [fieldName, field] of Object.entries<SchemaResolver>(schema.queries)) {
-      fields[field.alias || fieldName] = mapToGraphQLOutputField(field, seenObjectsByName, seenObjectsByIdentity, seenInputByIdentity);
+      fields[field.alias || fieldName] = mapToGraphQLOutputField(field, schemaObjects);
     }
     config.query =
       new GraphQLObjectType({
@@ -177,9 +188,7 @@ function getScalarFromResolver(resolver: SchemaResolver) {
 
 function mapToGraphQLOutputType(
   resolver: SchemaResolver, 
-  seenObjectByName: Map<string, any>, 
-  seenObjectsByIdentity: Map<any, any>, 
-  seenInputByIdentity: Map<any, any>
+  schemaObjects: SchemaObjects
 ): GraphQLOutputType {
   let scalar: GraphQLOutputType | null = getScalarFromResolver(resolver);
 
@@ -187,17 +196,15 @@ function mapToGraphQLOutputType(
     return mapOutputNullableAndArray(scalar, resolver);
   } else {
     let output: GraphQLObjectType;
-    if (seenObjectsByIdentity.has(resolver.type)) {
-      output = seenObjectsByIdentity.get(resolver.type);
+    if (schemaObjects.outputObjects.has(resolver.type)) {
+      output = schemaObjects.outputObjects.get(resolver.type);
     } else {
       const fields: GraphQLFieldConfigMap<any, any> = {};
       if (resolver.type.objectFields) {
         for (let [fieldName, field] of Object.entries<SchemaResolver>(resolver.type.objectFields)) {
           fields[field.alias || fieldName] = mapToGraphQLOutputField(
             field, 
-            seenObjectByName, 
-            seenObjectsByIdentity, 
-            seenInputByIdentity
+            schemaObjects
           );
         }
       }
@@ -208,7 +215,7 @@ function mapToGraphQLOutputType(
         fields
       });
 
-      seenObjectsByIdentity.set(resolver.type, output);
+      schemaObjects.outputObjects.set(resolver.type, output);
     }
     return mapOutputNullableAndArray(output, resolver);
   }
@@ -216,14 +223,12 @@ function mapToGraphQLOutputType(
 
 function mapToGraphQLOutputField(
   field: SchemaResolver, 
-  seenObjectsByName: Map<string, any>, 
-  seenObjectByIdentity: Map<any, any>,
-  seenInputByIdentity: Map<any, any>,
+  schemaObjects: SchemaObjects,
 ): GraphQLFieldConfig<any, any, any> {
   const config: GraphQLFieldConfig<any, any, any> = {
     description: field.description,
     deprecationReason: field.deprecationReason,
-    type: mapToGraphQLOutputType(field, seenObjectsByName, seenObjectByIdentity, seenInputByIdentity),
+    type: mapToGraphQLOutputType(field, schemaObjects),
   };
   if (field.argsFields) {
     const args: GraphQLFieldConfigArgumentMap = {}
@@ -231,7 +236,7 @@ function mapToGraphQLOutputField(
     for (let [argName, arg] of Object.entries<InputResolver>(field.argsFields)) {
       args[field.alias || argName] = {
         description: arg.description,
-        type: mapToGraphQLInputType(arg, seenInputByIdentity),
+        type: mapToGraphQLInputType(arg, schemaObjects),
         defaultValue: arg.defaultValue,
         deprecationReason: arg.deprecationReason
       }
@@ -254,22 +259,22 @@ function mapToGraphQLOutputField(
   return config;
 }
 
-function mapToGraphQLInputType(input: InputResolver, seenInputByIdentity: Map<any, any>): GraphQLInputType {
+function mapToGraphQLInputType(input: InputResolver, schemaObjects: SchemaObjects): GraphQLInputType {
   let scalar: GraphQLOutputType | null = getScalarFromResolver(input);
 
   if (scalar !== null) {
     return mapInputToNullableAndArray(scalar, input);
   } else {
     let graphqlInput: GraphQLInputType;
-    if (seenInputByIdentity.has(input.type)) {
-      graphqlInput = seenInputByIdentity.get(input.type);
+    if (schemaObjects.inputObjects.has(input.type)) {
+      graphqlInput = schemaObjects.inputObjects.get(input.type);
     } else {
       const fields: GraphQLInputFieldConfigMap = {};
       if (input.inputFields) {
         for (let [fieldName, field] of Object.entries<InputResolver>(input.inputFields)) {
           fields[field.alias || fieldName] = {
             description: field.description,
-            type: mapToGraphQLInputType(field, seenInputByIdentity),
+            type: mapToGraphQLInputType(field, schemaObjects),
             defaultValue: field.defaultValue,
             deprecationReason: field.deprecationReason,
           }

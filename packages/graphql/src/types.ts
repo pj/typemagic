@@ -53,7 +53,7 @@ export type IsTypeScalar<Type> =
 //     ? true
 //     : false
 
-// export type Constructor<T> = Function & { prototype: T };
+export type Constructor<T> = Function & { prototype: T };
 // export type ConstructorFromArray<T> = T extends Array<infer C> ? Constructor<C> : Constructor<T>;
 
 export type GetIfArray<I> = I extends Array<infer T> ? T : I; 

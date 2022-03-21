@@ -100,6 +100,29 @@ const unionTypeB =
     }
   } as const;
 
+type TestType = {
+  firstField: string,
+  secondField: number
+}
+
+const testTypeSchema = {
+  objectName: "TestType",
+  objectFields: {
+    firstField: ScalarTypes.STRING,
+    secondField: ScalarTypes.FLOAT
+  }
+} as const;
+
+enum TestStringEnum {
+  FIRST_FIELD = "FIRST_FIELD",
+  SECOND_FIElD = "SECOND_FIELD"
+}
+
+enum TestNumberEnum {
+  FIRST_FIELD,
+  SECOND_FIElD
+}
+
 let app: Express;
 beforeAll(async () => {
 
@@ -120,6 +143,13 @@ beforeAll(async () => {
             return ["Hello", null, "World!"]
           }
         },
+        enumTypeArray: {
+          enum: TestStringEnum,
+          array: "nullable_items",
+          resolve: (): (TestStringEnum)[] => {
+            return [TestStringEnum.FIRST_FIELD, TestStringEnum.SECOND_FIElD]
+          }
+        },
         objectTypeNonNull: {
           type: outputTypeSchema,
           resolve: () => {
@@ -130,6 +160,13 @@ beforeAll(async () => {
           type: outputTypeSchema,
           nullable: true,
           resolve: (): OutputType | null => {
+            return null;
+          }
+        },
+        objectTypeFromType: {
+          type: testTypeSchema,
+          nullable: true,
+          resolve: (): TestType | null => {
             return null;
           }
         },
@@ -155,7 +192,10 @@ beforeAll(async () => {
           }
         },
         objectUnion: {
-          type: [unionTypeA, unionTypeB] as const,
+          type: { 
+            unionName: "ObjectUnion",
+            unionTypes: [unionTypeA, unionTypeB] 
+          } as const,
           resolve: (): UnionTypeA | UnionTypeB => {
             return new UnionTypeB(false, null);
           }
