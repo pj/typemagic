@@ -144,7 +144,7 @@ beforeAll(async () => {
           type: outputTypeSchema,
           array: "nullable_items",
           argsFields: argSchema,
-          resolve: (args: Args): (OutputType | null)[] => {
+          resolve: (args: Args, root: QueryRoot): (OutputType | null)[] => {
             return [new OutputType(args.argField), new OutputType("Hello World!"), null];
           }
         },

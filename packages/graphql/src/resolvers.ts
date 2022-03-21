@@ -27,17 +27,13 @@ export type ValidateResolver<Resolver, Root, RootFieldType, Context> =
           RootFieldType, 
           Type,
           Enum,
-          HandleUnion<
-            ReturnTypeForRoot<ResolverFunction, RootFieldType>,
-            Type,
-            ResolverFunction,
-            ValidateResolverFunction<
-              ResolverFunction, 
-              Root, 
-              ReturnTypeForRoot<ResolverFunction, RootFieldType>, 
-              GetObjectFields<Type>, 
-              Context
-            >
+          ValidateResolverFunction<
+            ResolverFunction, 
+            Root, 
+            ReturnTypeForRoot<ResolverFunction, RootFieldType>, 
+            GetObjectFields<Type>, 
+            Context,
+            Type
           >
         >
     : [IsNonNullNonArrayTypeScalar<RootFieldType>] extends [true]
@@ -65,7 +61,8 @@ export type ValidateAdditionalResolver<Resolver, Root, Context> =
               Root, 
               ReturnTypeForRoot<ResolverFunction, unknown>, 
               GetObjectFields<Type>, 
-              Context
+              Context,
+              Type
             >
           >
       : "Resolve function is required on additional fields"
@@ -79,8 +76,8 @@ export type ValidateAdditionalResolver<Resolver, Root, Context> =
 //   return resolver;
 // }
 
-export type ValidateResolverFunction<ResolverFunction, Root, RootFieldType, ObjectFields, Context> =
-  ScalarOrObjectType<RootFieldType, ObjectFields, Context>
+export type ValidateResolverFunction<ResolverFunction, Root, RootFieldType, ObjectFields, Context, Type> =
+  ScalarOrObjectType<RootFieldType, ObjectFields, Context, Type>
   & CreateSchemaOptions<RootFieldType>
   & (
       [unknown] extends [ResolverFunction]
@@ -107,34 +104,40 @@ export type ValidateResolverFunction<ResolverFunction, Root, RootFieldType, Obje
       )
 
 
-export type ScalarOrObjectType<RootFieldType, ObjectFields, Context> =
+export type ScalarOrObjectType<RootFieldType, ObjectFields, Context, Type> =
   [IsTypeScalar<RootFieldType>] extends [true]
     ? {
         type: GetSchemaScalar<RootFieldType>
       }
-    : {
-        type: {
-          objectName: string,
-          description?: string,
-          deprecationReason?: string,
-          objectFields: {
-            [Key in keyof ObjectFields]:
-              [Key] extends [keyof GetUnderlyingType<RootFieldType>]
-                ? ValidateResolver<
-                    ObjectFields[Key],
-                    GetUnderlyingType<RootFieldType>, 
-                    GetUnderlyingType<RootFieldType>[Key], 
-                    Context
-                  >
-                  // Additional properties on object fields are possible.
-                : ValidateAdditionalResolver<
-                    ObjectFields[Key],
-                    GetUnderlyingType<RootFieldType>, 
-                    Context
-                  >
+    : [Type] extends [Readonly<unknown[]>]
+      ? UnionItemToReturnType<Type[number]> extends infer Unionized
+        ? Exact<Unionized, RootFieldType> extends true
+          ? {type: Type}
+          : {type: "Union type does not match return type"}
+        : never
+      : {
+          type: {
+            objectName: string,
+            description?: string,
+            deprecationReason?: string,
+            objectFields: {
+              [Key in keyof ObjectFields]:
+                [Key] extends [keyof GetUnderlyingType<RootFieldType>]
+                  ? ValidateResolver<
+                      ObjectFields[Key],
+                      GetUnderlyingType<RootFieldType>, 
+                      GetUnderlyingType<RootFieldType>[Key], 
+                      Context
+                    >
+                    // Additional properties on object fields are possible.
+                  : ValidateAdditionalResolver<
+                      ObjectFields[Key],
+                      GetUnderlyingType<RootFieldType>, 
+                      Context
+                    >
+            }
           }
         }
-      }
 
 export type HandleNonNullNonArrayTypeScalar<Scalar, Resolver> =
   [IsNonNullNonArrayTypeScalar<Scalar>] extends [true]
@@ -170,7 +173,6 @@ export type NormalEnum<RootFieldType, Enum> =
     }
   } & CreateSchemaOptions<RootFieldType>
 
-
 export type HandleEnum<RootFieldType, Type, Enum, NotEnum> =
   [unknown] extends [Enum]
     ? [Type] extends [{enum: infer TypeEnum}] 
@@ -198,7 +200,6 @@ export type TypeToReturnType<Type> =
       ? ScalarType
       : "Unable to infer type"
 
-  
 export type UnionItemToReturnType<Item> =
   Item extends {objectFields: infer Fields}
     ? {
