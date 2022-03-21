@@ -144,8 +144,8 @@ beforeAll(async () => {
           }
         },
         enumTypeArray: {
-          enum: TestStringEnum,
-          array: "nullable_items",
+          type: {enum: TestStringEnum},
+          array: true,
           resolve: (): (TestStringEnum)[] => {
             return [TestStringEnum.FIRST_FIELD, TestStringEnum.SECOND_FIElD]
           }
