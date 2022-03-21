@@ -4,7 +4,6 @@ import { printSchema } from "graphql";
 import { ScalarTypes, schema } from "../src";
 import { QueryRoot } from "../src/schema";
 import request from 'supertest';
-import { HandleUnion } from "../src/resolvers";
 
 class OutputType {
   constructor(
@@ -144,7 +143,7 @@ beforeAll(async () => {
           }
         },
         enumTypeArray: {
-          type: {enum: TestStringEnum},
+          type: {enum: TestStringEnum, name: "TestStringEnum"},
           array: true,
           resolve: (): (TestStringEnum)[] => {
             return [TestStringEnum.FIRST_FIELD, TestStringEnum.SECOND_FIElD]
@@ -194,7 +193,18 @@ beforeAll(async () => {
         objectUnion: {
           type: { 
             unionName: "ObjectUnion",
-            unionTypes: [unionTypeA, unionTypeB] 
+            unionTypes: [unionTypeA, unionTypeB],
+            resolveType: (unionType: UnionTypeA | UnionTypeB) => {
+              if (unionType instanceof UnionTypeA) {
+                return 'UnionTypeA'
+              }
+
+              if (unionType instanceof UnionTypeB) {
+                return 'UnionTypeB'
+              }
+
+              throw new Error('unable to determine type');
+            }
           } as const,
           resolve: (): UnionTypeA | UnionTypeB => {
             return new UnionTypeB(false, null);
@@ -328,4 +338,23 @@ test('rootType', async () => {
       ]
     }
   );
+});
+
+test('objectUnion', async () => {
+  const response = 
+    await runQuery(
+      `query TestQuery {
+        objectUnion {
+          ... on UnionTypeB {
+            typeBField
+          }
+          ... on UnionTypeA {
+            typeAField
+          }
+        }
+      }`
+    );
+  console.log(response.body);
+  expect(response.status).toEqual(200);
+  expect(response.body.data.objectUnion).toBeTruthy();
 });

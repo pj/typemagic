@@ -2,7 +2,7 @@
 - [x] Move object details back into type field.
 - [x] Handle enums
 - [x] Test Generated code
-- [ ] Unions
+- [x] Unions
 - [ ] Interfaces
 - [ ] Typecheck enums properly
 - [ ] Fix mutations.
@@ -10,4 +10,6 @@
 - [ ] Helper functions for checking types outside using schema.
 - [ ] Test multi level input and output objects.
 - [ ] Client generation
-- [ ] Clean up giant resolve function type.
+- [x] Clean up giant resolve function type.
+- [ ] Generate enum type from enum description.
+- [ ] Explore generation of unions from return type.

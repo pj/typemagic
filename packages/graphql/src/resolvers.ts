@@ -1,3 +1,4 @@
+import { UnionOrIntersectionType } from "typescript";
 import { ValidateArgs } from "./common";
 import {
   CreateTypeFromSchemaOptions,
@@ -98,10 +99,13 @@ export type ValidateResolverFunction<ResolverFunction, Root, RootFieldType, Obje
           : {resolve: "Invalid resolver"} 
       )
 
+export type UnionTypeNames<UnionType> = 
+  UnionType extends {objectName: infer Name} ? Name : never
+
 
 export type ScalarOrObjectType<RootFieldType, ObjectFields, Context, Type> =
-  [Type] extends [{enum: infer Enum}]
-    ? {type: {enum: Enum}}
+  [Type] extends [{enum: infer Enum, name: infer Name, description?: infer Description}]
+    ? {type: {enum: Enum, name: Name, description?: Description}}
     : [IsTypeScalar<RootFieldType>] extends [true]
       ? {
           type: GetSchemaScalar<RootFieldType>
@@ -110,8 +114,8 @@ export type ScalarOrObjectType<RootFieldType, ObjectFields, Context, Type> =
           ? [UnionTypes] extends [Readonly<unknown[]>]
             ? UnionItemToReturnType<UnionTypes[number]> extends infer Unionized
               ? Exact<Unionized, RootFieldType> extends true
-                ? {type: Type}
-                : {type: "Union type does not match return type"}
+                ? {type: {unionName: UnionName, unionTypes: UnionTypes, resolveType?: (value: RootFieldType) => UnionTypeNames<UnionTypes[number]>}}
+                : {unionName: UnionName, type: "Union type does not match return type"}
               : never
             : {type: {unionName: UnionName, unionTypes: "Union types should be an array"}}
           : {

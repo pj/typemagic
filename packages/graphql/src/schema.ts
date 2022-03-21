@@ -1,5 +1,7 @@
 import {
   GraphQLBoolean,
+  GraphQLEnumType,
+  GraphQLEnumValueConfigMap,
   GraphQLField,
   GraphQLFieldConfig,
   GraphQLFieldConfigArgumentMap,
@@ -18,7 +20,9 @@ import {
   GraphQLSchema,
   GraphQLSchemaConfig,
   GraphQLString,
-  GraphQLType
+  GraphQLType,
+  GraphQLUnionType,
+  GraphQLUnionTypeConfig
 } from "graphql";
 import { GraphQLISODateTime } from "type-graphql";
 import { ValidateMutations } from "./mutation";
@@ -85,6 +89,10 @@ class SchemaObjects {
     public inputObjects: Map<any, any> = new Map(),
     public unions: Map<any, any> = new Map(),
   ) {}
+}
+
+function enumKeys(enom: any): any[] {
+  return Object.keys(enom).filter(key => isNaN(Number(key)))
 }
 
 export function schema<Schema extends ValidateSchema<Schema, Context>, Context>(
@@ -186,6 +194,25 @@ function getScalarFromResolver(resolver: SchemaResolver) {
   return null;
 }
 
+function mapToGraphQLObjectType(type: any, schemaObjects: SchemaObjects) {
+  const fields: GraphQLFieldConfigMap<any, any> = {};
+  for (let [fieldName, field] of Object.entries<SchemaResolver>(type.objectFields)) {
+    fields[field.alias || fieldName] = mapToGraphQLOutputField(
+      field, 
+      schemaObjects
+    );
+  }
+
+  const output = new GraphQLObjectType({
+    name: type.objectName,
+    description: type.description,
+    fields
+  });
+
+  schemaObjects.outputObjects.set(type, output);
+  return output;
+}
+
 function mapToGraphQLOutputType(
   resolver: SchemaResolver, 
   schemaObjects: SchemaObjects
@@ -195,27 +222,41 @@ function mapToGraphQLOutputType(
   if (scalar !== null) {
     return mapOutputNullableAndArray(scalar, resolver);
   } else {
-    let output: GraphQLObjectType;
+    let output: GraphQLOutputType;
     if (schemaObjects.outputObjects.has(resolver.type)) {
       output = schemaObjects.outputObjects.get(resolver.type);
-    } else {
-      const fields: GraphQLFieldConfigMap<any, any> = {};
-      if (resolver.type.objectFields) {
-        for (let [fieldName, field] of Object.entries<SchemaResolver>(resolver.type.objectFields)) {
-          fields[field.alias || fieldName] = mapToGraphQLOutputField(
-            field, 
-            schemaObjects
-          );
-        }
+    } else if (schemaObjects.unions.has(resolver.type)) {
+      output = schemaObjects.unions.get(resolver.type);
+    } else if (resolver.type.unionTypes) {
+      const types: GraphQLObjectType[] = [];
+
+      for (let type of resolver.type.unionTypes) {
+        types.push(mapToGraphQLObjectType(type, schemaObjects));
       }
 
-      output = new GraphQLObjectType({
-        name: resolver.type.objectName,
+      output = new GraphQLUnionType({
+        name: resolver.type.unionName,
         description: resolver.description,
-        fields
+        types
       });
 
-      schemaObjects.outputObjects.set(resolver.type, output);
+      schemaObjects.unions.set(resolver.type, output);
+    } else if (resolver.type.objectFields) {
+      output = mapToGraphQLObjectType(resolver.type, schemaObjects);
+    } else if (resolver.type.enum) {
+      const values: GraphQLEnumValueConfigMap = {};
+
+      for (let key of Object.keys(resolver.type.enum)) {
+        values[key] = {value: resolver.type.enum[key]}
+      }
+
+      output = new GraphQLEnumType({
+        name: resolver.type.name,
+        description: resolver.type.description,
+        values
+      });
+    } else {
+      throw new Error(`Unknown resolver type ${resolver}`)
     }
     return mapOutputNullableAndArray(output, resolver);
   }
