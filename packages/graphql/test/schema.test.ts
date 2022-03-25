@@ -4,6 +4,7 @@ import { printSchema } from "graphql";
 import { ScalarTypes, schema } from "../src";
 import { QueryRoot } from "../src/schema";
 import request from 'supertest';
+import { resolver } from "../src/resolvers";
 
 class OutputType {
   constructor(
@@ -121,6 +122,24 @@ enum TestNumberEnum {
   FIRST_FIELD,
   SECOND_FIElD
 }
+const scalarTypeNonNull = resolver(
+  {
+    type: ScalarTypes.BOOLEAN,
+    resolve: () => {
+      return true
+    }
+  } as const
+);
+const objectTypeWithArgs = resolver<any, QueryRoot, unknown>(
+  {
+    type: outputTypeSchema,
+    array: "nullable_items",
+    argsFields: argSchema,
+    resolve: (args: Args, root: QueryRoot): (OutputType | null)[] => {
+      return [new OutputType(args.argField), new OutputType("Hello World!"), null];
+    }
+  } as const
+  );
 
 let app: Express;
 beforeAll(async () => {
@@ -129,12 +148,7 @@ beforeAll(async () => {
     {} as any, 
     {
       queries: {
-        scalarTypeNonNull: {
-          type: ScalarTypes.BOOLEAN,
-          resolve: () => {
-            return true
-          }
-        },
+        scalarTypeNonNull: scalarTypeNonNull,
         scalarTypeArray: {
           type: ScalarTypes.STRING,
           array: "nullable_items",
@@ -176,14 +190,7 @@ beforeAll(async () => {
             return [new OutputType("Hello World!")];
           }
         },
-        objectTypeWithArgs: {
-          type: outputTypeSchema,
-          array: "nullable_items",
-          argsFields: argSchema,
-          resolve: (args: Args, root: QueryRoot): (OutputType | null)[] => {
-            return [new OutputType(args.argField), new OutputType("Hello World!"), null];
-          }
-        },
+        objectTypeWithArgs: objectTypeWithArgs,
         rootType: {
           type: rootSchema,
           resolve: ()  => {
@@ -357,4 +364,13 @@ test('objectUnion', async () => {
   console.log(response.body);
   expect(response.status).toEqual(200);
   expect(response.body.data.objectUnion).toBeTruthy();
+});
+
+test('test resolver function', async () => {
+  resolver({
+    type: ScalarTypes.BOOLEAN,
+    resolve: () => {
+      return true
+    }
+  });
 });

@@ -211,3 +211,12 @@ export type UnionItemToReturnType<Item> =
     : never
 
 export type UnionOfArrayElements<ARR_T extends Readonly<unknown[]>> = ARR_T[number];
+
+export function resolver<
+  Context, 
+  Root, 
+  RootField, 
+  X extends ValidateResolver<X, Root, RootField, Context> = any
+>(resolver: X) {
+  return resolver;
+}

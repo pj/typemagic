@@ -14,3 +14,4 @@
 - [ ] Explore generation of unions from return type.
 - - [ ] Fix up resolveType for unions.
 - [ ] Fix descriptions and deprecation reasons on all types.
+- [ ] Standard GraphQL scalar types
