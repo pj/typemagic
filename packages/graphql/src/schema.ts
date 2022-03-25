@@ -25,11 +25,14 @@ import {
   GraphQLUnionTypeConfig
 } from "graphql";
 import { GraphQLISODateTime } from "type-graphql";
-import { ValidateMutations } from "./mutation";
 import { ArrayTrilean, Constructor, ScalarTypes } from "./types";
 import { ValidateResolver } from "./resolvers"
 
 export class QueryRoot {
+
+}
+
+export class MutationRoot {
 
 }
 
@@ -56,7 +59,7 @@ export type ValidateSchema<Schema, Context> =
     (
       [undefined] extends [Mutations]
       ? { mutations?: undefined }
-      : { mutations: ValidateMutations<Mutations, Context> }
+      : { mutations: ValidateQueries<Mutations, MutationRoot, Context> }
     )
   : never
 
@@ -81,6 +84,7 @@ type SchemaResolver = {
   array?: ArrayTrilean,
   argsFields?: { [key: string]: InputResolver },
   resolve?: (args: any, root: any, context?: any) => any,
+  resolveType?: (type: any) => any,
 }
 
 class SchemaObjects {
@@ -89,10 +93,6 @@ class SchemaObjects {
     public inputObjects: Map<any, any> = new Map(),
     public unions: Map<any, any> = new Map(),
   ) {}
-}
-
-function enumKeys(enom: any): any[] {
-  return Object.keys(enom).filter(key => isNaN(Number(key)))
 }
 
 export function schema<Schema extends ValidateSchema<Schema, Context>, Context>(
@@ -117,6 +117,18 @@ export function schema<Schema extends ValidateSchema<Schema, Context>, Context>(
     config.query =
       new GraphQLObjectType({
         name: "Query",
+        fields
+      });
+  }
+
+  if (schema.mutations) {
+    const fields: GraphQLFieldConfigMap<any, any> = {};
+    for (let [fieldName, field] of Object.entries<SchemaResolver>(schema.mutations)) {
+      fields[field.alias || fieldName] = mapToGraphQLOutputField(field, schemaObjects);
+    }
+    config.query =
+      new GraphQLObjectType({
+        name: "Mutation",
         fields
       });
   }
@@ -237,6 +249,7 @@ function mapToGraphQLOutputType(
       output = new GraphQLUnionType({
         name: resolver.type.unionName,
         description: resolver.description,
+        resolveType: resolver.type.resolveType,
         types
       });
 
