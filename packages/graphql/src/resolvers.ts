@@ -1,17 +1,7 @@
-import { UnionOrIntersectionType } from "typescript";
 import { ValidateArgs } from "./common";
 import {
-  CreateTypeFromSchemaOptions,
-  Exact,
-  CreateSchemaOptions,
-  GetTypeScalar,
-  GetRawReturnType,
-  GetSchemaScalar,
-  GetUnderlyingType,
-  IsTypeScalar,
-  IsNonNullNonArrayTypeScalar,
-  IsSchemaScalar,
-  ScalarTypes
+  CreateSchemaOptions, Exact, GetSchemaScalar,
+  GetUnderlyingType, IsNonNullNonArrayTypeScalar, IsTypeScalar, RemovePromise, SchemaTypeToType
 } from "./types";
 
 export type ValidateResolver<Resolver, Root, RootFieldType, Context> =
@@ -157,7 +147,7 @@ export type HandleNonNullNonArrayTypeScalar<Scalar, Resolver> =
 export type ReturnTypeForRoot<ResolverFunction, RootFieldType> =
   [unknown] extends [RootFieldType]
     ? [ResolverFunction] extends [(...args: infer Args) => infer ReturnType]
-      ? GetRawReturnType<ReturnType>
+      ? RemovePromise<ReturnType>
       : "Unable to determine return type for root query"
     : RootFieldType
 
@@ -185,32 +175,12 @@ export type HandleEnum<RootFieldType, Type, Enum, NotEnum> =
         ? {enum: Enum} | NormalEnum<RootFieldType, Enum>
         : NormalEnum<RootFieldType, Enum>
 
-export type TypeToReturnType<Type> =
-  [Type] extends [{type: infer CompileTimeType, nullable?: infer Nullable, array?: infer IsArray}]
-    ? IsTypeScalar<CompileTimeType> extends [true]
-      ? CreateTypeFromSchemaOptions<GetTypeScalar<CompileTimeType>, Nullable, IsArray>
-      : CompileTimeType extends {objectFields: infer Fields}
-        ? CreateTypeFromSchemaOptions<
-            {
-              [Key in keyof Fields]: 
-                TypeToReturnType<Fields[Key]>
-            }, 
-            Nullable, 
-            IsArray
-           >
-        : "Type must be an object"
-    : GetTypeScalar<Type> extends infer ScalarType
-      ? ScalarType
-      : "Unable to infer type"
-
 export type UnionItemToReturnType<Item> =
   Item extends {objectFields: infer Fields}
     ? {
-      [Key in keyof Fields]: TypeToReturnType<Fields[Key]>
+      [Key in keyof Fields]: SchemaTypeToType<Fields[Key]>
     }
     : never
-
-export type UnionOfArrayElements<ARR_T extends Readonly<unknown[]>> = ARR_T[number];
 
 export function resolver<
   Context, 

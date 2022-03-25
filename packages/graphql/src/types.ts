@@ -159,7 +159,7 @@ export type CreateTypeFromSchemaOptions<RT, N, A> =
 
 export type BooleanOrUndefined = boolean | undefined;
 
-export type GetRawReturnType<P> =
+export type RemovePromise<P> =
   [P] extends [Promise<infer T>]
     ? T
     : P
@@ -172,3 +172,20 @@ export type GetRawReturnType<P> =
 //     : "Should not happen"
 
 // export type CompileTimeTypeFromConstructor<T> = [GetUnderlyingType<T>] extends [{ prototype: infer X }] ? X : never;
+
+export type SchemaTypeToType<Type> =
+  [Type] extends [{type: infer CompileTimeType, nullable?: infer Nullable, array?: infer IsArray}]
+    ? IsTypeScalar<CompileTimeType> extends [true]
+      ? CreateTypeFromSchemaOptions<GetTypeScalar<CompileTimeType>, Nullable, IsArray>
+      : CompileTimeType extends {objectFields: infer Fields}
+        ? CreateTypeFromSchemaOptions<
+            {
+              [Key in keyof Fields]: SchemaTypeToType<Fields[Key]>
+            }, 
+            Nullable, 
+            IsArray
+           >
+        : "Type must be an object"
+    : GetTypeScalar<Type> extends infer ScalarType
+      ? ScalarType
+      : "Unable to infer type"
