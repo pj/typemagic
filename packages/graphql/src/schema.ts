@@ -95,8 +95,7 @@ class SchemaObjects {
   ) {}
 }
 
-export function schema<Schema extends ValidateSchema<Schema, Context>, Context>(
-  context: Context | Constructor<Context>,
+export function schema<Context, Schema extends ValidateSchema<Schema, Context>>(
   schema: Schema
 ) {
   const config: GraphQLSchemaConfig = {};

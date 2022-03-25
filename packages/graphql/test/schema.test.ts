@@ -1,8 +1,8 @@
 import express, {Express} from "express";
 import { graphqlHTTP } from "express-graphql";
 import { printSchema } from "graphql";
-import { ScalarTypes, schema } from "../src";
-import { QueryRoot } from "../src/schema";
+import { ScalarTypes, schema, client } from "../src";
+import { QueryRoot, ValidateSchema } from "../src/schema";
 import request from 'supertest';
 import { resolver } from "../src/resolvers";
 
@@ -130,6 +130,7 @@ const scalarTypeNonNull = resolver(
     }
   } as const
 );
+
 const objectTypeWithArgs = resolver<any, QueryRoot, unknown>(
   {
     type: outputTypeSchema,
@@ -141,85 +142,85 @@ const objectTypeWithArgs = resolver<any, QueryRoot, unknown>(
   } as const
   );
 
-let app: Express;
-beforeAll(async () => {
-
-  const generatedSchema = schema(
-    {} as any, 
-    {
-      queries: {
-        scalarTypeNonNull: scalarTypeNonNull,
-        scalarTypeArray: {
-          type: ScalarTypes.STRING,
-          array: "nullable_items",
-          resolve: (): (string | null)[] => {
-            return ["Hello", null, "World!"]
-          }
-        },
-        enumTypeArray: {
-          type: {enum: TestStringEnum, name: "TestStringEnum"},
-          array: true,
-          resolve: (): (TestStringEnum)[] => {
-            return [TestStringEnum.FIRST_FIELD, TestStringEnum.SECOND_FIElD]
-          }
-        },
-        objectTypeNonNull: {
-          type: outputTypeSchema,
-          resolve: () => {
-            return new OutputType("Hello World!");
-          }
-        },
-        objectTypeNull: {
-          type: outputTypeSchema,
-          nullable: true,
-          resolve: (): OutputType | null => {
-            return null;
-          }
-        },
-        objectTypeFromType: {
-          type: testTypeSchema,
-          nullable: true,
-          resolve: (): TestType | null => {
-            return null;
-          }
-        },
-        objectTypeArray: {
-          type: outputTypeSchema,
-          array: true,
-          resolve: (): OutputType[] => {
-            return [new OutputType("Hello World!")];
-          }
-        },
-        objectTypeWithArgs: objectTypeWithArgs,
-        rootType: {
-          type: rootSchema,
-          resolve: ()  => {
-            return new RootType("Root Type", [new OutputType("Output Type")]);
-          }
-        },
-        objectUnion: {
-          type: { 
-            unionName: "ObjectUnion",
-            unionTypes: [unionTypeA, unionTypeB],
-            resolveType: (unionType: UnionTypeA | UnionTypeB) => {
-              if (unionType instanceof UnionTypeA) {
-                return 'UnionTypeA'
-              }
-
-              if (unionType instanceof UnionTypeB) {
-                return 'UnionTypeB'
-              }
-
-              throw new Error('unable to determine type');
+const schemaObject = {
+  queries: {
+    scalarTypeNonNull: scalarTypeNonNull,
+    scalarTypeArray: {
+      type: ScalarTypes.STRING,
+      array: "nullable_items",
+      resolve: (): (string | null)[] => {
+        return ["Hello", null, "World!"]
+      }
+    },
+    enumTypeArray: {
+      type: {enum: TestStringEnum, name: "TestStringEnum"},
+      array: true,
+      resolve: (): (TestStringEnum)[] => {
+        return [TestStringEnum.FIRST_FIELD, TestStringEnum.SECOND_FIElD]
+      }
+    },
+      objectTypeNonNull: {
+        type: outputTypeSchema,
+        resolve: () => {
+          return new OutputType("Hello World!");
+        }
+      },
+      objectTypeNull: {
+        type: outputTypeSchema,
+        nullable: true,
+        resolve: (): OutputType | null => {
+          return null;
+        }
+      },
+      objectTypeFromType: {
+        type: testTypeSchema,
+        nullable: true,
+        resolve: (): TestType | null => {
+          return null;
+        }
+      },
+      objectTypeArray: {
+        type: outputTypeSchema,
+        array: true,
+        resolve: (): OutputType[] => {
+          return [new OutputType("Hello World!")];
+        }
+      },
+      objectTypeWithArgs: objectTypeWithArgs,
+      rootType: {
+        type: rootSchema,
+        resolve: ()  => {
+          return new RootType("Root Type", [new OutputType("Output Type")]);
+        }
+      },
+      objectUnion: {
+        type: { 
+          unionName: "ObjectUnion",
+          unionTypes: [unionTypeA, unionTypeB],
+          resolveType: (unionType: UnionTypeA | UnionTypeB) => {
+            if (unionType instanceof UnionTypeA) {
+              return 'UnionTypeA'
             }
-          } as const,
-          resolve: (): UnionTypeA | UnionTypeB => {
-            return new UnionTypeB(false, null);
+
+            if (unionType instanceof UnionTypeB) {
+              return 'UnionTypeB'
+            }
+
+            throw new Error('unable to determine type');
           }
+        } as const,
+        resolve: (): UnionTypeA | UnionTypeB => {
+          return new UnionTypeB(false, null);
         }
       }
     }
-  );
+  } as const;
+
+let app: Express;
+let generatedClient;
+beforeAll(async () => {
+  const generatedSchema = schema<any, ValidateSchema<typeof schemaObject, any>>(schemaObject);
+  generatedClient = client(schemaObject);
 
   // console.debug(printSchema(generatedSchema));
   app = express();
@@ -366,11 +367,15 @@ test('objectUnion', async () => {
   expect(response.body.data.objectUnion).toBeTruthy();
 });
 
-test('test resolver function', async () => {
-  resolver({
-    type: ScalarTypes.BOOLEAN,
-    resolve: () => {
-      return true
-    }
-  });
+test('objectTypeNonNull - with client', async () => {
+  const response = 
+    await runQuery(
+      `query TestQuery {
+        objectTypeNonNull {
+          testField
+        } 
+      }`
+    );
+  expect(response.status).toEqual(200);
+  expect(response.body.data.objectTypeNonNull.testField).toEqual("Hello World!");
 });
