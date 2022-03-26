@@ -67,7 +67,6 @@ const query = {
 
   // Single table, don't join,
   fromDefault: {
-    source: TestTable,
     schema: {
       id: {
         nullable: false,
@@ -75,8 +74,13 @@ const query = {
       }
     }
   },
+  // from: schema["tableName"],
+  // join: [
+  //   schema["otherTable"], // Natural join?
+  //   [schema["otherTable"], "id"] // equality same key name
+  //   [schema["otherTable"], "id", "other_id"] // equality same key name
+  // ]
   from: {
-    table: TestTable,
     join: [
       // Short form for left join?
       [RelatedTable, 'id', 'id'],
@@ -113,5 +117,5 @@ const query = {
         }
       },
     ]
-  }
+  },
 }

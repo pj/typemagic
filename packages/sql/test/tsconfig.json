@@ -1,7 +1,7 @@
 {
   "extends": "../../../tsconfig-common.json",
   "compilerOptions": {
-    "outDir": "./dist/test",
+    "outDir": "../distTest",
     "rootDir": ".",
   },
   "references": [
