@@ -7,20 +7,18 @@ import {
 export type ValidateResolver<Resolver, Root, RootFieldType, Context> =
   [Resolver] extends [{
     type?: infer Type,
-    // enum?: infer Enum,
     alias?: infer Alias,
     description?: infer Description,
     argsFields?: infer ArgsRuntimeTypes,
     resolve?: infer ResolverFunction
   }]
     ? { description?: Description, alias?: Alias }
-      & ScalarOrObjectType<ReturnTypeForRoot<ResolverFunction, RootFieldType>, GetObjectFields<Type>, Context, Type>
+      & ScalarOrObjectType<ReturnTypeForRoot<ResolverFunction, RootFieldType>, Context, Type>
       & CreateSchemaOptions<ReturnTypeForRoot<ResolverFunction, RootFieldType>>
       & ValidateResolverFunction<
           ResolverFunction, 
           Root, 
           ReturnTypeForRoot<ResolverFunction, RootFieldType>, 
-          GetObjectFields<Type>, 
           Context,
           Type
         >
@@ -31,7 +29,6 @@ export type ValidateResolver<Resolver, Root, RootFieldType, Context> =
 export type ValidateAdditionalResolver<Resolver, Root, Context> =
   [Resolver] extends [{
     type?: infer Type
-    // enum?: infer Enum,
     alias?: infer Alias,
     description?: infer Description,
     deprecationReason?: infer DeprecationReason,
@@ -40,109 +37,122 @@ export type ValidateAdditionalResolver<Resolver, Root, Context> =
   }]
     ? [ResolverFunction] extends [(...args: infer X) => infer RT]
       ? { description?: Description, deprecationReason?: DeprecationReason, alias?: Alias }
-        & ScalarOrObjectType<RT, GetObjectFields<Type>, Context, Type>
+        & ScalarOrObjectType<RT, Context, Type>
         & CreateSchemaOptions<RT>
         & ValidateResolverFunction<
             ResolverFunction, 
             Root, 
             RT, 
-            GetObjectFields<Type>, 
             Context,
             Type
           >
       : "Resolve function is required on additional fields"
     : "Resolve function is required on additional fields"
 
-// export function resolver<Root, Context, Resolver extends ValidateResolver<Resolver, Root, Context>>(
-//   root: Root | Constructor<Root>,
-//   context: Context | Constructor<Context>,
-//   resolver: Resolver
-// ) {
-//   return resolver;
-// }
-
-export type ValidateResolverFunction<ResolverFunction, Root, RootFieldType, ObjectFields, Context, Type> =
-  // ScalarOrObjectType<RootFieldType, ObjectFields, Context, Type>
-  // & CreateSchemaOptions<RootFieldType>
-  // & 
+export type ValidateResolverFunction<ResolverFunction, Root, RootFieldType, Context, Type> =
   (
-      [unknown] extends [ResolverFunction]
-        ? { resolve?: never, argsFields?: never}
-        : [ResolverFunction] extends [(rootOrArgs: infer RootOrArgs, rootOrContext: infer RootOrContext, context: infer X) => infer ReturnType]
-          ? [unknown] extends [RootOrArgs]
+    [unknown] extends [ResolverFunction]
+      ? { resolve?: never, argsFields?: never}
+      : [ResolverFunction] extends [(rootOrArgs: infer RootOrArgs, rootOrContext: infer RootOrContext, context: infer X) => infer ReturnType]
+        ? [unknown] extends [RootOrArgs]
+          ? { 
+              argsFields?: never,
+              resolve: ((root: Root, context: Context) => RootFieldType) 
+                      | ((root: Root, context: Context) => Promise<RootFieldType>)
+            }
+          : [Exact<RootOrArgs, Root>] extends [true]
             ? { 
                 argsFields?: never,
                 resolve: ((root: Root, context: Context) => RootFieldType) 
                         | ((root: Root, context: Context) => Promise<RootFieldType>)
               }
-            : [Exact<RootOrArgs, Root>] extends [true]
-              ? { 
-                  argsFields?: never,
-                  resolve: ((root: Root, context: Context) => RootFieldType) 
-                          | ((root: Root, context: Context) => Promise<RootFieldType>)
+            : ValidateArgs<RootOrArgs>
+              & { 
+                  resolve: ((args: RootOrArgs, root: Root, context: Context) => RootFieldType) 
+                          | ((args: RootOrArgs, root: Root, context: Context) => Promise<RootFieldType>)
                 }
-              : ValidateArgs<RootOrArgs>
-                & { 
-                    resolve: ((args: RootOrArgs, root: Root, context: Context) => RootFieldType) 
-                            | ((args: RootOrArgs, root: Root, context: Context) => Promise<RootFieldType>)
-                  }
-          : {resolve: "Invalid resolver"} 
-      )
+        : {resolve: "Invalid resolver"} 
+  )
 
 export type UnionTypeNames<UnionType> = 
   UnionType extends {objectName: infer Name} ? Name : never
 
 
-export type ScalarOrObjectType<RootFieldType, ObjectFields, Context, Type> =
+export type ScalarOrObjectType<ReturnType, Context, Type> =
   [Type] extends [{enum: infer Enum, name: infer Name, description?: infer Description}]
     ? {type: {enum: Enum, name: Name, description?: Description}}
-    : [IsTypeScalar<RootFieldType>] extends [true]
+    : IsTypeScalar<ReturnType> extends true
       ? {
-          type: GetSchemaScalar<RootFieldType>
+          type: GetSchemaScalar<ReturnType>
         }
         : Type extends {unionName: infer UnionName, unionTypes: infer UnionTypes}
-          ? [UnionTypes] extends [Readonly<unknown[]>]
+          ? UnionTypes extends Readonly<unknown[]>
             ? UnionItemToReturnType<UnionTypes[number]> extends infer Unionized
-              ? Exact<Unionized, RootFieldType> extends true
-                ? {type: {unionName: UnionName, unionTypes: UnionTypes, resolveType?: (value: RootFieldType) => UnionTypeNames<UnionTypes[number]>}}
-                : {unionName: UnionName, type: "Union type does not match return type"}
+              ? Exact<Unionized, ReturnType> extends true
+                ? { 
+                    type: {
+                      unionName: UnionName, 
+                      unionTypes: UnionTypes, 
+                      resolveType?: (value: ReturnType) => UnionTypeNames<UnionTypes[number]>
+                    }
+                  }
+                : {
+                    unionName: UnionName, 
+                    type: "Union type does not match return type"
+                  }
               : never
-            : {type: {unionName: UnionName, unionTypes: "Union types should be an array"}}
-          : {
-              type: {
-                objectName: string,
-                description?: string,
-                deprecationReason?: string,
-                objectFields: {
-                  [Key in keyof ObjectFields]:
-                    [Key] extends [keyof GetUnderlyingType<RootFieldType>]
-                      ? ValidateResolver<
-                          ObjectFields[Key],
-                          GetUnderlyingType<RootFieldType>, 
-                          GetUnderlyingType<RootFieldType>[Key], 
-                          Context
-                        >
-                        // Additional properties on object fields are possible.
-                      : ValidateAdditionalResolver<
-                          ObjectFields[Key],
-                          GetUnderlyingType<RootFieldType>, 
-                          Context
-                        >
+            : {
+                type: {
+                  unionName: UnionName, 
+                  unionTypes: "Union types should be an array"
                 }
               }
+          : Type extends {
+              objectName: string,
+              description?: string,
+              deprecationReason?: string,
+              objectFields: infer ObjectFields,
+              interfaces?: infer Interfaces
             }
+              ? {
+                  type: ({
+                    objectName: string,
+                    description?: string,
+                    deprecationReason?: string,
+                    objectFields: {
+                      [Key in keyof ObjectFields]:
+                        [Key] extends [keyof GetUnderlyingType<ReturnType>]
+                          ? ValidateResolver<
+                              ObjectFields[Key],
+                              GetUnderlyingType<ReturnType>, 
+                              GetUnderlyingType<ReturnType>[Key], 
+                              Context
+                            >
+                            // Additional properties on object fields are possible.
+                          : ValidateAdditionalResolver<
+                              ObjectFields[Key],
+                              GetUnderlyingType<ReturnType>, 
+                              Context
+                            >
+                  }
+                }) 
+                & (
+                      unknown extends Interfaces
+                        ? {}
+                        : {
+                            interfaces: {
+                              [Key in keyof Interfaces]: 
+                                ReturnTypeExtendsInterface<Interfaces[Key], ReturnType, Context>
+                            }
+                          }
+                    )
+                }
+              : {type: "Not an object" }
 
 export type HandleNonNullNonArrayTypeScalar<Scalar, Resolver> =
   [IsNonNullNonArrayTypeScalar<Scalar>] extends [true]
     ? GetSchemaScalar<Scalar> | Resolver
     : Resolver
-
-// export type NonNullEnum<RootFieldType, Enum, EnumType> =
-//   [unknown] extends [Enum] 
-//     ? EnumType
-//     : [IsNonNullCompileTimeScalar<RootFieldType>] extends [true]
-//         ? {enum: Enum} | EnumType
-//         : EnumType
 
 export type ReturnTypeForRoot<ResolverFunction, RootFieldType> =
   [unknown] extends [RootFieldType]
@@ -150,14 +160,6 @@ export type ReturnTypeForRoot<ResolverFunction, RootFieldType> =
       ? RemovePromise<ReturnType>
       : "Unable to determine return type for root query"
     : RootFieldType
-
-export type GetObjectFields<Type> = 
-  [Type] extends [{ objectFields: infer ObjectFields }] 
-    ? ObjectFields 
-    : unknown
-    // : [Type] extends [{enum: infer Enum}] 
-    //   ? Type
-    //   : unknown
 
 export type NormalEnum<RootFieldType, Enum> = 
   { 
@@ -181,6 +183,28 @@ export type UnionItemToReturnType<Item> =
       [Key in keyof Fields]: SchemaTypeToType<Fields[Key]>
     }
     : never
+
+export type ReturnTypeExtendsInterface<Interface, ReturnType, Context> =
+  Interface extends {name: infer Name, fields: infer Fields}
+    ? {
+        name: Name,
+        description?: string,
+        deprecationReason?: string,
+        // Fixme: Can we infer all the possible names this could be?
+        resolveType?: (value: ReturnType) => string,
+        fields: {
+          [Key in keyof Fields]:
+            Key extends keyof GetUnderlyingType<ReturnType>
+              ? ValidateResolver<
+                  Fields[Key],
+                  GetUnderlyingType<ReturnType>, 
+                  GetUnderlyingType<ReturnType>[Key], 
+                  Context
+                >
+              : "Interface can't have fields that aren't in return type."
+        }
+      }
+    : "Interface is incorrect"
 
 export function resolver<
   Context, 

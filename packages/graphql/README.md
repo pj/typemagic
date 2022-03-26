@@ -1,17 +1,14 @@
-- [x] Additional properties on output
-- [x] Move object details back into type field.
-- [x] Handle enums
-- [x] Test Generated code
-- [x] Unions
-- [ ] Interfaces
-- [x] Typecheck enums properly
-- [ ] Fix mutations.
-- [ ] Helper functions for checking types outside using schema.
-- [ ] Test multi level input and output objects.
-- [ ] Client generation
-- [x] Clean up giant resolve function type.
-- [ ] Generate enum type from enum description.
+- [ ] Change from generic 'type' field to 'enum', 'scalar', 'object' etc.
+- [ ] Standard GraphQL scalar types
+- [ ] Custom GraphQL scalar types
 - [ ] Explore generation of unions from return type.
 - - [ ] Fix up resolveType for unions.
+- [ ] Fix mutations.
+- [ ] Helper functions for checking types outside using schema.
+- [ ] Graphql query generation
+- [ ] Infer all possible names of interface implementations to fix return type?
+- [ ] Client generation
 - [ ] Fix descriptions and deprecation reasons on all types.
-- [ ] Standard GraphQL scalar types
+- [ ] Fragments for querying
+- [ ] Detailed testing of Mutli level output, input, unions, interfaces
+- [ ] Generate enum type from enum fields?.

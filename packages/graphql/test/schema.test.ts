@@ -1,10 +1,9 @@
-import express, {Express} from "express";
+import express, { Express } from "express";
 import { graphqlHTTP } from "express-graphql";
-import { printSchema } from "graphql";
-import { ScalarTypes, schema, client } from "../src";
-import { QueryRoot, ValidateSchema } from "../src/schema";
 import request from 'supertest';
+import { ScalarTypes, schema } from "../src";
 import { resolver } from "../src/resolvers";
+import { QueryRoot } from "../src/schema";
 
 class OutputType {
   constructor(
@@ -99,6 +98,51 @@ const unionTypeB =
       }
     }
   } as const;
+
+interface TestInterface {
+  interfaceField: string
+}
+
+interface AnotherInterface {
+  anotherField: boolean
+}
+
+class TestWithInterface implements TestInterface, AnotherInterface {
+  constructor(public interfaceField: string, public implementorField: number, public anotherField: boolean) {
+
+  }
+}
+
+const testWithInterfaceSchema = 
+  resolver({
+    type: {
+      objectName: TestWithInterface.name,
+      objectFields: {
+        implementorField: ScalarTypes.INT,
+        interfaceField: ScalarTypes.STRING,
+        anotherField: ScalarTypes.BOOLEAN
+      },
+      interfaces: [
+        {
+          name: "TestInterface",
+          fields: {
+            interfaceField: ScalarTypes.STRING
+          },
+          resolveType: (args: TestWithInterface) => "TestWithInterface"
+        },
+        {
+          name: "AnotherInterface",
+          fields: {
+            anotherField: ScalarTypes.BOOLEAN
+          },
+          resolveType: (args: TestWithInterface) => "TestWithInterface"
+        }
+      ]
+    },
+    resolve: (): TestWithInterface => {
+      return new TestWithInterface("hello", 1234, true);
+    }
+  } as const);
 
 type TestType = {
   firstField: string,
@@ -212,17 +256,16 @@ const schemaObject = {
         resolve: (): UnionTypeA | UnionTypeB => {
           return new UnionTypeB(false, null);
         }
-      }
+      },
+      objectWithInterface: testWithInterfaceSchema
     }
   } as const;
 
 let app: Express;
 let generatedClient;
 beforeAll(async () => {
-  const generatedSchema = schema<any, ValidateSchema<typeof schemaObject, any>>(schemaObject);
-  generatedClient = client(schemaObject);
+  const generatedSchema = schema(schemaObject);
 
-  // console.debug(printSchema(generatedSchema));
   app = express();
   app.use('/graphql', graphqlHTTP({
     schema: generatedSchema,
@@ -362,20 +405,30 @@ test('objectUnion', async () => {
         }
       }`
     );
-  console.log(response.body);
   expect(response.status).toEqual(200);
   expect(response.body.data.objectUnion).toBeTruthy();
 });
 
-test('objectTypeNonNull - with client', async () => {
+test('objectWithInterface', async () => {
   const response = 
     await runQuery(
       `query TestQuery {
-        objectTypeNonNull {
-          testField
-        } 
+        objectWithInterface {
+          implementorField
+
+          ... on AnotherInterface {
+            anotherField
+          }
+          ... on TestInterface {
+            interfaceField
+          }
+        }
       }`
     );
   expect(response.status).toEqual(200);
-  expect(response.body.data.objectTypeNonNull.testField).toEqual("Hello World!");
+  expect(response.body.data.objectWithInterface).toStrictEqual({
+    implementorField: 1234, 
+    interfaceField: "hello", 
+    anotherField: true
+  });
 });

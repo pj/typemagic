@@ -1,32 +1,25 @@
 import {
   GraphQLBoolean,
   GraphQLEnumType,
-  GraphQLEnumValueConfigMap,
-  GraphQLField,
-  GraphQLFieldConfig,
+  GraphQLEnumValueConfigMap, GraphQLFieldConfig,
   GraphQLFieldConfigArgumentMap,
   GraphQLFieldConfigMap,
-  GraphQLFloat,
-  GraphQLInputFieldConfig,
-  GraphQLInputFieldConfigMap,
+  GraphQLFloat, GraphQLInputFieldConfigMap,
   GraphQLInputObjectType,
   GraphQLInputType,
   GraphQLInt,
+  GraphQLInterfaceType,
+  GraphQLInterfaceTypeConfig,
   GraphQLList,
   GraphQLNonNull,
   GraphQLObjectType,
-  GraphQLOutputType,
-  GraphQLScalarType,
-  GraphQLSchema,
+  GraphQLOutputType, GraphQLSchema,
   GraphQLSchemaConfig,
-  GraphQLString,
-  GraphQLType,
-  GraphQLUnionType,
-  GraphQLUnionTypeConfig
+  GraphQLString, GraphQLUnionType
 } from "graphql";
 import { GraphQLISODateTime } from "type-graphql";
-import { ArrayTrilean, Constructor, ScalarTypes } from "./types";
-import { ValidateResolver } from "./resolvers"
+import { ValidateResolver } from "./resolvers";
+import { ArrayTrilean, ScalarTypes } from "./types";
 
 export class QueryRoot {
 
@@ -99,13 +92,6 @@ export function schema<Context, Schema extends ValidateSchema<Schema, Context>>(
   schema: Schema
 ) {
   const config: GraphQLSchemaConfig = {};
-  // const seenObjectsByName = new Map<string, any>();
-  // const seenObjectsByIdentity = new Map<any, any>();
-
-  // const seenInputByName = new Map<string, any>();
-  // const seenInputByIdentity = new Map<any, any>();
-
-  // const seenUnionBy
   const schemaObjects = new SchemaObjects();
 
   if (schema.queries) {
@@ -207,6 +193,22 @@ function getScalarFromResolver(resolver: SchemaResolver) {
 
 function mapToGraphQLObjectType(type: any, schemaObjects: SchemaObjects) {
   const fields: GraphQLFieldConfigMap<any, any> = {};
+  const interfaces: GraphQLInterfaceType[] = [];
+  if (type.interfaces) {
+    for (let interface_ of type.interfaces) {
+      const interfaceFields: GraphQLFieldConfigMap<any, any> = {};
+      for (let [fieldName, field] of Object.entries<SchemaResolver>(interface_.fields)) {
+        interfaceFields[field.alias || fieldName] = mapToGraphQLOutputField(
+          field, 
+          schemaObjects
+        );
+      }
+      interfaces.push(
+        new GraphQLInterfaceType({name: interface_.name, fields: interfaceFields})
+      )
+    }
+  }
+
   for (let [fieldName, field] of Object.entries<SchemaResolver>(type.objectFields)) {
     fields[field.alias || fieldName] = mapToGraphQLOutputField(
       field, 
@@ -217,7 +219,8 @@ function mapToGraphQLObjectType(type: any, schemaObjects: SchemaObjects) {
   const output = new GraphQLObjectType({
     name: type.objectName,
     description: type.description,
-    fields
+    fields,
+    interfaces
   });
 
   schemaObjects.outputObjects.set(type, output);
