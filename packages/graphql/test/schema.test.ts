@@ -13,8 +13,8 @@ class OutputType {
 
 const outputTypeSchema = 
   {
-    objectName: OutputType.name,
-    objectFields: {
+    name: OutputType.name,
+    fields: {
       testField: ScalarTypes.STRING
     }
   } as const;
@@ -39,8 +39,8 @@ class RootType {
 
 const rootSchema = 
   {
-    objectName: RootType.name,
-    objectFields: {
+    name: RootType.name,
+    fields: {
       rootField: ScalarTypes.STRING,
       outputType: {
         type: outputTypeSchema,
@@ -62,8 +62,8 @@ class UnionTypeA {
 
 const unionTypeA = 
   {
-    objectName: UnionTypeA.name,
-    objectFields: {
+    name: UnionTypeA.name,
+    fields: {
       typeAField: ScalarTypes.STRING,
       outputType: {
         type: outputTypeSchema,
@@ -85,8 +85,8 @@ class UnionTypeB {
 
 const unionTypeB = 
   {
-    objectName: UnionTypeB.name,
-    objectFields: {
+    name: UnionTypeB.name,
+    fields: {
       typeBField: ScalarTypes.BOOLEAN,
       outputType: {
         type: outputTypeSchema,
@@ -116,8 +116,8 @@ class TestWithInterface implements TestInterface, AnotherInterface {
 const testWithInterfaceSchema = 
   resolver({
     type: {
-      objectName: TestWithInterface.name,
-      objectFields: {
+      name: TestWithInterface.name,
+      fields: {
         implementorField: ScalarTypes.INT,
         interfaceField: ScalarTypes.STRING,
         anotherField: ScalarTypes.BOOLEAN
@@ -150,8 +150,8 @@ type TestType = {
 }
 
 const testTypeSchema = {
-  objectName: "TestType",
-  objectFields: {
+  name: "TestType",
+  fields: {
     firstField: ScalarTypes.STRING,
     secondField: ScalarTypes.FLOAT
   }
@@ -239,8 +239,8 @@ const schemaObject = {
       },
       objectUnion: {
         type: { 
-          unionName: "ObjectUnion",
-          unionTypes: [unionTypeA, unionTypeB],
+          name: "ObjectUnion",
+          union: [unionTypeA, unionTypeB],
           resolveType: (unionType: UnionTypeA | UnionTypeB) => {
             if (unionType instanceof UnionTypeA) {
               return 'UnionTypeA'
@@ -265,6 +265,30 @@ let app: Express;
 let generatedClient;
 beforeAll(async () => {
   const generatedSchema = schema(schemaObject);
+  const asdf = schema({
+    queries: {
+      test: {
+        type: { 
+          name: "ObjectUnion",
+          union: [unionTypeA, unionTypeB],
+          resolveType: (unionType: UnionTypeA | UnionTypeB) => {
+            if (unionType instanceof UnionTypeA) {
+              return 'UnionTypeA'
+            }
+
+            if (unionType instanceof UnionTypeB) {
+              return 'UnionTypeB'
+            }
+
+            throw new Error('unable to determine type');
+          }
+        },
+        resolve: (): UnionTypeA | UnionTypeB => {
+          return new UnionTypeB(false, null);
+        }
+      }
+    }
+  });
 
   app = express();
   app.use('/graphql', graphqlHTTP({
@@ -432,3 +456,11 @@ test('objectWithInterface', async () => {
     anotherField: true
   });
 });
+
+type X = ({a: string} | {b:number})[]
+type Y = [{a: string}, {b:number}]
+
+type Z = X[number]
+type A = Y[number]
+
+type E = X[number] extends Y[number] ? Y[number] extends X[number] ? true : false : false

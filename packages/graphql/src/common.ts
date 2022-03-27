@@ -1,10 +1,15 @@
-import { HandleNonNullNonArrayTypeScalar } from "./resolvers"
 import {
   CreateSchemaOptions,
   GetSchemaScalar,
   GetUnderlyingType,
+  IsNonNullNonArrayTypeScalar,
   IsTypeScalar
 } from "./types"
+
+export type HandleNonNullNonArrayTypeScalar<Scalar, Resolver> =
+  [IsNonNullNonArrayTypeScalar<Scalar>] extends [true]
+    ? GetSchemaScalar<Scalar> | Resolver
+    : Resolver
 
 export type ValidateInputRuntimeType<FunctionArg> =
   {

@@ -173,19 +173,50 @@ export type RemovePromise<P> =
 
 // export type CompileTimeTypeFromConstructor<T> = [GetUnderlyingType<T>] extends [{ prototype: infer X }] ? X : never;
 
-export type SchemaTypeToType<Type> =
-  [Type] extends [{type: infer CompileTimeType, nullable?: infer Nullable, array?: infer IsArray}]
-    ? IsTypeScalar<CompileTimeType> extends [true]
-      ? CreateTypeFromSchemaOptions<GetTypeScalar<CompileTimeType>, Nullable, IsArray>
-      : CompileTimeType extends {objectFields: infer Fields}
-        ? CreateTypeFromSchemaOptions<
-            {
-              [Key in keyof Fields]: SchemaTypeToType<Fields[Key]>
-            }, 
-            Nullable, 
-            IsArray
-           >
-        : "Type must be an object"
-    : GetTypeScalar<Type> extends infer ScalarType
+export type TransformResolverToType<Schema> =
+  Schema extends {type: infer CompileTimeType, nullable?: infer Nullable, array?: infer IsArray}
+    ? CreateTypeFromSchemaOptions<
+        (
+          IsTypeScalar<CompileTimeType> extends true
+            ? GetTypeScalar<CompileTimeType>
+            : CompileTimeType extends {fields: infer Fields}
+              ? {
+                  [Key in keyof Fields]: TransformResolverToType<Fields[Key]>
+                }
+              : CompileTimeType extends {enum: infer Enum}
+                ? Enum
+                : CompileTimeType extends {union: infer Union}
+                  ? Union extends unknown[]
+                    ? TransformObjectSchemaToType<Union[number]>
+                    : "Union must be an array"
+                  : "Unable to infer type"
+          ), 
+          Nullable, 
+          IsArray
+        >
+    : GetTypeScalar<Schema> extends infer ScalarType
       ? ScalarType
       : "Unable to infer type"
+
+// export type TransformSchemaToType<Schema> =
+//   Schema extends {fields: infer Fields}
+//     ? {
+//         [Key in keyof Fields]: TransformResolverToType<Fields[Key]>
+//       }
+//     : Schema extends {union: infer Union}
+//       ? Union extends unknown[]
+//         ? TransformObjectSchemaToType<Union[number]>
+//         : "Union must be an array"
+//       : Schema extends {enum: infer Enum}
+//         ? Enum
+//         : IsTypeScalar<Schema> extends true
+//           ? Schema
+//           : "Unable to infer type"
+
+export type TransformObjectSchemaToType<ObjectSchema> =
+  ObjectSchema extends {fields: infer Fields}
+    ? {
+        [Key in keyof Fields]:
+          TransformResolverToType<Fields[Key]>
+      }
+    : "Not an object"

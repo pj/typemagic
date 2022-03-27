@@ -1,6 +1,6 @@
 import { GraphQLClient } from "graphql-request";
 import { ValidateSchema } from "./schema";
-import { GetTypeScalar, IsSchemaScalar, IsTypeScalar, RemovePromise, SchemaTypeToType } from "./types";
+import { GetTypeScalar, IsSchemaScalar, IsTypeScalar, RemovePromise, TransformResolverToType } from "./types";
 
 export type FieldSentinel = {};
 
@@ -62,7 +62,7 @@ export type GenerateQuery<Schema extends ValidateSchema<Schema, any>> = {
 
 export type GenerateResultField<Schema, Field> =
   [Field] extends [FieldSentinel]
-    ? SchemaTypeToType<Schema>
+    ? TransformResolverToType<Schema>
     : GenerateResultFields<Schema, Field>
 
 export type GenerateResultFields<Schema, Query> =

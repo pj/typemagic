@@ -1,8 +1,9 @@
 import { ValidateArgs } from "./common";
+import { HandleOutputObject } from "./object";
 import {
-  CreateSchemaOptions, Exact, GetSchemaScalar,
-  GetUnderlyingType, IsNonNullNonArrayTypeScalar, IsTypeScalar, RemovePromise, SchemaTypeToType
+  CreateSchemaOptions, Exact, GetSchemaScalar, IsNonNullNonArrayTypeScalar, IsTypeScalar, RemovePromise
 } from "./types";
+import { HandleUnion } from "./union";
 
 export type ValidateResolver<Resolver, Root, RootFieldType, Context> =
   [Resolver] extends [{
@@ -74,85 +75,22 @@ export type ValidateResolverFunction<ResolverFunction, Root, RootFieldType, Cont
         : {resolve: "Invalid resolver"} 
   )
 
-export type UnionTypeNames<UnionType> = 
-  UnionType extends {objectName: infer Name} ? Name : never
-
-
 export type ScalarOrObjectType<ReturnType, Context, Type> =
-  [Type] extends [{enum: infer Enum, name: infer Name, description?: infer Description}]
-    ? {type: {enum: Enum, name: Name, description?: Description}}
+  Type extends {enum: infer Enum, name: infer Name, description?: infer Description}
+    ? {
+        type: {
+          enum: Enum, 
+          name: Name, 
+          description?: Description
+        }
+      }
     : IsTypeScalar<ReturnType> extends true
       ? {
           type: GetSchemaScalar<ReturnType>
         }
-        : Type extends {unionName: infer UnionName, unionTypes: infer UnionTypes}
-          ? UnionTypes extends Readonly<unknown[]>
-            ? UnionItemToReturnType<UnionTypes[number]> extends infer Unionized
-              ? Exact<Unionized, ReturnType> extends true
-                ? { 
-                    type: {
-                      unionName: UnionName, 
-                      unionTypes: UnionTypes, 
-                      resolveType?: (value: ReturnType) => UnionTypeNames<UnionTypes[number]>
-                    }
-                  }
-                : {
-                    unionName: UnionName, 
-                    type: "Union type does not match return type"
-                  }
-              : never
-            : {
-                type: {
-                  unionName: UnionName, 
-                  unionTypes: "Union types should be an array"
-                }
-              }
-          : Type extends {
-              objectName: string,
-              description?: string,
-              deprecationReason?: string,
-              objectFields: infer ObjectFields,
-              interfaces?: infer Interfaces
-            }
-              ? {
-                  type: ({
-                    objectName: string,
-                    description?: string,
-                    deprecationReason?: string,
-                    objectFields: {
-                      [Key in keyof ObjectFields]:
-                        [Key] extends [keyof GetUnderlyingType<ReturnType>]
-                          ? ValidateResolver<
-                              ObjectFields[Key],
-                              GetUnderlyingType<ReturnType>, 
-                              GetUnderlyingType<ReturnType>[Key], 
-                              Context
-                            >
-                            // Additional properties on object fields are possible.
-                          : ValidateAdditionalResolver<
-                              ObjectFields[Key],
-                              GetUnderlyingType<ReturnType>, 
-                              Context
-                            >
-                  }
-                }) 
-                & (
-                      unknown extends Interfaces
-                        ? {}
-                        : {
-                            interfaces: {
-                              [Key in keyof Interfaces]: 
-                                ReturnTypeExtendsInterface<Interfaces[Key], ReturnType, Context>
-                            }
-                          }
-                    )
-                }
-              : {type: "Not an object" }
-
-export type HandleNonNullNonArrayTypeScalar<Scalar, Resolver> =
-  [IsNonNullNonArrayTypeScalar<Scalar>] extends [true]
-    ? GetSchemaScalar<Scalar> | Resolver
-    : Resolver
+      : Type extends {union: infer Union} 
+        ? HandleUnion<Type, ReturnType>
+        : HandleOutputObject<Type, ReturnType, Context>
 
 export type ReturnTypeForRoot<ResolverFunction, RootFieldType> =
   [unknown] extends [RootFieldType]
@@ -160,51 +98,6 @@ export type ReturnTypeForRoot<ResolverFunction, RootFieldType> =
       ? RemovePromise<ReturnType>
       : "Unable to determine return type for root query"
     : RootFieldType
-
-export type NormalEnum<RootFieldType, Enum> = 
-  { 
-    type: {
-      enum: Enum 
-    }
-  } & CreateSchemaOptions<RootFieldType>
-
-export type HandleEnum<RootFieldType, Type, Enum, NotEnum> =
-  [unknown] extends [Enum]
-    ? [Type] extends [{enum: infer TypeEnum}] 
-      ? NormalEnum<RootFieldType, TypeEnum>
-      : NotEnum
-    : [IsNonNullNonArrayTypeScalar<RootFieldType>] extends [true]
-        ? {enum: Enum} | NormalEnum<RootFieldType, Enum>
-        : NormalEnum<RootFieldType, Enum>
-
-export type UnionItemToReturnType<Item> =
-  Item extends {objectFields: infer Fields}
-    ? {
-      [Key in keyof Fields]: SchemaTypeToType<Fields[Key]>
-    }
-    : never
-
-export type ReturnTypeExtendsInterface<Interface, ReturnType, Context> =
-  Interface extends {name: infer Name, fields: infer Fields}
-    ? {
-        name: Name,
-        description?: string,
-        deprecationReason?: string,
-        // Fixme: Can we infer all the possible names this could be?
-        resolveType?: (value: ReturnType) => string,
-        fields: {
-          [Key in keyof Fields]:
-            Key extends keyof GetUnderlyingType<ReturnType>
-              ? ValidateResolver<
-                  Fields[Key],
-                  GetUnderlyingType<ReturnType>, 
-                  GetUnderlyingType<ReturnType>[Key], 
-                  Context
-                >
-              : "Interface can't have fields that aren't in return type."
-        }
-      }
-    : "Interface is incorrect"
 
 export function resolver<
   Context, 

@@ -209,7 +209,7 @@ function mapToGraphQLObjectType(type: any, schemaObjects: SchemaObjects) {
     }
   }
 
-  for (let [fieldName, field] of Object.entries<SchemaResolver>(type.objectFields)) {
+  for (let [fieldName, field] of Object.entries<SchemaResolver>(type.fields)) {
     fields[field.alias || fieldName] = mapToGraphQLOutputField(
       field, 
       schemaObjects
@@ -217,7 +217,7 @@ function mapToGraphQLObjectType(type: any, schemaObjects: SchemaObjects) {
   }
 
   const output = new GraphQLObjectType({
-    name: type.objectName,
+    name: type.name,
     description: type.description,
     fields,
     interfaces
@@ -241,22 +241,22 @@ function mapToGraphQLOutputType(
       output = schemaObjects.outputObjects.get(resolver.type);
     } else if (schemaObjects.unions.has(resolver.type)) {
       output = schemaObjects.unions.get(resolver.type);
-    } else if (resolver.type.unionTypes) {
+    } else if (resolver.type.union) {
       const types: GraphQLObjectType[] = [];
 
-      for (let type of resolver.type.unionTypes) {
+      for (let type of resolver.type.union) {
         types.push(mapToGraphQLObjectType(type, schemaObjects));
       }
 
       output = new GraphQLUnionType({
-        name: resolver.type.unionName,
+        name: resolver.type.name,
         description: resolver.description,
         resolveType: resolver.type.resolveType,
         types
       });
 
       schemaObjects.unions.set(resolver.type, output);
-    } else if (resolver.type.objectFields) {
+    } else if (resolver.type.fields) {
       output = mapToGraphQLObjectType(resolver.type, schemaObjects);
     } else if (resolver.type.enum) {
       const values: GraphQLEnumValueConfigMap = {};
