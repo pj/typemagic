@@ -13,13 +13,13 @@ import {
   GraphQLList,
   GraphQLNonNull,
   GraphQLObjectType,
-  GraphQLOutputType, GraphQLSchema,
+  GraphQLOutputType, GraphQLScalarType, GraphQLSchema,
   GraphQLSchemaConfig,
   GraphQLString, GraphQLUnionType
 } from "graphql";
 import { GraphQLISODateTime } from "type-graphql";
 import { ValidateResolver } from "./resolvers";
-import { ArrayTrilean, ScalarTypes } from "./types";
+import { ArrayTrilean } from "./types";
 
 export class QueryRoot {
 
@@ -60,7 +60,7 @@ type InputResolver = {
   alias?: string,
   description?: string,
   deprecationReason?: string,
-  type?: ScalarTypes,
+  type?: any,
   nullable?: boolean,
   array?: ArrayTrilean,
   inputFields?: { [key: string]: InputResolver },
@@ -162,33 +162,7 @@ function mapInputToNullableAndArray(
 }
 
 function getScalarFromResolver(resolver: SchemaResolver) {
-  switch (resolver) {
-    case ScalarTypes.BOOLEAN:
-      return GraphQLBoolean;
-    case ScalarTypes.STRING:
-      return GraphQLString;
-    case ScalarTypes.FLOAT:
-      return GraphQLFloat;
-    case ScalarTypes.INT:
-      return GraphQLInt;
-    case ScalarTypes.DATE:
-      return GraphQLISODateTime;
-    default:
-      switch (resolver.type) {
-        case ScalarTypes.BOOLEAN:
-          return GraphQLBoolean;
-        case ScalarTypes.STRING:
-          return GraphQLString;
-        case ScalarTypes.FLOAT:
-          return GraphQLFloat;
-        case ScalarTypes.INT:
-          return GraphQLInt;
-        case ScalarTypes.DATE:
-          return GraphQLISODateTime;
-      }
-  }
-
-  return null;
+  return (resolver instanceof GraphQLScalarType ? resolver : null)
 }
 
 function mapToGraphQLObjectType(type: any, schemaObjects: SchemaObjects) {

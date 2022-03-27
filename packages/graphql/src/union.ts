@@ -14,7 +14,13 @@ export type HandleUnion<Type, ReturnType> =
         : {
             type: {
               name: UnionName, 
-              union: TransformObjectSchemaToType<UnionTypes[number]>
+              union: {
+                error:"Union doesn't equal return type",
+                // unionTypes: UnionTypes,
+                // unionTypesNumber: UnionTypes[number],
+                schema: TransformObjectSchemaToType<UnionTypes[number]>,
+                // returnType: GetUnderlyingType<ReturnType>
+              }
             }
           }
       : { 

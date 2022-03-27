@@ -1473,3 +1473,31 @@ Type '{ type: ({ readonly objectName: string; readonly objectFields: { readonly 
   Object literal may only specify known properties, and 'type' does not exist in type '{ description?: unknown; alias?: unknown; } & (["Union type does not extend return type.", { readonly typeAField: string; readonly outputType: "Unknown scalar type"[] | null; }, { readonly typeAField: string; readonly outputType: "Unknown scalar type"[] | null; } & ({ ...; } | { ...; })] | [...])'.
   anotherField
   "{\"errors\":[{\"message\":\"Interface field TestInterface.interfaceField expected but TestWithInterface does not provide it.\"},{\"message\":\"Interface field AnotherInterface.anotherField expected but TestWithInterface does not provide it.\"}]}"
+
+Type '
+  (
+    { 
+      readonly name: string; 
+      readonly fields: { 
+        readonly typeAField: GraphQLScalarType; 
+        readonly outputType: { 
+          readonly type: { 
+            readonly name: string; 
+            readonly fields: { 
+              readonly testField: GraphQLScalarType; 
+            }; 
+          }; 
+          readonly array: true; 
+          readonly nullable: true; 
+          readonly resolve: (root: RootType) => OutputType[] | null;...' 
+is not assignable to type '
+  { 
+    readonly typeAField: Date; 
+    readonly outputType: { 
+      readonly testField: Date; }[] | null; 
+    } | { 
+      readonly typeBField: Date; 
+      readonly outputType: { 
+        readonly testField: Date; 
+      }[] | null; 
+    }'.

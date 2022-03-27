@@ -1,7 +1,8 @@
 import express, { Express } from "express";
 import { graphqlHTTP } from "express-graphql";
+import { GraphQLBoolean, GraphQLFloat, GraphQLInt, GraphQLString } from "graphql";
 import request from 'supertest';
-import { ScalarTypes, schema } from "../src";
+import { schema } from "../src";
 import { resolver } from "../src/resolvers";
 import { QueryRoot } from "../src/schema";
 
@@ -15,7 +16,7 @@ const outputTypeSchema =
   {
     name: OutputType.name,
     fields: {
-      testField: ScalarTypes.STRING
+      testField: GraphQLString
     }
   } as const;
 
@@ -27,7 +28,7 @@ class Args {
 
 const argSchema = 
   {
-    argField: ScalarTypes.STRING
+    argField: GraphQLString
   } as const;
 
 class RootType {
@@ -41,7 +42,7 @@ const rootSchema =
   {
     name: RootType.name,
     fields: {
-      rootField: ScalarTypes.STRING,
+      rootField: GraphQLString,
       outputType: {
         type: outputTypeSchema,
         array: true,
@@ -64,7 +65,7 @@ const unionTypeA =
   {
     name: UnionTypeA.name,
     fields: {
-      typeAField: ScalarTypes.STRING,
+      typeAField: GraphQLString,
       outputType: {
         type: outputTypeSchema,
         array: true,
@@ -87,7 +88,7 @@ const unionTypeB =
   {
     name: UnionTypeB.name,
     fields: {
-      typeBField: ScalarTypes.BOOLEAN,
+      typeBField: GraphQLBoolean,
       outputType: {
         type: outputTypeSchema,
         array: true,
@@ -118,22 +119,22 @@ const testWithInterfaceSchema =
     type: {
       name: TestWithInterface.name,
       fields: {
-        implementorField: ScalarTypes.INT,
-        interfaceField: ScalarTypes.STRING,
-        anotherField: ScalarTypes.BOOLEAN
+        implementorField: GraphQLInt,
+        interfaceField: GraphQLString,
+        anotherField: GraphQLBoolean
       },
       interfaces: [
         {
           name: "TestInterface",
           fields: {
-            interfaceField: ScalarTypes.STRING
+            interfaceField: GraphQLString
           },
           resolveType: (args: TestWithInterface) => "TestWithInterface"
         },
         {
           name: "AnotherInterface",
           fields: {
-            anotherField: ScalarTypes.BOOLEAN
+            anotherField: GraphQLBoolean
           },
           resolveType: (args: TestWithInterface) => "TestWithInterface"
         }
@@ -152,8 +153,8 @@ type TestType = {
 const testTypeSchema = {
   name: "TestType",
   fields: {
-    firstField: ScalarTypes.STRING,
-    secondField: ScalarTypes.FLOAT
+    firstField: GraphQLString,
+    secondField: GraphQLFloat
   }
 } as const;
 
@@ -168,7 +169,7 @@ enum TestNumberEnum {
 }
 const scalarTypeNonNull = resolver(
   {
-    type: ScalarTypes.BOOLEAN,
+    type: GraphQLBoolean,
     resolve: () => {
       return true
     }
@@ -186,11 +187,34 @@ const objectTypeWithArgs = resolver<any, QueryRoot, unknown>(
   } as const
   );
 
+const objectUnion = resolver<any, QueryRoot, unknown>(
+  {
+    type: { 
+      name: "ObjectUnion",
+      union: [unionTypeA, unionTypeB],
+      resolveType: (unionType: UnionTypeA | UnionTypeB) => {
+        if (unionType instanceof UnionTypeA) {
+          return 'UnionTypeA'
+        }
+
+        if (unionType instanceof UnionTypeB) {
+          return 'UnionTypeB'
+        }
+
+        throw new Error('unable to determine type');
+      }
+    } as const,
+    resolve: (): UnionTypeA | UnionTypeB => {
+      return new UnionTypeB(false, null);
+    }
+  }
+);
+
 const schemaObject = {
   queries: {
     scalarTypeNonNull: scalarTypeNonNull,
     scalarTypeArray: {
-      type: ScalarTypes.STRING,
+      type: GraphQLString,
       array: "nullable_items",
       resolve: (): (string | null)[] => {
         return ["Hello", null, "World!"]
@@ -237,26 +261,7 @@ const schemaObject = {
           return new RootType("Root Type", [new OutputType("Output Type")]);
         }
       },
-      objectUnion: {
-        type: { 
-          name: "ObjectUnion",
-          union: [unionTypeA, unionTypeB],
-          resolveType: (unionType: UnionTypeA | UnionTypeB) => {
-            if (unionType instanceof UnionTypeA) {
-              return 'UnionTypeA'
-            }
-
-            if (unionType instanceof UnionTypeB) {
-              return 'UnionTypeB'
-            }
-
-            throw new Error('unable to determine type');
-          }
-        } as const,
-        resolve: (): UnionTypeA | UnionTypeB => {
-          return new UnionTypeB(false, null);
-        }
-      },
+      objectUnion: objectUnion,
       objectWithInterface: testWithInterfaceSchema
     }
   } as const;
