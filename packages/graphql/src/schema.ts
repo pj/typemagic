@@ -17,7 +17,7 @@ import {
   GraphQLSchemaConfig,
   GraphQLString, GraphQLUnionType
 } from "graphql";
-import { GraphQLISODateTime } from "type-graphql";
+import { CustomScalar } from "./custom_scalar";
 import { ValidateResolver } from "./resolvers";
 import { ArrayTrilean, ScalarTypes } from "./types";
 
@@ -171,8 +171,6 @@ function getScalarFromResolver(resolver: SchemaResolver) {
       return GraphQLFloat;
     case ScalarTypes.INT:
       return GraphQLInt;
-    case ScalarTypes.DATE:
-      return GraphQLISODateTime;
     default:
       switch (resolver.type) {
         case ScalarTypes.BOOLEAN:
@@ -183,8 +181,6 @@ function getScalarFromResolver(resolver: SchemaResolver) {
           return GraphQLFloat;
         case ScalarTypes.INT:
           return GraphQLInt;
-        case ScalarTypes.DATE:
-          return GraphQLISODateTime;
       }
   }
 
@@ -237,7 +233,11 @@ function mapToGraphQLOutputType(
     return mapOutputNullableAndArray(scalar, resolver);
   } else {
     let output: GraphQLOutputType;
-    if (schemaObjects.outputObjects.has(resolver.type)) {
+    if (resolver instanceof CustomScalar) {
+      output = resolver.scalar;
+    } else if (resolver.type instanceof CustomScalar) {
+      output = resolver.type.scalar;
+    } else if (schemaObjects.outputObjects.has(resolver.type)) {
       output = schemaObjects.outputObjects.get(resolver.type);
     } else if (schemaObjects.unions.has(resolver.type)) {
       output = schemaObjects.unions.get(resolver.type);

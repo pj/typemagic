@@ -1,4 +1,4 @@
-import { Exact, GetUnderlyingType, IsTypeScalar, TransformObjectSchemaToType, TransformResolverToType } from "./types"
+import { Exact, GetUnderlyingType, TransformObjectSchemaToType } from "./types"
 
 export type HandleUnion<Type, ReturnType> =
   Type extends {name: infer UnionName, union: infer UnionTypes}

@@ -1,7 +1,8 @@
 import express, { Express } from "express";
 import { graphqlHTTP } from "express-graphql";
+import { GraphQLScalarType } from "graphql";
 import request from 'supertest';
-import { ScalarTypes, schema } from "../src";
+import { customScalar, ScalarTypes, schema } from "../src";
 import { resolver } from "../src/resolvers";
 import { QueryRoot } from "../src/schema";
 
@@ -186,6 +187,40 @@ const objectTypeWithArgs = resolver<any, QueryRoot, unknown>(
   } as const
   );
 
+const CustomDateScalar = new GraphQLScalarType({
+  name: 'Date',
+  description: "Custom Date scalar",
+  // Serializes an internal value to include in a response.
+  serialize: (source: Date): string => source.toISOString(),
+  // Parses an externally provided value to use as an input.
+  parseValue: (source: string): Date => new Date(source),
+  // Parses an externally provided literal value to use as an input.
+  // parseLiteral: (source: string): Date => new Date(source)
+});
+
+type TestCustom = {
+  dateField: Date
+}
+
+const basicCustomScalar = {
+  type: customScalar<Date>(CustomDateScalar),
+  resolve: (): Date => {
+    return new Date();
+  }
+};
+
+const objectCustomScalar = {
+  type: {
+    name: "TestCustom",
+    fields: {
+      dateField: customScalar<Date>(CustomDateScalar),
+    }
+  },
+  resolve: (): TestCustom => {
+    return {dateField: new Date()};
+  }
+};
+
 const schemaObject = {
   queries: {
     scalarTypeNonNull: scalarTypeNonNull,
@@ -257,7 +292,9 @@ const schemaObject = {
           return new UnionTypeB(false, null);
         }
       },
-      objectWithInterface: testWithInterfaceSchema
+      objectWithInterface: testWithInterfaceSchema,
+      basicCustomScalar,
+      objectCustomScalar
     }
   } as const;
 
@@ -265,30 +302,6 @@ let app: Express;
 let generatedClient;
 beforeAll(async () => {
   const generatedSchema = schema(schemaObject);
-  const asdf = schema({
-    queries: {
-      test: {
-        type: { 
-          name: "ObjectUnion",
-          union: [unionTypeA, unionTypeB],
-          resolveType: (unionType: UnionTypeA | UnionTypeB) => {
-            if (unionType instanceof UnionTypeA) {
-              return 'UnionTypeA'
-            }
-
-            if (unionType instanceof UnionTypeB) {
-              return 'UnionTypeB'
-            }
-
-            throw new Error('unable to determine type');
-          }
-        },
-        resolve: (): UnionTypeA | UnionTypeB => {
-          return new UnionTypeB(false, null);
-        }
-      }
-    }
-  });
 
   app = express();
   app.use('/graphql', graphqlHTTP({
@@ -300,7 +313,6 @@ beforeAll(async () => {
 async function runQuery(query: string, variables?: {[key: string]: any}) {
   return await request(app)
       .post('/graphql')
-      // .set('Accept', 'application/json')
       .set('Content-Type', 'application/json')
       .send(
         {
@@ -457,10 +469,26 @@ test('objectWithInterface', async () => {
   });
 });
 
-type X = ({a: string} | {b:number})[]
-type Y = [{a: string}, {b:number}]
+test('basicCustomScalar', async () => {
+  const response = 
+    await runQuery(
+      `query TestQuery {
+        basicCustomScalar
+      }`
+    );
+  expect(response.status).toEqual(200);
+  expect(new Date(response.body.data.basicCustomScalar)).toBeInstanceOf(Date);
+});
 
-type Z = X[number]
-type A = Y[number]
-
-type E = X[number] extends Y[number] ? Y[number] extends X[number] ? true : false : false
+test('objectCustomScalar', async () => {
+  const response = 
+    await runQuery(
+      `query TestQuery {
+        objectCustomScalar {
+          dateField
+        }
+      }`
+    );
+  expect(response.status).toEqual(200);
+  expect(new Date(response.body.data.objectCustomScalar.dateField)).toBeInstanceOf(Date);
+});

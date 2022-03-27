@@ -1,4 +1,5 @@
-import { ValidateArgs } from "./common";
+import { CustomScalar, HandleCustomScalar } from "./custom_scalar";
+import { ValidateArgs } from "./input";
 import { HandleOutputObject } from "./object";
 import {
   CreateSchemaOptions, Exact, GetSchemaScalar, IsNonNullNonArrayTypeScalar, IsTypeScalar, RemovePromise
@@ -6,26 +7,31 @@ import {
 import { HandleUnion } from "./union";
 
 export type ValidateResolver<Resolver, Root, RootFieldType, Context> =
-  [Resolver] extends [{
-    type?: infer Type,
-    alias?: infer Alias,
-    description?: infer Description,
-    argsFields?: infer ArgsRuntimeTypes,
-    resolve?: infer ResolverFunction
-  }]
-    ? { description?: Description, alias?: Alias }
-      & ScalarOrObjectType<ReturnTypeForRoot<ResolverFunction, RootFieldType>, Context, Type>
-      & CreateSchemaOptions<ReturnTypeForRoot<ResolverFunction, RootFieldType>>
-      & ValidateResolverFunction<
-          ResolverFunction, 
-          Root, 
-          ReturnTypeForRoot<ResolverFunction, RootFieldType>, 
-          Context,
-          Type
-        >
-    : [IsNonNullNonArrayTypeScalar<RootFieldType>] extends [true]
-      ? GetSchemaScalar<RootFieldType>
-      : "Can't infer resolver type"
+  [Resolver] extends [CustomScalar<infer CustomScalarType>]
+    ? Exact<CustomScalarType, RootFieldType> extends true
+      ? CustomScalar<CustomScalarType>
+      : "Incorrect custom scalar"
+    : [Resolver] extends [{
+        type?: infer Type,
+        alias?: infer Alias,
+        description?: infer Description,
+        argsFields?: infer ArgsRuntimeTypes,
+        resolve?: infer ResolverFunction
+      }]
+        // FIXME: Have to have this here due to circular constraint problem
+        ?  { description?: Description, alias?: Alias }
+              & ScalarOrObjectType<ReturnTypeForRoot<ResolverFunction, RootFieldType>, Context, Type>
+              & CreateSchemaOptions<ReturnTypeForRoot<ResolverFunction, RootFieldType>>
+              & ValidateResolverFunction<
+                  ResolverFunction, 
+                  Root, 
+                  ReturnTypeForRoot<ResolverFunction, RootFieldType>, 
+                  Context,
+                  Type
+                >
+        : IsNonNullNonArrayTypeScalar<RootFieldType> extends true
+          ? GetSchemaScalar<RootFieldType>
+          : "Can't infer resolver type"
 
 export type ValidateAdditionalResolver<Resolver, Root, Context> =
   [Resolver] extends [{
@@ -90,7 +96,9 @@ export type ScalarOrObjectType<ReturnType, Context, Type> =
         }
       : Type extends {union: infer Union} 
         ? HandleUnion<Type, ReturnType>
-        : HandleOutputObject<Type, ReturnType, Context>
+        : Type extends CustomScalar<infer CustomScalarType>
+          ? HandleCustomScalar<CustomScalarType, ReturnType>
+          : HandleOutputObject<Type, ReturnType, Context>
 
 export type ReturnTypeForRoot<ResolverFunction, RootFieldType> =
   [unknown] extends [RootFieldType]

@@ -1,23 +1,3 @@
-// export type IsEnum<T> = 
-//   T extends {[key: string]: string} 
-//     ? T
-//     : T extends {[key: number]: string} 
-//       ? T 
-//       : never;
-
-// export class RegisteredEnum<T> {
-//   name?: string;
-//   clazz: T;
-//   constructor(clazz: T, name?: string) {
-//     this.clazz = clazz;
-//     this.name = name;
-//   }
-// }
-
-// export function registerEnum<T>(clazz: IsEnum<T>, name?: string): RegisteredEnum<T> {
-//   return new RegisteredEnum(clazz, name);
-// }
-
 export type Exact<A, B> =
   [A] extends [B]
     ? [B] extends [A]
@@ -37,60 +17,36 @@ export type GetUnderlyingType<A> =
 export enum ScalarTypes {
   STRING,
   FLOAT,
-  DATE,
   INT,
   BOOLEAN
 }
 
-
 export type IsTypeScalar<Type> = 
-  [GetUnderlyingType<Type>] extends [string | number | Date | boolean]
+  [GetUnderlyingType<Type>] extends [string | number | boolean]
     ? true
     : false
 
-// export type IsUnion<Type> = 
-//   [GetUnderlyingType<Type>] extends [string | number | Date | boolean]
-//     ? true
-//     : false
-
 export type Constructor<T> = Function & { prototype: T };
-// export type ConstructorFromArray<T> = T extends Array<infer C> ? Constructor<C> : Constructor<T>;
 
 export type GetIfArray<I> = I extends Array<infer T> ? T : I; 
 
 export type GetSchemaScalar<Scalar> =
   [GetUnderlyingType<Scalar>] extends [infer Item]
-    ? [Item] extends [Date] 
-      ? ScalarTypes.DATE
-      : [Item] extends [boolean]
-        ? ScalarTypes.BOOLEAN
-        : [Item] extends [string]
-          ? ScalarTypes.STRING
-          : [Item] extends [number]
-            ? ScalarTypes.INT | ScalarTypes.FLOAT
-          // ? [string] extends [Item] 
-          //   ? ScalarTypes.STRING
-          //   : RegisteredEnum<{[key: string]: string}>
-          // : [Item] extends [number]
-          //   ? ScalarTypes.FLOAT | ScalarTypes.INT | RegisteredEnum<{[key: number]: string}>
-            : "Scalar Type not found"
+    ? Item extends boolean
+      ? ScalarTypes.BOOLEAN
+      : Item extends string
+        ? ScalarTypes.STRING
+        : Item extends number
+          ? ScalarTypes.INT | ScalarTypes.FLOAT
+          : never
     : "Should not happen"
 
 export type IsSchemaScalar<Item> =
   [GetUnderlyingType<Item>] extends [infer Type]
-    ? [GetSchemaScalar<Type>] extends ["Scalar Type not found"]
+    ? GetSchemaScalar<Type> extends never
       ? false
       : true
     : "Should not happen"
-
-export type IsNonNullNonArraySchemaScalar<Scalar> =
-  [null] extends [Scalar]
-    ? false
-    : [Scalar] extends [Array<infer X>]
-      ? false
-      : [IsSchemaScalar<Scalar>] extends [true]
-        ? true
-        : false
 
 export type IsNonNullNonArrayTypeScalar<Scalar> =
   [null] extends [Scalar]
@@ -103,17 +59,15 @@ export type IsNonNullNonArrayTypeScalar<Scalar> =
 
 export type GetTypeScalar<Scalar> =
   [GetUnderlyingType<Scalar>] extends [infer Item]
-    ? [Item] extends [ScalarTypes.DATE] 
-      ? Date
-      : [Item] extends [ScalarTypes.BOOLEAN]
-        ? boolean
-        : [Item] extends [ScalarTypes.STRING]
-          ? string
-          : [Item] extends [ScalarTypes.INT]
+    ? Item extends ScalarTypes.BOOLEAN
+      ? boolean
+      : Item extends ScalarTypes.STRING
+        ? string
+        : Item extends ScalarTypes.INT
+          ? number
+          : Item extends ScalarTypes.FLOAT
             ? number
-            : [Item] extends [ScalarTypes.FLOAT]
-              ? number
-              : "Unknown type scalar"
+            : "Unknown type scalar"
     : "Should not happen"
 
 export type ArrayTrilean = boolean | "nullable_items" | undefined;
@@ -164,15 +118,6 @@ export type RemovePromise<P> =
     ? T
     : P
 
-// export type GetRuntimeType<Item> =
-//   [GetUnderlyingType<Item>] extends [infer Type]
-//     ? [GetRuntimeScalarType<Type>] extends ["Scalar Type not found"]
-//       ? Constructor<Type>
-//       : GetRuntimeScalarType<Type> 
-//     : "Should not happen"
-
-// export type CompileTimeTypeFromConstructor<T> = [GetUnderlyingType<T>] extends [{ prototype: infer X }] ? X : never;
-
 export type TransformResolverToType<Schema> =
   Schema extends {type: infer CompileTimeType, nullable?: infer Nullable, array?: infer IsArray}
     ? CreateTypeFromSchemaOptions<
@@ -194,24 +139,9 @@ export type TransformResolverToType<Schema> =
           Nullable, 
           IsArray
         >
-    : GetTypeScalar<Schema> extends infer ScalarType
-      ? ScalarType
+    : IsTypeScalar<Schema> extends true
+      ? GetTypeScalar<Schema>
       : "Unable to infer type"
-
-// export type TransformSchemaToType<Schema> =
-//   Schema extends {fields: infer Fields}
-//     ? {
-//         [Key in keyof Fields]: TransformResolverToType<Fields[Key]>
-//       }
-//     : Schema extends {union: infer Union}
-//       ? Union extends unknown[]
-//         ? TransformObjectSchemaToType<Union[number]>
-//         : "Union must be an array"
-//       : Schema extends {enum: infer Enum}
-//         ? Enum
-//         : IsTypeScalar<Schema> extends true
-//           ? Schema
-//           : "Unable to infer type"
 
 export type TransformObjectSchemaToType<ObjectSchema> =
   ObjectSchema extends {fields: infer Fields}
