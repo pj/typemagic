@@ -4,39 +4,10 @@
 //     [ RETURNING * | output_expression [ [ AS ] output_name ] [, ...] ]
 
 // [{},{},{not: {or:[{},{}]}}]
+import {format} from "@scaleleap/pg-format";
+import { ValidateBoolean } from "./condition";
+import { ValidateTableName } from "./schema";
 
-type ValidateBooleanOperators<Schema, Condition> =
-  Condition extends {not: infer Not}
-    ? {not: ValidateCondition<Schema, Not>}
-    : Condition extends {and: infer And}
-      ? And extends Readonly<unknown[]>
-        ? {and: ValidateCondition<Schema, And>}
-        : {and: "Must be an array"}
-      : Condition extends {or: infer Or}
-        ? Or extends Readonly<unknown[]>
-          ? {or: ValidateCondition<Schema, Or>}
-          : {or: "Must be an array"}
-        : never
-
-type ValidateComparators = 
-  'eq' | 'ne' | 'equal' | 'not_equal' 
-  | 'lt' | 'lte' | 'less_than' | 'less_than_equal' 
-  | 'gt' | 'gte' | 'greater_than' | 'greater_than_equal' 
-  | 'in' | 'not in';
-
-type ValidateEqualityOperators<Schema, Condition> =
-  {
-      [Key in keyof Condition]: 
-        [Key] extends ValidateComparators
-          ? Condition[Key] extends [infer Left, infer Right]
-            ? [ValidateCondition<Schema, Left>, ValidateCondition<Schema, Right>]
-            : ["Must be two element tuple", "Must be two element tuple"]
-          : never
-    } extends infer Validated
-      ? Validated extends {[Key in keyof Condition]: never}
-        ? never
-        : Validated
-      : "Should not happen"
 
   // Condition extends {eq: [infer Left, infer Right]}
   //   ? {eq: [ValidateCondition<Schema, Left>, ValidateCondition<Schema, Right>]}
@@ -67,7 +38,7 @@ type ValidateCondition<Schema, Condition> =
 
 type ValidateWhere<Schema, Where> =
   [unknown] extends [Where]
-    ? {where: ValidateCondition<Schema, Where>}
+    ? {where: ValidateBoolean<Schema, Where>}
     : {}
 
 type ValidateDelete<Schema, Delete> = 
@@ -77,28 +48,29 @@ type ValidateDelete<Schema, Delete> =
     where?: infer Where,
     returning?: infer Returning
   }]
-    ? (
-      TableName extends string
-        ? TableName extends keyof Schema
-          ? {from: TableName}
-          : {from: "Table name must be in schema"}
-        : TableName extends [infer OldName, infer AliasName]
-          ? OldName extends string
-            ? AliasName extends string
-              ? OldName extends keyof Schema
-                ? {from: [OldName, AliasName]}
-                : {from: ["Table name must be in schema", AliasName]}
-              : {from: [any, string]}
-            : {from: [keyof Schema, string]}
-          :{from: [keyof Schema, string]}
-      )
-        & (
-          unknown extends Only
-            ? {}
-            : {only: boolean}
-        )
-        & ValidateWhere<Schema, Where>
+    ? ValidateTableName<Schema, TableName> 
+      & unknown extends Only ? {} : {only: boolean}
+      & ValidateWhere<Schema, Where>
     : "Unable to validate delete"
+
+export function generateTableName(from: any) {
+  if (Array.isArray(from)) {
+    let [tableName, aliasName] = from;
+    return format("%I AS %I", tableName, aliasName);
+  } else {
+    return format("%I", from);
+  }
+}
+
+export function generateRemoveSQL<
+  Schema, 
+  Delete extends ValidateDelete<Schema, Delete> = any
+>(schema: any, remove: any) {
+  return `
+DELETE FROM ${remove.only ? "ONLY" : ""} ${generateTableName(remove.from)}
+WHERE ${generateCondition(remove.where)}
+`;
+}
 
 export async function remove<Schema, Delete extends ValidateDelete<Schema, Delete> = any>(
   schema: any, 
