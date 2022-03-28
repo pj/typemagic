@@ -1,13 +1,17 @@
-type ValidateBooleanOperators<Schema, Condition> =
+import { ValidateExpression } from "./expression";
+import { Parameter } from "./parameter";
+import {format} from "@scaleleap/pg-format";
+
+type ValidateLogicalOperators<Schema, Identifiers, Condition> =
   Condition extends {not: infer Not}
-    ? {not: Validate<Schema, Not>}
+    ? {not: ValidateBoolean<Schema, Identifiers, Not>}
     : Condition extends {and: infer And}
       ? And extends Readonly<unknown[]>
-        ? {and: ValidateCondition<Schema, And>}
+        ? {and: ValidateBoolean<Schema, Identifiers, And>}
         : {and: "Must be an array"}
       : Condition extends {or: infer Or}
         ? Or extends Readonly<unknown[]>
-          ? {or: ValidateCondition<Schema, Or>}
+          ? {or: ValidateBoolean<Schema, Identifiers, Or>}
           : {or: "Must be an array"}
         : never
 
@@ -29,26 +33,37 @@ type ValidateEqualityOperators<Schema, Condition> =
       ? Validated extends {[Key in keyof Condition]: never}
         ? never
         : Validated
-      : "Should not happen"
+      : never
 
-
-export type ValidateBoolean<Schema, Condition> =
-    // Literals
-    // Identifiers
+export type ValidateBoolean<Schema, Identifiers, Condition> =
+  // Literals
+  Condition extends boolean
+    ? boolean
     // Parameters
-    // Logical Operators
-    // Comparators
-    // Boolean functions
-  [Condition] extends [unknown[]]
-    ?
-    : ValidateBooleanOperators<Schema, Condition extends never
-      ? ValidateEqualityOperators<Schema, 
+    : Condition extends Parameter<infer Type>
+      ? Type extends boolean
+        ? Parameter<Type>
+        : "Parameter must be boolean"
+      // Identifiers
+      : Condition extends Identifiers
+        ? Condition
+        // Logical Operators
+        : ValidateLogicalOperators<Schema, Identifiers, Condition> extends never
+          // Comparators
+          ? ValidateEqualityOperators<Schema, Condition> extends never
+            ? "Unable to validate - must be boolean literal/operator/parameter"
+            : ValidateEqualityOperators<Schema, Condition>
+          : ValidateLogicalOperators<Schema, Identifiers, Condition>
+      
+    // TODO: Boolean functions
 
 export function generateCondition(where: any): string {
   if (Array.isArray(where)) {
     return where.map(w => generateCondition(w)).join(" AND ");
   } else if (where["not"]) {
     return ` NOT (${generateCondition(where["not"])})`
+  } else if (where === true || where === false) {
+    return where ? "TRUE" : "FALSE"
   }
 
   throw new Error("Unknown condition");
