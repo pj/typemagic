@@ -222,6 +222,15 @@ const objectCustomScalar = {
 };
 
 const schemaObject = {
+  mutations: {
+    mutateScalar: {
+      type: ScalarTypes.STRING,
+      argsFields: {field: ScalarTypes.STRING},
+      resolve: (args: {field: string}): string => {
+        return "done"
+      }
+    }
+  },
   queries: {
     scalarTypeNonNull: scalarTypeNonNull,
     scalarTypeArray: {
@@ -491,4 +500,15 @@ test('objectCustomScalar', async () => {
     );
   expect(response.status).toEqual(200);
   expect(new Date(response.body.data.objectCustomScalar.dateField)).toBeInstanceOf(Date);
+});
+
+test('mutateScalar', async () => {
+  const response = 
+    await runQuery(
+      `mutate TestMutation {
+        mutateScalar
+      }`
+    );
+  expect(response.status).toEqual(200);
+  expect(response.body.data.mutateScalar).toBe("done");
 });
