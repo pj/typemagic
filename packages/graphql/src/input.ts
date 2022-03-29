@@ -14,6 +14,7 @@ export type HandleNonNullNonArrayTypeScalar<Scalar, Resolver> =
 export type ValidateInputRuntimeType<FunctionArg> =
   {
     description?: string,
+    deprecationReason?: string,
     defaultValue?: string,
   }
   & (

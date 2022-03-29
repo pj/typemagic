@@ -289,7 +289,7 @@ function mapToGraphQLOutputType(
 
     output = new GraphQLUnionType({
       name: object.type.name,
-      description: object.description,
+      description: object.type.description,
       resolveType: object.type.resolveType,
       types
     });

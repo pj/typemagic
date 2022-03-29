@@ -15,20 +15,21 @@ export type ValidateResolver<Resolver, Root, RootFieldType, Context> =
         type?: infer Type,
         alias?: infer Alias,
         description?: infer Description,
+        deprecationReason?: string,
         argsFields?: infer ArgsRuntimeTypes,
         resolve?: infer ResolverFunction
       }]
         // FIXME: Have to have this here due to circular constraint problem
-        ?  { description?: Description, alias?: Alias }
-              & ScalarOrObjectType<ReturnTypeForRoot<ResolverFunction, RootFieldType>, Context, Type>
-              & CreateSchemaOptions<ReturnTypeForRoot<ResolverFunction, RootFieldType>>
-              & ValidateResolverFunction<
-                  ResolverFunction, 
-                  Root, 
-                  ReturnTypeForRoot<ResolverFunction, RootFieldType>, 
-                  Context,
-                  Type
-                >
+        ? { description?: Description, alias?: Alias, deprecationReason?: string }
+          & ScalarOrObjectType<ReturnTypeForRoot<ResolverFunction, RootFieldType>, Context, Type>
+          & CreateSchemaOptions<ReturnTypeForRoot<ResolverFunction, RootFieldType>>
+          & ValidateResolverFunction<
+              ResolverFunction, 
+              Root, 
+              ReturnTypeForRoot<ResolverFunction, RootFieldType>, 
+              Context,
+              Type
+            >
         : IsNonNullNonArrayTypeScalar<RootFieldType> extends true
           ? GetSchemaScalar<RootFieldType>
           : "Can't infer resolver type"
@@ -87,7 +88,7 @@ export type ScalarOrObjectType<ReturnType, Context, Type> =
         type: {
           enum: Enum, 
           name: Name, 
-          description?: Description
+          description?: Description,
         }
       }
     : IsTypeScalar<ReturnType> extends true

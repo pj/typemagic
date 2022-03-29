@@ -7,6 +7,7 @@ export type HandleUnion<Type, ReturnType> =
         ? { 
             type: {
               name: UnionName, 
+              description?: string,
               union: UnionTypes, 
               resolveType?: (value: ReturnType) => UnionTypeNames<UnionTypes[number]>
             }
@@ -14,12 +15,15 @@ export type HandleUnion<Type, ReturnType> =
         : {
             type: {
               name: UnionName, 
+              description?: string, 
               union: TransformObjectSchemaToType<UnionTypes[number]>
+              resolveType?: (value: ReturnType) => UnionTypeNames<UnionTypes[number]>
             }
           }
       : { 
           type: {
             name: UnionName,
+            description?: string,
             union: "Union must be an array"
           }
         }
