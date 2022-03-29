@@ -3,7 +3,7 @@ import { graphqlHTTP } from "express-graphql";
 import { GraphQLScalarType } from "graphql";
 import { customScalar, schema } from "../src";
 import { QueryRoot } from "../src/schema";
-import { runQuery } from "./utils";
+import { runQuery, testSchema } from "./utils";
 
 const CustomDateScalar = new GraphQLScalarType({
   name: 'Date',
@@ -20,61 +20,49 @@ type TestCustom = {
   dateField: Date
 }
 
-let app: Express;
-beforeAll(async () => {
-  const generatedSchema = schema(
-    {
-      queries: {
-        basicCustomScalar: {
-          type: customScalar<Date>(CustomDateScalar),
-          resolve: (): Date => {
-            return new Date();
+const customDate = "2022-03-29T16:29:51.000Z"
+const generatedSchema = schema(
+  {
+    queries: {
+      basicCustomScalar: {
+        type: customScalar<Date>(CustomDateScalar),
+        resolve: (): Date => {
+          return new Date(customDate);
+        }
+      },
+      objectCustomScalar: {
+        type: {
+          name: "TestCustom",
+          fields: {
+            dateField: customScalar<Date>(CustomDateScalar),
           }
         },
-        objectCustomScalar: {
-          type: {
-            name: "TestCustom",
-            fields: {
-              dateField: customScalar<Date>(CustomDateScalar),
-            }
-          },
-          resolve: (): TestCustom => {
-            return { dateField: new Date() };
-          }
+        resolve: (): TestCustom => {
+          return { dateField: new Date(customDate) };
         }
       }
     }
-  );
+  }
+);
 
-  app = express();
-  app.use('/graphql', graphqlHTTP({
-    schema: generatedSchema,
-    rootValue: new QueryRoot(),
-  }));
-});
-
-test('basicCustomScalar', async () => {
-  const response =
-    await runQuery(
-      app,
-      `query TestQuery {
-        basicCustomScalar
-      }`
-    );
-  expect(response.status).toEqual(200);
-  expect(new Date(response.body.data.basicCustomScalar)).toBeInstanceOf(Date);
-});
-
-test('objectCustomScalar', async () => {
-  const response =
-    await runQuery(
-      app,
-      `query TestQuery {
-        objectCustomScalar {
-          dateField
-        }
-      }`
-    );
-  expect(response.status).toEqual(200);
-  expect(new Date(response.body.data.objectCustomScalar.dateField)).toBeInstanceOf(Date);
-});
+testSchema(
+  generatedSchema, 
+  [
+    {
+      name: 'basicCustomScalar',
+      query: `query TestQuery {
+          basicCustomScalar
+        }`,
+      result: { basicCustomScalar: customDate },
+    },
+    {
+      name: 'objectCustomScalar',
+      query: `query TestQuery {
+          objectCustomScalar {
+            dateField
+          }
+        }`,
+      result: { objectCustomScalar: { dateField: customDate } }
+    }
+  ]
+);

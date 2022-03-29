@@ -84,13 +84,13 @@ type ArgsFields = {
 }
 
 type ObjectType = {
-    fields: {[key: string]: OutputObject}
-    interfaces?: ObjectType[],
-    name: string 
-    description?: string,
-  }
+  fields: {[key: string]: OutputObject}
+  interfaces?: ObjectType[],
+  name: string 
+  description?: string,
+}
 
-type OutputType = 
+export type OutputType = 
   ScalarTypes |
   CustomScalar<any> |
   {
@@ -107,7 +107,7 @@ type OutputType =
     resolveType?: any
   } | ObjectType;
 
-type OutputObject = CustomScalar<any> | ScalarTypes | {
+export type OutputObject = CustomScalar<any> | ScalarTypes | {
   alias?: string,
   description?: string,
   deprecationReason?: string,

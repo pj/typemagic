@@ -1,4 +1,4 @@
-import { Exact, GetUnderlyingType, TransformObjectSchemaToType } from "./types"
+import { Exact, GetUnderlyingType, TransformObjectSchemaToType, UnionToIntersection } from "./types"
 
 export type HandleUnion<Type, ReturnType> =
   Type extends {name: infer UnionName, union: infer UnionTypes}
@@ -16,7 +16,7 @@ export type HandleUnion<Type, ReturnType> =
             type: {
               name: UnionName, 
               description?: string, 
-              union: TransformObjectSchemaToType<UnionTypes[number]>
+              union: "Union does not match return type",
               resolveType?: (value: ReturnType) => UnionTypeNames<UnionTypes[number]>
             }
           }

@@ -32,7 +32,10 @@ export type ValidateInputRuntimeType<FunctionArg> =
 export type ValidateInputRuntimeTypes<FunctionArgs> =
   {
     [Key in keyof FunctionArgs]:
-      HandleNonNullNonArrayTypeScalar<FunctionArgs[Key], ValidateInputRuntimeType<FunctionArgs[Key]>>
+      HandleNonNullNonArrayTypeScalar<
+        FunctionArgs[Key], 
+        ValidateInputRuntimeType<FunctionArgs[Key]>
+      >
   }
 
 export type ValidateArgs<FunctionArgs> =

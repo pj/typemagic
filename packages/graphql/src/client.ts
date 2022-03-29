@@ -1,240 +1,362 @@
-import { ArgumentNode, DocumentNode, FieldNode, NameNode, SelectionSetNode, ValueNode, VariableNode } from "graphql";
-import { ValidateSchema } from "./schema";
-import { IsSchemaScalar, ScalarTypes, TransformResolverToType } from "./types";
+import { ArgumentNode, DocumentNode, FieldNode, NameNode, ObjectFieldNode, print, SelectionNode, SelectionSetNode, TypeNode, ValueNode, VariableDefinitionNode, VariableNode } from "graphql";
+import { OutputObject, ValidateSchema } from "./schema";
+import { Exact, IsSchemaScalar, ScalarTypes } from "./types";
+import { UnionTypeNames } from "./union";
 
 export type FieldSentinel = {};
 export const _: FieldSentinel = {};
 
-// class FloatLiteral {
-//   constructor(public num: number) {}
-// }
-
-// class IntLiteral {
-//   constructor(public num: number) {}
-// }
-
-// export function floatLiteral(num: number) {
-//   return new FloatLiteral(num);
-// }
-
-class Variable<Type> {
-  constructor(public name: string) {
-  }
-}
-
-export function variable<Type = never>(name: string) {
-  return new Variable<Type>(name);
-}
-
-export type GenerateArgsVariables<Args> =
+export type GenerateVariableDefinition<Arg> =
   {
-    args: {
-      [Key in keyof Args]: Args[Key] | Variable<Args[Key]>
-    }
+    $defaultValue?: Arg,
+    $name: string
   }
 
-export type GenerateArgsField<Type, ResolverFunction, Args> =
-  [unknown] extends [Args]
-    ? Type
-    :[undefined] extends [Args]
-      ? Type
-      : (
-          ResolverFunction extends (args: infer Args, root: infer Root, context: infer Context) => any
-          ? GenerateArgsVariables<Args>
-          : "Should not happen"
-        ) & Type
+export type GenerateArgsVariables<FunctionArgs, ArgsFields> =
+  {
+    [Key in keyof FunctionArgs]: 
+      Key extends keyof ArgsFields
+        ? FunctionArgs[Key] | GenerateVariableDefinition<FunctionArgs[Key]>
+        : never
+  }
 
-export type GenerateQueryField<Resolver> = 
+export type GenerateArgsField<Type, ResolverFunction, ArgsFields> =
+  [unknown] extends [ArgsFields]
+    ? Type
+    : undefined extends ArgsFields
+      ? Type
+      : ResolverFunction extends (args: infer Args, root: infer Root, context: infer Context) => any
+        ? { $args: GenerateArgsVariables<Args, ArgsFields>, $fields: Type }
+        : never
+
+export type GenerateObjectType<Query, Type, ResolverFunction, ArgsFields> =
+  [Type] extends [{ fields: infer ObjectFields }]
+    ? unknown extends ArgsFields
+      ? GenerateQuery<Query, ObjectFields>
+      : undefined extends ArgsFields
+        ? GenerateQuery<Query, ObjectFields>
+        : ResolverFunction extends (args: infer Args, root: infer Root, context: infer Context) => any
+          ? Query extends { $fields: infer QueryFields }
+            ? { $args: GenerateArgsVariables<Args, ArgsFields>, $fields: GenerateQuery<QueryFields, ObjectFields> }
+            : { $args: GenerateArgsVariables<Args, ArgsFields>, $fields: GenerateQuery<{}, ObjectFields> }
+          : never
+    : "Unable to determine type"
+
+type UnionItemForName<UnionType, Name> =
+  UnionType extends { name: infer UnionName }
+    ? Exact<Name, UnionName> extends true
+      ? UnionType
+      : never
+    : never
+
+export type GenerateQueryField<Query, Resolver> =
   [Resolver] extends [
     {
       type: infer Type,
-      argsFields?: infer Args,
+      argsFields?: infer ArgsFields
       resolve?: infer ResolverFunction
     }
-  ] 
-    ? (
-        Type extends {enum: infer Enum, name: infer Name, description?: infer Description}
-          ? GenerateArgsField<FieldSentinel, ResolverFunction, Args>
-          : IsSchemaScalar<Type> extends true
-            ? GenerateArgsField<FieldSentinel, ResolverFunction, Args>
-            : Type extends {name: infer UnionName, union: infer UnionTypes}
-              ? UnionTypes extends Readonly<unknown[]>
-                ?  GenerateArgsField<
-                    {
-                      __typename: FieldSentinel,
-                      on: {
-                        [Index in keyof UnionTypes]: "asdf"
+  ]
+  ? (
+    Type extends { enum: infer Enum }
+      ? GenerateArgsField<FieldSentinel, ResolverFunction, ArgsFields>
+      : IsSchemaScalar<Type> extends true
+        ? GenerateArgsField<FieldSentinel, ResolverFunction, ArgsFields>
+        : Type extends { union: infer UnionTypes }
+          ? UnionTypes extends Readonly<unknown[]>
+            ? Query extends { $on: infer QueryTypes }
+              ? {
+                __typename?: FieldSentinel,
+                $on: {
+                  [Key in keyof QueryTypes]?:
+                    Key extends UnionTypeNames<UnionTypes[number]>
+                    ? UnionItemForName<UnionTypes[number], Key> extends { fields: infer Fields }
+                      ? {
+                        [FieldKey in keyof Fields]?: GenerateQueryField<QueryTypes[Key], Fields[FieldKey]>
                       }
-                    }, 
-                    ResolverFunction, 
-                    Args
-                  >
-                : "Union types must be an array"
-              : Type extends {fields: infer ObjectFields}
-                ? GenerateArgsField<
-                    {
-                      [Key in keyof ObjectFields]?:
-                        GenerateQueryField<ObjectFields[Key]>
-                    }, 
-                    ResolverFunction, 
-                    Args
-                  >
-                : "Unable to determine type for client"
-      )
-    : Resolver extends ScalarTypes
-      ? FieldSentinel
-      : ["Invalid Resolver", Resolver]
-
-export type GenerateQuery<Schema extends ValidateSchema<Schema, any>> = {
-  [Key in keyof Schema['queries']]?: GenerateQueryField<Schema['queries'][Key]>
-}
-
-export type GenerateResultField<Schema, Field> =
-  [Field] extends [FieldSentinel]
-    ? TransformResolverToType<Schema>
-    : GenerateResultFields<Schema, Field>
-
-export type GenerateResultFields<Schema, Query> =
-{
-  [Key in keyof Query]:
-    [Key] extends [keyof Schema]
-      ? GenerateResultField<Schema[Key], Query[Key]>
-      : "Should not happen"
-}
-
-export type GenerateResult<Schema extends ValidateSchema<Schema, any>, Query> =
-  GenerateResultFields<Schema["queries"], Query>
-
-export type RawReturn<Result> = 
-  {
-    data: Result;
-    extensions?: any;
-    headers: Headers;
-    status: number;
-  }
-
-function queryArgValue(schema: any, arg: any): ValueNode {
-  if (arg === null) {
-    return {kind: 'NullValue'}
-  } 
-
-  if (schema.array) {
-    return {kind: "ListValue", values: arg.map((a: any) => queryArgValue(schema, a))}
-  }
-
-  if (schema.fields) {
-    return {
-      kind: "ObjectValue",
-      fields: 
-        Object.entries(schema.fields)
-          .map(
-            ([name, field]) => (
-              {
-                kind: "ObjectField", 
-                name: {
-                  kind: "Name", 
-                  value: name
-                }, 
-                value: queryArgValue(field, arg[name])
+                      : never
+                  : never
+                }
               }
-            )
-          )
+              : { $on: { [Key in keyof UnionTypeNames<UnionTypes>]?: {} } }
+            : "Should not happen"
+          : GenerateObjectType<Query, Type, ResolverFunction, ArgsFields>
+    )
+  : Resolver extends ScalarTypes
+    ? FieldSentinel
+    : ["Invalid Resolver", Resolver]
+
+export type GenerateQuery<Query, Schema> = {
+  [Key in (keyof Query | keyof Schema)]?:
+    Key extends keyof Schema
+      ? Key extends keyof Query
+        ? GenerateQueryField<Query[Key], Schema[Key]>
+        : never
+      : never
+}
+
+function getVariableType(schema: any) {
+  switch (schema) {
+    case 'float':
+      return 'Float'
+    case 'int':
+      return 'Int'
+    case 'string':
+      return 'String'
+    case 'boolean':
+      return 'Boolean'
+    default:
+      switch (schema.type) {
+        case 'float':
+          return 'Float'
+        case 'int':
+          return 'Int'
+        case 'string':
+          return 'String'
+        case 'boolean':
+          return 'Boolean'
+        default:
+          return schema.type.name
+      }
+    }
+}
+
+function queryArgValue(schema: any, arg: any, variables: QueryVariables): ValueNode {
+  // Literals
+  if (arg === null) {
+    return { kind: 'NullValue' };
+  }
+
+  let value: ValueNode | null = null;
+  if (typeof arg === 'string') {
+    value = { kind: 'StringValue', value: arg };
+  }
+
+  if (typeof arg === 'boolean') {
+    value = { kind: 'BooleanValue', value: arg };
+  }
+
+  if (typeof arg === 'number') {
+    switch (schema) {
+      case 'float':
+        value = { kind: 'FloatValue', value: arg.toString() };
+        break;
+      case 'int':
+        value = { kind: 'IntValue', value: arg.toString() };
+        break;
+      default:
+        throw new Error();
     }
   }
 
-  switch (schema) {
-    case 'boolean':
-      return {kind: 'BooleanValue', value: arg};
-    case 'string':
-      return {kind: 'StringValue', value: arg};
-    case 'float':
-      return {kind: 'FloatValue', value: arg};
-    case 'int':
-      return {kind: 'IntValue', value: arg};
-    default:
-      switch (schema.type) {
-        case 'boolean':
-          return {kind: 'BooleanValue', value: arg};
-        case 'string':
-          return {kind: 'StringValue', value: arg};
-        case 'float':
-          return {kind: 'FloatValue', value: arg};
-        case 'int':
-          return {kind: 'IntValue', value: arg};
-      }
+  if (Array.isArray(arg)) {
+    let values = [];
+    for (let value of arg) {
+      const listValue = queryArgValue(schema, value, variables);
+      values.push(listValue)
+    }
+    value = { kind: "ListValue", values: values };
   }
 
-  if (arg instanceof Variable) {
-    return (
-      {
+  if (value) {
+    return value;
+  }
+
+  if ('$name' in arg) {
+    const variableDefinition = variables.get(arg.$name);
+    if (variableDefinition) {
+      return variableDefinition.variable;
+    } else {
+      const variable: VariableNode = ({
         kind: 'Variable',
         name: {
           kind: 'Name',
-          value: arg.name
+          value: arg.$name
         }
-      }
-    )
-  }
+      });
 
-  throw new Error("Unknown arg value");
-}
-
-//   | ObjectValueNode;
-
-function queryArgs(schema: any, args: any): [ArgumentNode[] | undefined, VariableNode[]] {
-  const variables: VariableNode[] = [];
-  if (args) {
-    const argNodes = Object.entries<any>(args).map(
-      ([name, arg]): ArgumentNode => 
-        (
-          {
-            kind: 'Argument',
-            name: {kind: 'Name', value: name},
-            value: queryArgValue(schema.argFields[name], arg)
-          }
-        )
-    );
-
-    return [argNodes, variables];
-  } else {
-    return [undefined, []]
-  }
-}
-
-function queryFields(schema: any, fields: any): FieldNode[] {
-  return Object.entries<any>(fields).map(
-    ([name, field]): FieldNode => {
-      if (field === _) {
-        return (
-          {
-            kind: 'Field',
-            name: {kind: 'Name', value: name},
-          }
-        );
+      let variableType: TypeNode = {kind: 'NamedType', name: {kind: 'Name', value: getVariableType(schema)}};
+      if (schema.array === 'nullable_items') {
+        variableType = {kind: 'ListType', type: variableType};
+      } else if (schema.array) {
+        variableType = {kind: 'ListType', type: {kind: 'NonNullType', type: variableType}};
       }
 
-      const [args, variables] = queryArgs(schema[name], field.args)
-      return (
+      if (!schema.nullable) {
+        variableType = {kind: 'NonNullType', type: variableType};
+      }
+
+      variables.set(
+        arg.$name, 
         {
-          kind: 'Field',
-          name: {kind: 'Name', value: field.alias || name},
-          arguments: args,
-          selectionSet: {
-              kind: 'SelectionSet',
-              selections: queryFields(schema[name], field)
-            }
+          kind: 'VariableDefinition',
+          variable: variable,
+          defaultValue: arg.$defaultValue,
+          type: variableType
+        }
+      );
+
+      return variable;
+    } 
+  } else {
+    let values: ObjectFieldNode[] = [];
+    for (let [name, field] of Object.entries<any>(arg)) {
+      const listValue = queryArgValue(field, schema.type.fields[name], variables);
+      values.push({
+        kind: "ObjectField",
+        name: {
+          kind: "Name",
+          value: name
+        }, 
+        value: listValue
+      });
+    }
+    return (
+      {
+        kind: "ObjectValue",
+        fields: values
+      }
+    ); 
+  }
+
+}
+
+function queryArgs(schema: any, args: any, variables: QueryVariables): ArgumentNode[] | undefined {
+  if (args) {
+    const argNodes: ArgumentNode[] = [];
+
+    for (let [name, arg] of Object.entries<any>(args)) {
+      let argValue = queryArgValue(schema[name], arg, variables);
+      argNodes.push(
+        {
+          kind: 'Argument',
+          name: { kind: 'Name', value: name },
+          value: argValue
         }
       );
     }
-  );
+
+    return argNodes;
+  } else {
+    return undefined;
+  }
 }
 
-export function query<Schema extends ValidateSchema<Schema, any>, Query extends GenerateQuery<Schema>>(
-  schema: Schema, 
-  query: Query, 
-  queryName?: string
-): DocumentNode {
-  const queryNameNode: NameNode | undefined = queryName ? {kind: 'Name', value: queryName} : undefined;
+function queryFields(
+  schema: any, 
+  queryValue: any, 
+  variables: QueryVariables
+): SelectionNode[] {
+  let fieldNodes: SelectionNode[] = [];
+  for (let [name, field] of Object.entries<any>(queryValue)) {
+    if (field === _) {
+      fieldNodes.push(
+        {
+          kind: 'Field',
+          name: { kind: 'Name', value: field.alias || name },
+        }
+      );
+      continue;
+    }
+
+    const [selectionSet, args] = queryObject(
+      schema[name], 
+      field, 
+      variables
+    );
+
+    fieldNodes.push(
+      {
+        kind: 'Field',
+        name: { kind: 'Name', value: field.alias || name },
+        selectionSet,
+        arguments: args
+      }
+    );
+  }
+
+  return fieldNodes;
+}
+
+function queryObject(
+  schema: any, 
+  queryValue: any, 
+  variables: QueryVariables
+): [SelectionSetNode, ArgumentNode[] | undefined] {
+  let fieldNodes: SelectionNode[] = [];
+  let argumentNodes: ArgumentNode[] | undefined;
+  if ('$args' in queryValue) {
+    argumentNodes = queryArgs(schema.argsFields, queryValue.$args, variables);
+    fieldNodes = queryFields(schema.type.fields, queryValue['$fields'], variables);
+  } else if ('$on' in queryValue) {
+    for (let [abstractName, abstractFields] of Object.entries<any>(queryValue['$on'])) {
+      let x = null;
+      if ('union' in schema.type) {
+        for (let item of schema.type.union) {
+          if (item.name === abstractName) {
+            x = item
+          }
+        }
+      }
+      if ('interfaces' in schema.type) {
+        for (let item of schema.type.interfaces) {
+          if (item.name === abstractName) {
+            x = item
+          }
+        }
+      }
+      const fragmentNodes = queryFields(
+        x,
+        abstractFields, 
+        variables
+      );
+      if (fragmentNodes.length > 0) {
+        fieldNodes.push({
+          kind: 'InlineFragment',
+          selectionSet: {
+            kind: 'SelectionSet',
+            selections: fragmentNodes,
+          }, 
+          typeCondition: {
+            kind: 'NamedType',
+            name: {
+              kind: 'Name',
+              value: abstractName
+            }
+          }
+        });
+      }
+    }
+  } else {
+    fieldNodes = queryFields(schema.type.fields, queryValue, variables);
+  }
+
+  return ([
+    {
+      kind: 'SelectionSet',
+      selections: fieldNodes,
+    }, 
+    argumentNodes
+  ]);
+}
+
+type QueryVariables = Map<string, VariableDefinitionNode>;
+
+export function query<
+  Schema extends ValidateSchema<Schema, any>,
+  Query extends GenerateQuery<Query, Schema['queries']>>
+  (
+    schema: Schema,
+    query: Query,
+    queryName?: string
+  ): DocumentNode {
+  const queryNameNode: NameNode | undefined = queryName ? { kind: 'Name', value: queryName } : undefined;
+  const variables: QueryVariables = new Map();
+  const selections = queryFields(
+    schema['queries'], 
+    query, 
+    variables
+  );
   return ({
     kind: 'Document',
     definitions: [
@@ -244,44 +366,22 @@ export function query<Schema extends ValidateSchema<Schema, any>, Query extends 
         name: queryNameNode,
         selectionSet: {
           kind: 'SelectionSet',
-          selections: queryFields(schema['queries'], query)
-        }
+          selections
+        },
+        variableDefinitions: Array.from(variables.values())
       }
     ]
   });
 }
 
-// export type GenerateClientType<
-//   Schema extends ValidateSchema<Schema, any>, 
-//   Query extends GenerateQuery<Schema>, 
-//   Result extends GenerateResult<Schema, Query>
-// > = {
-//   request: (query: Query) => Promise<Result>,
-//   rawRequest: (query: Query) => Promise<RawReturn<Result>>
-// }
-
-// export function client<
-//   Query extends GenerateQuery<Schema>, 
-//   Result extends GenerateResult<Schema, Query>, 
-//   Schema extends ValidateSchema<Schema, any> = any
-// >(
-//   schema: Schema,
-//   url: string,
-//   options?: RequestInit
-// ): GenerateClientType<Schema, Query, Result> {
-//   const client = new GraphQLClient(url, options);
-//   async function request(queryObject: Query, name?: string): Promise<Result>{
-//     const query = createGraphQLQuery(schema, queryObject, name);
-//     return await client.request(query);
-//   }
-
-//   async function rawRequest(queryObject: Query, name?: string): Promise<RawReturn<Result>>{
-//     const query = createGraphQLQuery(schema, queryObject, name)
-//     return await client.rawRequest(query);
-//   }
-
-//   return ({
-//     request,
-//     rawRequest
-//   });
-// }
+export function queryGQL<
+  Schema extends ValidateSchema<Schema, any>,
+  Query extends GenerateQuery<Query, Schema['queries']>
+>(
+  schema: Schema,
+  asdf: Query,
+  queryName?: string
+): string {
+  const document = query(schema, asdf, queryName);
+  return print(document);
+}

@@ -3,14 +3,14 @@ import { GetUnderlyingType, ScalarTypes } from "./types"
 
 export type HandleOutputObject<Type, ReturnType, Context> =
   Type extends {
-      name: string,
+      name: infer Name,
       description?: string,
       fields: infer ObjectFields,
       interfaces?: infer Interfaces
     }
       ? {
           type: ({
-            name: string,
+            name: Name,
             description?: string,
             fields: {
               [Key in keyof ObjectFields]:

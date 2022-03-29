@@ -1473,3 +1473,37 @@ Type '{ type: ({ readonly objectName: string; readonly objectFields: { readonly 
   Object literal may only specify known properties, and 'type' does not exist in type '{ description?: unknown; alias?: unknown; } & (["Union type does not extend return type.", { readonly typeAField: string; readonly outputType: "Unknown scalar type"[] | null; }, { readonly typeAField: string; readonly outputType: "Unknown scalar type"[] | null; } & ({ ...; } | { ...; })] | [...])'.
   anotherField
   "{\"errors\":[{\"message\":\"Interface field TestInterface.interfaceField expected but TestWithInterface does not provide it.\"},{\"message\":\"Interface field AnotherInterface.anotherField expected but TestWithInterface does not provide it.\"}]}"
+
+
+  "{\"errors\":[{\"message\":\"Abstract type \\\"ObjectUnion\\\" must resolve to an Object type at runtime for field \\\"Query.objectUnion\\\". Either the \\\"ObjectUnion\\\" type should provide a \\\"resolveType\\\" function or each possible type should provide an \\\"isTypeOf\\\" function.\",\"locations\":[{\"line\":2,\"column\":9}],\"path\":[\"objectUnion\"]}],\"data\":null}"
+
+
+  "{\"errors\":[{\"message\":\"Field \\\"mutateScalar\\\" argument \\\"field\\\" of type \\\"String!\\\" is required, but it was not provided.\",\"locations\":[{\"line\":2,\"column\":9}]}]}"
+ "Error: cannot POST /graphql (500)
+    at Response.toError (/Users/pauljohnson/Programming/typemagic/packages/graphql/node_modules/superagent/src/node/response.js:110:17)
+    at Response._setStatusProperties (/Users/pauljohnson/Programming/typemagic/packages/graphql/node_modules/superagent/src/response-base.js:107:48)
+    at new Response (/Users/pauljohnson/Programming/typemagic/packages/graphql/node_modules/superagent/src/node/response.js:41:8)
+    at Test._emitResponse (/Users/pauljohnson/Programming/typemagic/packages/graphql/node_modules/superagent/src/node/index.js:935:20)
+    at fn (/Users/pauljohnson/Programming/typemagic/packages/graphql/node_modules/superagent/src/node/index.js:1137:38)
+    at IncomingMessage.<anonymous> (/Users/pauljohnson/Programming/typemagic/packages/graphql/node_modules/superagent/src/node/parsers/json.js:19:7)
+    at IncomingMessage.emit (node:events:402:35)
+    at endReadableNT (node:internal/streams/readable:1343:12)
+    at processTicksAndRejections (node:internal/process/task_queues:83:21)" 
+
+  if (schema.fields) {
+     let values = [];
+    let variables: VariableNode[] = [];
+    for (let [name, field] of schema.fields) {
+      const [listValue, listVariables] = queryArgValue(field, arg[name]);
+      values.push({
+        kind: "ObjectField",
+        name: {
+          kind: "Name",
+          value: name}, value: listValue})
+      variables = variables.concat(listVariables);
+    }
+    return [{
+      kind: "ObjectValue",
+      fields: values
+    }, variables]
+  }

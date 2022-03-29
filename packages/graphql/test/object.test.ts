@@ -2,17 +2,18 @@ import express, { Express } from "express";
 import { graphqlHTTP } from "express-graphql";
 import { GraphQLScalarType } from "graphql";
 import { customScalar, ScalarTypes, schema } from "../src";
+import { FieldSentinel, GenerateQuery, queryGQL, _ } from "../src/client";
 import { resolver } from "../src/resolvers";
 import { QueryRoot } from "../src/schema";
-import { OutputType, outputTypeSchema, rootSchema, RootType, runQuery } from "./utils";
+import { OutputType, outputTypeSchema, rootSchema, RootType, runQuery, testSchema } from "./utils";
 
 class Args {
   constructor(
     public argField: string
-  ) {}
+  ) { }
 }
 
-const argSchema = 
+const argSchema =
   {
     argField: 'string'
   } as const;
@@ -30,7 +31,7 @@ const testTypeSchema = {
   }
 } as const;
 
-const objectTypeWithArgs = resolver<any, QueryRoot, unknown>(
+const objectTypeWithArgs = 
   {
     type: outputTypeSchema,
     array: "nullable_items",
@@ -38,143 +39,103 @@ const objectTypeWithArgs = resolver<any, QueryRoot, unknown>(
     resolve: (args: Args, root: QueryRoot): (OutputType | null)[] => {
       return [new OutputType(args.argField), new OutputType("Hello World!"), null];
     }
-  } as const
-  );
+  } as const;
 
 const schemaObject = {
   queries: {
-      objectTypeNonNull: {
-        type: outputTypeSchema,
-        resolve: () => {
-          return new OutputType("Hello World!");
-        }
-      },
-      objectTypeNull: {
-        type: outputTypeSchema,
-        nullable: true,
-        resolve: (): OutputType | null => {
-          return null;
-        }
-      },
-      objectTypeFromType: {
-        type: testTypeSchema,
-        nullable: true,
-        resolve: (): TestType | null => {
-          return null;
-        }
-      },
-      objectTypeArray: {
-        type: outputTypeSchema,
-        array: true,
-        resolve: (): OutputType[] => {
-          return [new OutputType("Hello World!")];
-        }
-      },
-      objectTypeWithArgs: objectTypeWithArgs,
-      rootType: {
-        type: rootSchema,
-        resolve: ()  => {
-          return new RootType("Root Type", [new OutputType("Output Type")]);
-        }
-      },
-    }
-  } as const;
+    objectTypeNonNull: {
+      type: outputTypeSchema,
+      resolve: () => {
+        return new OutputType("Hello World!");
+      }
+    },
+    objectTypeNull: {
+      type: outputTypeSchema,
+      nullable: true,
+      resolve: (): OutputType | null => {
+        return null;
+      }
+    },
+    objectTypeFromType: {
+      type: testTypeSchema,
+      nullable: true,
+      resolve: (): TestType | null => {
+        return null;
+      }
+    },
+    objectTypeArray: {
+      type: outputTypeSchema,
+      array: true,
+      resolve: (): OutputType[] => {
+        return [new OutputType("Hello World!")];
+      }
+    },
+    objectTypeWithArgs: objectTypeWithArgs,
+    rootType: {
+      type: rootSchema,
+      resolve: () => {
+        return new RootType("Root Type", [new OutputType("Output Type")]);
+      }
+    },
+  }
+} as const;
 
-let app: Express;
-beforeAll(async () => {
-  const generatedSchema = schema(schemaObject);
+const generatedSchema = schema(schemaObject);
 
-  app = express();
-  app.use('/graphql', graphqlHTTP({
-    schema: generatedSchema,
-    rootValue: new QueryRoot(),
-  }));
-});
-
-test('objectTypeNonNull', async () => {
-  const response = 
-    await runQuery(
-      app,
-      `query TestQuery {
-        objectTypeNonNull {
-          testField
-        } 
-      }`
-    );
-  expect(response.status).toEqual(200);
-  expect(response.body.data.objectTypeNonNull.testField).toEqual("Hello World!");
-});
-
-test('objectTypeNull', async () => {
-  const response = 
-    await runQuery(
-      app,
-      `query TestQuery {
-        objectTypeNull {
-          testField
-        } 
-      }`
-    );
-  expect(response.status).toEqual(200);
-  expect(response.body.data.objectTypeNull).toBeNull();
-});
-
-test('objectTypeArray', async () => {
-  const response = 
-    await runQuery(
-      app,
-      `query TestQuery {
-        objectTypeArray {
-          testField
-        } 
-      }`
-    );
-  expect(response.status).toEqual(200);
-  expect(response.body.data.objectTypeArray).toStrictEqual([{"testField": "Hello World!"}]);
-});
-
-test('objectTypeWithArgs', async () => {
-  const response = 
-    await runQuery(
-      app,
-      `query TestQuery($argField: String!) {
-        objectTypeWithArgs(argField: $argField) {
-          testField
-        } 
-      }`,
-      {argField: "test"}
-    );
-  expect(response.status).toEqual(200);
-  expect(response.body.data.objectTypeWithArgs).toStrictEqual(
-    [
-      {"testField": "test"}, 
-      {"testField": "Hello World!"}, 
-      null
-    ]
-  );
-});
-
-test('rootType', async () => {
-  const response = 
-    await runQuery(
-      app,
-      `query TestQuery {
-        rootType {
-          rootField
-          outputType {
-            testField
-          }
-        } 
-      }`,
-      {argField: "test"}
-    );
-  expect(response.status).toEqual(200);
-  expect(response.body.data.rootType).toStrictEqual(
+testSchema(
+  generatedSchema,
+  [
     {
-      "rootField": "Root Type",
-      "outputType": [
-        {"testField": "Output Type"}
-      ]
+      name: 'objectTypeNonNull',
+      query: queryGQL(schemaObject, {objectTypeNonNull: {testField: _}}),
+      result: { objectTypeNonNull: { testField: 'Hello World!' } }
+    },
+    {
+      name: 'objectTypeNull',
+      query: queryGQL(schemaObject, {objectTypeNull: {testField: _}}),
+      result: { objectTypeNull: null }
+    },
+    {
+      name: 'objectTypeArray',
+      query: queryGQL(schemaObject, {objectTypeArray: {testField: _}}),
+      result: { objectTypeArray: [{ testField: "Hello World!" }] }
+    },
+    {
+      name: 'objectTypeWithArgs',
+      query: queryGQL(
+        schemaObject, 
+        {
+          objectTypeWithArgs: {
+            $args: {
+              argField: {$name: "test"}
+            },
+            $fields: {
+              testField: _
+            }
+          }
+        }
+      ),
+      args: { test: "test" },
+      result: {
+        objectTypeWithArgs:
+          [
+            { "testField": "test" },
+            { "testField": "Hello World!" },
+            null
+          ]
+      }
+    },
+    {
+      name: 'rootType',
+      query: queryGQL(schemaObject, {rootType: {rootField: _, outputType: {testField: _}}}),
+      result: {
+        rootType: {
+          rootField: "Root Type",
+          "outputType": [
+            { "testField": "Output Type" }
+          ]
+        }
+      }
     }
-  );
-});
+  ]
+);
