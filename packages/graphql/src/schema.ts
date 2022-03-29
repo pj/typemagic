@@ -38,15 +38,13 @@ export type ValidateQueries<Queries, QueryRoot, Context> =
 export type ValidateSchema<Schema, Context> =
   [Schema] extends [
     {
-      queries?: infer Queries,
+      queries: infer Queries,
       mutations?: infer Mutations
     }
   ]
   ?
     (
-      [undefined] extends [Queries]
-      ? { queries?: undefined }
-      : { queries: ValidateQueries<Queries, QueryRoot, Context> }
+      { queries: ValidateQueries<Queries, QueryRoot, Context> }
     )
     &
     (

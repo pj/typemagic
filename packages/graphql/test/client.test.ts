@@ -91,7 +91,6 @@ test('testQueryObject', async () => {
       }, 
       "TestQuery"
     );
-    console.log(print(testQuery));
   expect(
     print(testQuery)
   ).toMatchSnapshot();
