@@ -1,21 +1,21 @@
+import { ArgumentNode, DocumentNode, FieldNode, NameNode, SelectionSetNode, ValueNode, VariableNode } from "graphql";
 import { ValidateSchema } from "./schema";
-import { GetTypeScalar, IsSchemaScalar, IsTypeScalar, RemovePromise, ScalarTypes, TransformResolverToType } from "./types";
-import { ArgumentNode, ASTNode, DocumentNode, FieldNode, GraphQLAbstractType, NameNode, ValueNode, VariableNode } from "graphql";
+import { IsSchemaScalar, ScalarTypes, TransformResolverToType } from "./types";
 
 export type FieldSentinel = {};
 export const _: FieldSentinel = {};
 
-class FloatLiteral {
-  constructor(public num: number) {}
-}
+// class FloatLiteral {
+//   constructor(public num: number) {}
+// }
 
-class IntLiteral {
-  constructor(public num: number) {}
-}
+// class IntLiteral {
+//   constructor(public num: number) {}
+// }
 
-export function floatLiteral(num: number) {
-  return new FloatLiteral(num);
-}
+// export function floatLiteral(num: number) {
+//   return new FloatLiteral(num);
+// }
 
 class Variable<Type> {
   constructor(public name: string) {
@@ -57,7 +57,7 @@ export type GenerateQueryField<Resolver> =
           ? GenerateArgsField<FieldSentinel, ResolverFunction, Args>
           : IsSchemaScalar<Type> extends true
             ? GenerateArgsField<FieldSentinel, ResolverFunction, Args>
-            : Type extends {unionName: infer UnionName, unionTypes: infer UnionTypes}
+            : Type extends {name: infer UnionName, union: infer UnionTypes}
               ? UnionTypes extends Readonly<unknown[]>
                 ?  GenerateArgsField<
                     {
@@ -70,7 +70,7 @@ export type GenerateQueryField<Resolver> =
                     Args
                   >
                 : "Union types must be an array"
-              : Type extends {objectFields: infer ObjectFields}
+              : Type extends {fields: infer ObjectFields}
                 ? GenerateArgsField<
                     {
                       [Key in keyof ObjectFields]?:
@@ -81,7 +81,9 @@ export type GenerateQueryField<Resolver> =
                   >
                 : "Unable to determine type for client"
       )
-    : "Invalid Resolver"
+    : Resolver extends ScalarTypes
+      ? FieldSentinel
+      : ["Invalid Resolver", Resolver]
 
 export type GenerateQuery<Schema extends ValidateSchema<Schema, any>> = {
   [Key in keyof Schema['queries']]?: GenerateQueryField<Schema['queries'][Key]>
@@ -114,6 +116,30 @@ export type RawReturn<Result> =
 function queryArgValue(schema: any, arg: any): ValueNode {
   if (arg === null) {
     return {kind: 'NullValue'}
+  } 
+
+  if (schema.array) {
+    return {kind: "ListValue", values: arg.map((a: any) => queryArgValue(schema, a))}
+  }
+
+  if (schema.fields) {
+    return {
+      kind: "ObjectValue",
+      fields: 
+        Object.entries(schema.fields)
+          .map(
+            ([name, field]) => (
+              {
+                kind: "ObjectField", 
+                name: {
+                  kind: "Name", 
+                  value: name
+                }, 
+                value: queryArgValue(field, arg[name])
+              }
+            )
+          )
+    }
   }
 
   switch (schema) {
@@ -153,7 +179,6 @@ function queryArgValue(schema: any, arg: any): ValueNode {
   throw new Error("Unknown arg value");
 }
 
-//   | ListValueNode
 //   | ObjectValueNode;
 
 function queryArgs(schema: any, args: any): [ArgumentNode[] | undefined, VariableNode[]] {
@@ -176,19 +201,30 @@ function queryArgs(schema: any, args: any): [ArgumentNode[] | undefined, Variabl
   }
 }
 
-function queryFields(schema: any, queryFields: any): FieldNode[] {
-  return Object.entries<any>(queryFields).map(
+function queryFields(schema: any, fields: any): FieldNode[] {
+  return Object.entries<any>(fields).map(
     ([name, field]): FieldNode => {
+      if (field === _) {
+        return (
+          {
+            kind: 'Field',
+            name: {kind: 'Name', value: name},
+          }
+        );
+      }
+
       const [args, variables] = queryArgs(schema[name], field.args)
-      const fieldNode: FieldNode = (
+      return (
         {
           kind: 'Field',
           name: {kind: 'Name', value: field.alias || name},
-          arguments: args
+          arguments: args,
+          selectionSet: {
+              kind: 'SelectionSet',
+              selections: queryFields(schema[name], field)
+            }
         }
       );
-
-      return fieldNode;
     }
   );
 }

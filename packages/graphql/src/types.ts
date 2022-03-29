@@ -14,13 +14,6 @@ export type GetUnderlyingType<A> =
       ? Exclude<T, null | undefined> 
       : Exclude<A, null | undefined>
 
-// export enum ScalarTypes {
-//   STRING,
-//   FLOAT,
-//   INT,
-//   BOOLEAN
-// }
-
 export const ScalarStrings = ['string', 'int', 'float', 'boolean'] as const;
 export type ScalarTypes = (typeof ScalarStrings)[number]
 
