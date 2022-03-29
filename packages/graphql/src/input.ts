@@ -20,12 +20,13 @@ export type ValidateInputRuntimeType<FunctionArg> =
       [IsTypeScalar<FunctionArg>] extends [true]
         ? { type: GetSchemaScalar<FunctionArg> }
         : {
-          inputFields: ValidateInputRuntimeTypes<GetUnderlyingType<FunctionArg>>,
-          inputName: string
-        }
+            type: {
+              fields: ValidateInputRuntimeTypes<GetUnderlyingType<FunctionArg>>,
+              input: string
+            }
+          }
     )
   & CreateSchemaOptions<FunctionArg>
-
 
 export type ValidateInputRuntimeTypes<FunctionArgs> =
   {

@@ -1,21 +1,48 @@
-import { GraphQLClient } from "graphql-request";
 import { ValidateSchema } from "./schema";
-import { GetTypeScalar, IsSchemaScalar, IsTypeScalar, RemovePromise, TransformResolverToType } from "./types";
+import { GetTypeScalar, IsSchemaScalar, IsTypeScalar, RemovePromise, ScalarTypes, TransformResolverToType } from "./types";
+import { ArgumentNode, ASTNode, DocumentNode, FieldNode, GraphQLAbstractType, NameNode, ValueNode, VariableNode } from "graphql";
 
 export type FieldSentinel = {};
+export const _: FieldSentinel = {};
 
-const _: FieldSentinel = {};
+class FloatLiteral {
+  constructor(public num: number) {}
+}
+
+class IntLiteral {
+  constructor(public num: number) {}
+}
+
+export function floatLiteral(num: number) {
+  return new FloatLiteral(num);
+}
+
+class Variable<Type> {
+  constructor(public name: string) {
+  }
+}
+
+export function variable<Type = never>(name: string) {
+  return new Variable<Type>(name);
+}
+
+export type GenerateArgsVariables<Args> =
+  {
+    args: {
+      [Key in keyof Args]: Args[Key] | Variable<Args[Key]>
+    }
+  }
 
 export type GenerateArgsField<Type, ResolverFunction, Args> =
   [unknown] extends [Args]
     ? Type
-    : (
-        ResolverFunction extends (args: infer Args, root: infer Root, context: infer Context) => any
-        ? {
-            args: Args
-          }
-        : "Should not happen"
-      ) & Type
+    :[undefined] extends [Args]
+      ? Type
+      : (
+          ResolverFunction extends (args: infer Args, root: infer Root, context: infer Context) => any
+          ? GenerateArgsVariables<Args>
+          : "Should not happen"
+        ) & Type
 
 export type GenerateQueryField<Resolver> = 
   [Resolver] extends [
@@ -84,53 +111,141 @@ export type RawReturn<Result> =
     status: number;
   }
 
-export type GenerateClientType<
-  Schema extends ValidateSchema<Schema, any>, 
-  Query extends GenerateQuery<Schema>, 
-  Result extends GenerateResult<Schema, Query>
-> = {
-  request: (query: Query) => Promise<Result>,
-  rawRequest: (query: Query) => Promise<RawReturn<Result>>
-}
+function queryArgValue(schema: any, arg: any): ValueNode {
+  if (arg === null) {
+    return {kind: 'NullValue'}
+  }
 
-function createGraphQLQuery(schema: any, query: any, queryName?: string): string {
-  for (let [name, fields] of Object.entries(query)) {
-    const actualName = queryName || name[0].toUpperCase() + name.substring(1);
-    
-    return `
-      query ${actualName} () {
-        ${name} {
+  switch (schema) {
+    case 'boolean':
+      return {kind: 'BooleanValue', value: arg};
+    case 'string':
+      return {kind: 'StringValue', value: arg};
+    case 'float':
+      return {kind: 'FloatValue', value: arg};
+    case 'int':
+      return {kind: 'IntValue', value: arg};
+    default:
+      switch (schema.type) {
+        case 'boolean':
+          return {kind: 'BooleanValue', value: arg};
+        case 'string':
+          return {kind: 'StringValue', value: arg};
+        case 'float':
+          return {kind: 'FloatValue', value: arg};
+        case 'int':
+          return {kind: 'IntValue', value: arg};
+      }
+  }
 
+  if (arg instanceof Variable) {
+    return (
+      {
+        kind: 'Variable',
+        name: {
+          kind: 'Name',
+          value: arg.name
         }
       }
-      `
+    )
   }
 
-  throw new Error("At least 1 query must be specified");
+  throw new Error("Unknown arg value");
 }
 
-export function client<
-  Query extends GenerateQuery<Schema>, 
-  Result extends GenerateResult<Schema, Query>, 
-  Schema extends ValidateSchema<Schema, any> = any
->(
-  schema: Schema,
-  url: string,
-  options?: RequestInit
-): GenerateClientType<Schema, Query, Result> {
-  const client = new GraphQLClient(url, options);
-  async function request(queryObject: Query, name?: string): Promise<Result>{
-    const query = createGraphQLQuery(schema, queryObject, name);
-    return await client.request(query);
-  }
+//   | ListValueNode
+//   | ObjectValueNode;
 
-  async function rawRequest(queryObject: Query, name?: string): Promise<RawReturn<Result>>{
-    const query = createGraphQLQuery(schema, queryObject, name)
-    return await client.rawRequest(query);
-  }
+function queryArgs(schema: any, args: any): [ArgumentNode[] | undefined, VariableNode[]] {
+  const variables: VariableNode[] = [];
+  if (args) {
+    const argNodes = Object.entries<any>(args).map(
+      ([name, arg]): ArgumentNode => 
+        (
+          {
+            kind: 'Argument',
+            name: {kind: 'Name', value: name},
+            value: queryArgValue(schema.argFields[name], arg)
+          }
+        )
+    );
 
+    return [argNodes, variables];
+  } else {
+    return [undefined, []]
+  }
+}
+
+function queryFields(schema: any, queryFields: any): FieldNode[] {
+  return Object.entries<any>(queryFields).map(
+    ([name, field]): FieldNode => {
+      const [args, variables] = queryArgs(schema[name], field.args)
+      const fieldNode: FieldNode = (
+        {
+          kind: 'Field',
+          name: {kind: 'Name', value: field.alias || name},
+          arguments: args
+        }
+      );
+
+      return fieldNode;
+    }
+  );
+}
+
+export function query<Schema extends ValidateSchema<Schema, any>, Query extends GenerateQuery<Schema>>(
+  schema: Schema, 
+  query: Query, 
+  queryName?: string
+): DocumentNode {
+  const queryNameNode: NameNode | undefined = queryName ? {kind: 'Name', value: queryName} : undefined;
   return ({
-    request,
-    rawRequest
+    kind: 'Document',
+    definitions: [
+      {
+        kind: 'OperationDefinition',
+        operation: 'query',
+        name: queryNameNode,
+        selectionSet: {
+          kind: 'SelectionSet',
+          selections: queryFields(schema['queries'], query)
+        }
+      }
+    ]
   });
 }
+
+// export type GenerateClientType<
+//   Schema extends ValidateSchema<Schema, any>, 
+//   Query extends GenerateQuery<Schema>, 
+//   Result extends GenerateResult<Schema, Query>
+// > = {
+//   request: (query: Query) => Promise<Result>,
+//   rawRequest: (query: Query) => Promise<RawReturn<Result>>
+// }
+
+// export function client<
+//   Query extends GenerateQuery<Schema>, 
+//   Result extends GenerateResult<Schema, Query>, 
+//   Schema extends ValidateSchema<Schema, any> = any
+// >(
+//   schema: Schema,
+//   url: string,
+//   options?: RequestInit
+// ): GenerateClientType<Schema, Query, Result> {
+//   const client = new GraphQLClient(url, options);
+//   async function request(queryObject: Query, name?: string): Promise<Result>{
+//     const query = createGraphQLQuery(schema, queryObject, name);
+//     return await client.request(query);
+//   }
+
+//   async function rawRequest(queryObject: Query, name?: string): Promise<RawReturn<Result>>{
+//     const query = createGraphQLQuery(schema, queryObject, name)
+//     return await client.rawRequest(query);
+//   }
+
+//   return ({
+//     request,
+//     rawRequest
+//   });
+// }

@@ -1,0 +1,27 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`clientASTGeneration 1`] = `
+Object {
+  "definitions": Array [
+    Object {
+      "kind": "OperationDefinition",
+      "name": undefined,
+      "operation": "query",
+      "selectionSet": Object {
+        "kind": "SelectionSet",
+        "selections": Array [
+          Object {
+            "arguments": undefined,
+            "kind": "Field",
+            "name": Object {
+              "kind": "Name",
+              "value": "testQuery",
+            },
+          },
+        ],
+      },
+    },
+  ],
+  "kind": "Document",
+}
+`;

@@ -14,12 +14,15 @@ export type GetUnderlyingType<A> =
       ? Exclude<T, null | undefined> 
       : Exclude<A, null | undefined>
 
-export enum ScalarTypes {
-  STRING,
-  FLOAT,
-  INT,
-  BOOLEAN
-}
+// export enum ScalarTypes {
+//   STRING,
+//   FLOAT,
+//   INT,
+//   BOOLEAN
+// }
+
+export const ScalarStrings = ['string', 'int', 'float', 'boolean'] as const;
+export type ScalarTypes = (typeof ScalarStrings)[number]
 
 export type IsTypeScalar<Type> = 
   [GetUnderlyingType<Type>] extends [string | number | boolean]
@@ -33,11 +36,11 @@ export type GetIfArray<I> = I extends Array<infer T> ? T : I;
 export type GetSchemaScalar<Scalar> =
   [GetUnderlyingType<Scalar>] extends [infer Item]
     ? Item extends boolean
-      ? ScalarTypes.BOOLEAN
+      ? 'boolean'
       : Item extends string
-        ? ScalarTypes.STRING
+        ? 'string'
         : Item extends number
-          ? ScalarTypes.INT | ScalarTypes.FLOAT
+          ? 'int' | 'float'
           : never
     : "Should not happen"
 
@@ -59,13 +62,13 @@ export type IsNonNullNonArrayTypeScalar<Scalar> =
 
 export type GetTypeScalar<Scalar> =
   [GetUnderlyingType<Scalar>] extends [infer Item]
-    ? Item extends ScalarTypes.BOOLEAN
+    ? Item extends 'boolean'
       ? boolean
-      : Item extends ScalarTypes.STRING
+      : Item extends 'string'
         ? string
-        : Item extends ScalarTypes.INT
+        : Item extends 'int'
           ? number
-          : Item extends ScalarTypes.FLOAT
+          : Item extends 'float'
             ? number
             : "Unknown type scalar"
     : "Should not happen"

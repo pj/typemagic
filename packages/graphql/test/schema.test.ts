@@ -16,7 +16,7 @@ const outputTypeSchema =
   {
     name: OutputType.name,
     fields: {
-      testField: ScalarTypes.STRING
+      testField: 'string'
     }
   } as const;
 
@@ -28,7 +28,7 @@ class Args {
 
 const argSchema = 
   {
-    argField: ScalarTypes.STRING
+    argField: 'string'
   } as const;
 
 class RootType {
@@ -42,7 +42,7 @@ const rootSchema =
   {
     name: RootType.name,
     fields: {
-      rootField: ScalarTypes.STRING,
+      rootField: 'string',
       outputType: {
         type: outputTypeSchema,
         array: true,
@@ -65,7 +65,7 @@ const unionTypeA =
   {
     name: UnionTypeA.name,
     fields: {
-      typeAField: ScalarTypes.STRING,
+      typeAField: 'string',
       outputType: {
         type: outputTypeSchema,
         array: true,
@@ -88,7 +88,7 @@ const unionTypeB =
   {
     name: UnionTypeB.name,
     fields: {
-      typeBField: ScalarTypes.BOOLEAN,
+      typeBField: 'boolean',
       outputType: {
         type: outputTypeSchema,
         array: true,
@@ -119,22 +119,22 @@ const testWithInterfaceSchema =
     type: {
       name: TestWithInterface.name,
       fields: {
-        implementorField: ScalarTypes.INT,
-        interfaceField: ScalarTypes.STRING,
-        anotherField: ScalarTypes.BOOLEAN
+        implementorField: 'int',
+        interfaceField: 'string',
+        anotherField: 'boolean'
       },
       interfaces: [
         {
           name: "TestInterface",
           fields: {
-            interfaceField: ScalarTypes.STRING
+            interfaceField: 'string'
           },
           resolveType: (args: TestWithInterface) => "TestWithInterface"
         },
         {
           name: "AnotherInterface",
           fields: {
-            anotherField: ScalarTypes.BOOLEAN
+            anotherField: 'boolean'
           },
           resolveType: (args: TestWithInterface) => "TestWithInterface"
         }
@@ -153,8 +153,8 @@ type TestType = {
 const testTypeSchema = {
   name: "TestType",
   fields: {
-    firstField: ScalarTypes.STRING,
-    secondField: ScalarTypes.FLOAT
+    firstField: 'string',
+    secondField: 'float'
   }
 } as const;
 
@@ -169,7 +169,7 @@ enum TestNumberEnum {
 }
 const scalarTypeNonNull = resolver(
   {
-    type: ScalarTypes.BOOLEAN,
+    type: 'boolean',
     resolve: () => {
       return true
     }
@@ -224,8 +224,8 @@ const objectCustomScalar = {
 const schemaObject = {
   mutations: {
     mutateScalar: {
-      type: ScalarTypes.STRING,
-      argsFields: {field: ScalarTypes.STRING},
+      type: 'string',
+      argsFields: {field: 'string'},
       resolve: (args: {field: string}): string => {
         return "done"
       }
@@ -234,7 +234,7 @@ const schemaObject = {
   queries: {
     scalarTypeNonNull: scalarTypeNonNull,
     scalarTypeArray: {
-      type: ScalarTypes.STRING,
+      type: 'string',
       array: "nullable_items",
       resolve: (): (string | null)[] => {
         return ["Hello", null, "World!"]
@@ -505,8 +505,8 @@ test('objectCustomScalar', async () => {
 test('mutateScalar', async () => {
   const response = 
     await runQuery(
-      `mutate TestMutation {
-        mutateScalar
+      `mutation TestMutation {
+        mutateScalar(field: "asdf")
       }`
     );
   expect(response.status).toEqual(200);

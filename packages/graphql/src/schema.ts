@@ -13,13 +13,13 @@ import {
   GraphQLList,
   GraphQLNonNull,
   GraphQLObjectType,
-  GraphQLOutputType, GraphQLSchema,
+  GraphQLOutputType, GraphQLScalarType, GraphQLSchema,
   GraphQLSchemaConfig,
   GraphQLString, GraphQLUnionType
 } from "graphql";
 import { CustomScalar } from "./custom_scalar";
 import { ValidateResolver } from "./resolvers";
-import { ArrayTrilean, ScalarTypes } from "./types";
+import { ArrayTrilean, ScalarStrings, ScalarTypes } from "./types";
 
 export class QueryRoot {
 
@@ -56,26 +56,67 @@ export type ValidateSchema<Schema, Context> =
     )
   : never
 
-type InputResolver = {
+type InputType =
+  ScalarTypes
+  | {
+    enum: any,
+    description?: string,
+    name: string
+  } | {
+    name: string, 
+    description?: string,
+    scalar: CustomScalar<any>
+  } | {
+    fields: {[key: string]: InputObject},
+    name: string 
+  };
+
+type InputObject = ScalarTypes | {
   alias?: string,
   description?: string,
   deprecationReason?: string,
-  type?: ScalarTypes,
+  type: InputType,
   nullable?: boolean,
   array?: ArrayTrilean,
-  inputFields?: { [key: string]: InputResolver },
-  inputName: string,
-  defaultValue: any
+  defaultValue?: any
 }
 
-type SchemaResolver = {
+type ArgsFields = {
+  [key: string]: InputObject
+}
+
+type ObjectType = {
+    fields: {[key: string]: OutputObject}
+    interfaces?: ObjectType[],
+    name: string 
+    description?: string,
+  }
+
+type OutputType = 
+  ScalarTypes |
+  CustomScalar<any> |
+  {
+    enum: any,
+    description?: string,
+    name: string
+  } | {
+    scalar: CustomScalar<any>,
+    description?: string,
+  } | {
+    name: string,
+    description?: string,
+    union: ObjectType[],
+    resolveType?: any
+  } | ObjectType;
+
+type OutputObject = CustomScalar<any> | ScalarTypes | {
   alias?: string,
   description?: string,
   deprecationReason?: string,
-  type?: any,
+  type: OutputType,
   nullable?: boolean,
   array?: ArrayTrilean,
-  argsFields?: { [key: string]: InputResolver },
+  argsFields?: ArgsFields,
   resolve?: (args: any, root: any, context?: any) => any,
   resolveType?: (type: any) => any,
 }
@@ -96,8 +137,13 @@ export function schema<Context, Schema extends ValidateSchema<Schema, Context>>(
 
   if (schema.queries) {
     const fields: GraphQLFieldConfigMap<any, any> = {};
-    for (let [fieldName, field] of Object.entries<SchemaResolver>(schema.queries)) {
-      fields[field.alias || fieldName] = mapToGraphQLOutputField(field, schemaObjects);
+    for (let [fieldName, field] of Object.entries<OutputObject>(schema.queries)) {
+      if (isScalar(field)) {
+        fields[fieldName] = mapToGraphQLOutputField(field, schemaObjects);
+      } else {
+        const name = 'alias' in field && field.alias ? field.alias : fieldName;
+        fields[name] = mapToGraphQLOutputField(field, schemaObjects);
+      }
     }
     config.query =
       new GraphQLObjectType({
@@ -108,10 +154,15 @@ export function schema<Context, Schema extends ValidateSchema<Schema, Context>>(
 
   if (schema.mutations) {
     const fields: GraphQLFieldConfigMap<any, any> = {};
-    for (let [fieldName, field] of Object.entries<SchemaResolver>(schema.mutations)) {
-      fields[field.alias || fieldName] = mapToGraphQLOutputField(field, schemaObjects);
+    for (let [fieldName, field] of Object.entries<OutputObject>(schema.mutations)) {
+      if (isScalar(field)) {
+        fields[fieldName] = mapToGraphQLOutputField(field, schemaObjects);
+      } else {
+        const name = 'alias' in field && field.alias ? field.alias : fieldName;
+        fields[name] = mapToGraphQLOutputField(field, schemaObjects);
+      }
     }
-    config.query =
+    config.mutation =
       new GraphQLObjectType({
         name: "Mutation",
         fields
@@ -121,7 +172,7 @@ export function schema<Context, Schema extends ValidateSchema<Schema, Context>>(
   return new GraphQLSchema(config);
 }
 
-function mapOutputNullableAndArray(
+function mapOutputToNullableAndArray(
   type: GraphQLOutputType,
   options: {
     nullable?: boolean,
@@ -161,43 +212,133 @@ function mapInputToNullableAndArray(
   return output;
 }
 
-function getScalarFromResolver(resolver: SchemaResolver) {
-  switch (resolver) {
-    case ScalarTypes.BOOLEAN:
-      return GraphQLBoolean;
-    case ScalarTypes.STRING:
-      return GraphQLString;
-    case ScalarTypes.FLOAT:
-      return GraphQLFloat;
-    case ScalarTypes.INT:
-      return GraphQLInt;
-    default:
-      switch (resolver.type) {
-        case ScalarTypes.BOOLEAN:
-          return GraphQLBoolean;
-        case ScalarTypes.STRING:
-          return GraphQLString;
-        case ScalarTypes.FLOAT:
-          return GraphQLFloat;
-        case ScalarTypes.INT:
-          return GraphQLInt;
-      }
-  }
+function mapToGraphQLOutputField(
+  field: OutputObject, 
+  schemaObjects: SchemaObjects,
+): GraphQLFieldConfig<any, any, any> {
+  let config: GraphQLFieldConfig<any, any, any>;
+  if (isScalar(field)) {
+    config = {
+      type: scalarToGraphQL(field)
+    };
+  } else if ('type' in field) {
+    config = {
+      description: field.description,
+      deprecationReason: field.deprecationReason,
+      type: mapToGraphQLOutputType(field, schemaObjects),
+    };
+    if (field.argsFields) {
+      const args: GraphQLFieldConfigArgumentMap = {}
 
-  return null;
+      for (let [argName, arg] of Object.entries(field.argsFields)) {
+        if (isScalar(arg)) {
+          args[field.alias || argName] = {
+            type: mapToGraphQLInputType(arg, schemaObjects),
+          };
+        } else {
+          args[field.alias || argName] = {
+            type: mapToGraphQLInputType(arg, schemaObjects),
+            description: arg.description,
+            defaultValue: arg.defaultValue,
+            deprecationReason: arg.deprecationReason
+          };
+        }
+      }
+      config.args = args;
+    }
+
+    if (field.resolve !== undefined) {
+      const resolver = field.resolve;
+      config.resolve = (root: any, args: any, context: any) => {
+        if (field.argsFields) {
+          return resolver(args, root, context);
+        } else {
+          return resolver(root, context);
+        }
+      }
+    }
+  } else {
+    config = {type: field.scalar}
+  }
+  return config;
 }
 
-function mapToGraphQLObjectType(type: any, schemaObjects: SchemaObjects) {
+function mapToGraphQLOutputType(
+  object: OutputObject, 
+  schemaObjects: SchemaObjects
+): GraphQLOutputType {
+  let output: GraphQLOutputType;
+  if (isScalar(object)) {
+    output = scalarToGraphQL(object);
+  } else if (object instanceof CustomScalar) {
+    output = object.scalar;
+  } else if (schemaObjects.outputObjects.has(object.type)) {
+    output = schemaObjects.outputObjects.get(object.type);
+  } else if (schemaObjects.unions.has(object.type)) {
+    output = schemaObjects.unions.get(object.type);
+  } else if (isScalar(object.type)) {
+    output = scalarToGraphQL(object.type);
+  } else if (object.type instanceof CustomScalar) {
+    output = object.type.scalar;
+  } else if ('union' in object.type) {
+    const types: GraphQLObjectType[] = [];
+
+    for (let unionType of object.type.union) {
+      types.push(mapToGraphQLObjectType(unionType, schemaObjects));
+    }
+
+    output = new GraphQLUnionType({
+      name: object.type.name,
+      description: object.description,
+      resolveType: object.type.resolveType,
+      types
+    });
+
+    schemaObjects.unions.set(object.type, output);
+  } else if ('fields' in object.type) {
+    output = mapToGraphQLObjectType(object.type, schemaObjects);
+  } else if ('enum' in object.type) {
+    const values: GraphQLEnumValueConfigMap = {};
+
+    for (let key of Object.keys(object.type.enum)) {
+      values[key] = {value: object.type.enum[key]}
+    }
+
+    output = new GraphQLEnumType({
+      name: object.type.name,
+      description: object.description,
+      values
+    });
+  } else {
+    throw new Error();
+  }
+  if (isScalar(object) || object instanceof CustomScalar) {
+    return output;
+  } else {
+    return mapOutputToNullableAndArray(output, object);
+  }
+}
+
+
+function mapToGraphQLObjectType(type: ObjectType, schemaObjects: SchemaObjects) {
   const fields: GraphQLFieldConfigMap<any, any> = {};
   const interfaces: GraphQLInterfaceType[] = [];
   if (type.interfaces) {
     for (let interface_ of type.interfaces) {
       const interfaceFields: GraphQLFieldConfigMap<any, any> = {};
-      for (let [fieldName, field] of Object.entries<SchemaResolver>(interface_.fields)) {
-        interfaceFields[field.alias || fieldName] = mapToGraphQLOutputField(
-          field, 
-          schemaObjects
-        );
+      for (let [fieldName, field] of Object.entries<OutputObject>(interface_.fields)) {
+        if (isScalar(field)) {
+          interfaceFields[fieldName] = mapToGraphQLOutputField(
+            field, 
+            schemaObjects
+          );
+        } else {
+          const name = 'alias' in field && field.alias ? field.alias : fieldName;
+          interfaceFields[name] = mapToGraphQLOutputField(
+            field, 
+            schemaObjects
+          );
+        }
       }
       interfaces.push(
         new GraphQLInterfaceType({name: interface_.name, fields: interfaceFields})
@@ -205,11 +346,19 @@ function mapToGraphQLObjectType(type: any, schemaObjects: SchemaObjects) {
     }
   }
 
-  for (let [fieldName, field] of Object.entries<SchemaResolver>(type.fields)) {
-    fields[field.alias || fieldName] = mapToGraphQLOutputField(
-      field, 
-      schemaObjects
-    );
+  for (let [fieldName, field] of Object.entries<OutputObject>(type.fields)) {
+    if (isScalar(field)) {
+      fields[fieldName] = mapToGraphQLOutputField(
+        field, 
+        schemaObjects
+      );
+    } else {
+      const name = 'alias' in field && field.alias ? field.alias : fieldName;
+      fields[name] = mapToGraphQLOutputField(
+        field, 
+        schemaObjects
+      );
+    }
   }
 
   const output = new GraphQLObjectType({
@@ -223,127 +372,78 @@ function mapToGraphQLObjectType(type: any, schemaObjects: SchemaObjects) {
   return output;
 }
 
-function mapToGraphQLOutputType(
-  resolver: SchemaResolver, 
-  schemaObjects: SchemaObjects
-): GraphQLOutputType {
-  let scalar: GraphQLOutputType | null = getScalarFromResolver(resolver);
+function isScalar(scalar: InputObject | OutputObject | InputType | OutputType): scalar is ScalarTypes {
+  switch(scalar) {
+    case 'boolean':
+      return true;
+    case 'string':
+      return true;
+    case 'float':
+      return true;
+    case 'int':
+      return true;
+  }
+  return false;
+}
 
-  if (scalar !== null) {
-    return mapOutputNullableAndArray(scalar, resolver);
-  } else {
-    let output: GraphQLOutputType;
-    if (resolver instanceof CustomScalar) {
-      output = resolver.scalar;
-    } else if (resolver.type instanceof CustomScalar) {
-      output = resolver.type.scalar;
-    } else if (schemaObjects.outputObjects.has(resolver.type)) {
-      output = schemaObjects.outputObjects.get(resolver.type);
-    } else if (schemaObjects.unions.has(resolver.type)) {
-      output = schemaObjects.unions.get(resolver.type);
-    } else if (resolver.type.union) {
-      const types: GraphQLObjectType[] = [];
-
-      for (let type of resolver.type.union) {
-        types.push(mapToGraphQLObjectType(type, schemaObjects));
-      }
-
-      output = new GraphQLUnionType({
-        name: resolver.type.name,
-        description: resolver.description,
-        resolveType: resolver.type.resolveType,
-        types
-      });
-
-      schemaObjects.unions.set(resolver.type, output);
-    } else if (resolver.type.fields) {
-      output = mapToGraphQLObjectType(resolver.type, schemaObjects);
-    } else if (resolver.type.enum) {
-      const values: GraphQLEnumValueConfigMap = {};
-
-      for (let key of Object.keys(resolver.type.enum)) {
-        values[key] = {value: resolver.type.enum[key]}
-      }
-
-      output = new GraphQLEnumType({
-        name: resolver.type.name,
-        description: resolver.type.description,
-        values
-      });
-    } else {
-      throw new Error(`Unknown resolver type ${resolver}`)
-    }
-    return mapOutputNullableAndArray(output, resolver);
+function scalarToGraphQL(scalar: ScalarTypes): GraphQLScalarType {
+  switch(scalar) {
+    case 'boolean':
+      return GraphQLBoolean;
+    case 'string':
+      return GraphQLString;
+    case 'float':
+      return GraphQLFloat;
+    case 'int':
+      return GraphQLInt;
   }
 }
 
-function mapToGraphQLOutputField(
-  field: SchemaResolver, 
-  schemaObjects: SchemaObjects,
-): GraphQLFieldConfig<any, any, any> {
-  const config: GraphQLFieldConfig<any, any, any> = {
-    description: field.description,
-    deprecationReason: field.deprecationReason,
-    type: mapToGraphQLOutputType(field, schemaObjects),
-  };
-  if (field.argsFields) {
-    const args: GraphQLFieldConfigArgumentMap = {}
-
-    for (let [argName, arg] of Object.entries<InputResolver>(field.argsFields)) {
-      args[field.alias || argName] = {
-        description: arg.description,
-        type: mapToGraphQLInputType(arg, schemaObjects),
-        defaultValue: arg.defaultValue,
-        deprecationReason: arg.deprecationReason
-      }
-    }
-
-    config.args = args;
-  }
-
-  if (field.resolve !== undefined) {
-    const resolver = field.resolve;
-    config.resolve = (root: any, args: any, context: any) => {
-      if (field.argsFields) {
-        return resolver(args, root, context);
+function mapToGraphQLInputType(input: InputObject, schemaObjects: SchemaObjects): GraphQLInputType {
+  let graphqlInput: GraphQLInputType;
+  if (isScalar(input)) {
+    return mapInputToNullableAndArray(scalarToGraphQL(input), {});
+  } else if (isScalar(input.type)) {
+    return mapInputToNullableAndArray(scalarToGraphQL(input.type), input);
+  } else if (input.type instanceof CustomScalar) {
+    graphqlInput = input.type.scalar;
+  } else if (schemaObjects.inputObjects.has(input.type)) {
+    graphqlInput = schemaObjects.inputObjects.get(input.type);
+  } else if ('fields' in input.type) {
+    const fields: GraphQLInputFieldConfigMap = {};
+    for (let [fieldName, field] of Object.entries<InputObject>(input.type.fields)) {
+      if (isScalar(field)) {
+        fields[fieldName] = {
+          type: mapToGraphQLInputType(field, schemaObjects)
+        };
       } else {
-        return resolver(root, context);
-      }
-    }
-  }
-
-  return config;
-}
-
-function mapToGraphQLInputType(input: InputResolver, schemaObjects: SchemaObjects): GraphQLInputType {
-  let scalar: GraphQLOutputType | null = getScalarFromResolver(input);
-
-  if (scalar !== null) {
-    return mapInputToNullableAndArray(scalar, input);
-  } else {
-    let graphqlInput: GraphQLInputType;
-    if (schemaObjects.inputObjects.has(input.type)) {
-      graphqlInput = schemaObjects.inputObjects.get(input.type);
-    } else {
-      const fields: GraphQLInputFieldConfigMap = {};
-      if (input.inputFields) {
-        for (let [fieldName, field] of Object.entries<InputResolver>(input.inputFields)) {
-          fields[field.alias || fieldName] = {
-            description: field.description,
-            type: mapToGraphQLInputType(field, schemaObjects),
-            defaultValue: field.defaultValue,
-            deprecationReason: field.deprecationReason,
-          }
+        fields[field.alias || fieldName] = {
+          description: field.description,
+          type: mapToGraphQLInputType(field, schemaObjects),
+          defaultValue: field.defaultValue,
+          deprecationReason: field.deprecationReason,
         }
-      }
-
-      graphqlInput = new GraphQLInputObjectType({
-        name: input.inputName,
-        description: input.description,
-        fields
-      });
+      } 
     }
-    return mapInputToNullableAndArray(graphqlInput, input);
-  }
+    graphqlInput = new GraphQLInputObjectType({
+      name: input.type.name,
+      description: input.description,
+      fields
+    });
+  } else if ('enum' in input.type) {
+    const values: GraphQLEnumValueConfigMap = {};
 
+    for (let key of Object.keys(input.type.enum)) {
+      values[key] = {value: input.type.enum[key]}
+    }
+
+    graphqlInput = new GraphQLEnumType({
+      name: input.type.name,
+      description: input.type.description,
+      values
+    });
+  } else {
+    throw new Error();
+  }
+  return mapInputToNullableAndArray(graphqlInput, input);
 }

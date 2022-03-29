@@ -1,10 +1,10 @@
 ## Core
 - [ ] Fix descriptions and deprecation reasons on all types.
-- [ ] Fix mutations.
+- [ ] enums for input.
 
 ## Client and helpers
-- [ ] Helper functions for checking types outside using schema.
 - [ ] Graphql query generation
+- [ ] Helper functions for checking types outside using schema.
 - [ ] Client generation
 - [ ] Fragments for querying
 
