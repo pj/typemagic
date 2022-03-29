@@ -1,11 +1,10 @@
 ## Core
-- [ ] Fix descriptions and deprecation reasons on all types.
 - [ ] enums for input.
 - [ ] enum values with description and deprecationReason.
 
 ## Client and helpers
-- [ ] Graphql query generation
 - [ ] Helper functions for checking types outside using schema.
+- [ ] Graphql query generation
 - [ ] Fragments for querying
 
 ## Documentation
@@ -21,7 +20,8 @@
 
 ## Testing
 - [ ] Rearrage tests
-- [ ] Detailed testing of Mutli level output, input, unions, interfaces
+- [ ] Detailed testing of Mutli level output, input, unions, interfaces, description, deprecationReason.
+- [ ] integration test with real server.
 
 ## Aditional Features
 - [ ] Subscriptions
