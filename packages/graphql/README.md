@@ -1,11 +1,9 @@
 ## Core
 - [ ] enums for input.
-- [ ] enum values with description and deprecationReason.
 - [ ] force union names to be narrower than strings.
 
 ## Client and helpers
 - [ ] Helper functions for checking types outside using schema.
-- [ ] Graphql query generation
 - [ ] Fragments for querying
 
 ## Documentation
@@ -20,8 +18,6 @@
 - [ ] check enum type is actually enum or similar.
 
 ## Testing
-- [ ] Testing helper functions
-- [ ] Use generated client for testing.
 - [ ] Detailed testing of Mutli level output, input, unions, interfaces, description, deprecationReason.
 - [ ] Detailed testing of query generation.
 - [ ] integration test with real server.
