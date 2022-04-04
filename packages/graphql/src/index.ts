@@ -1,5 +1,5 @@
 export {build} from './schema';
-export {field, fields, object, input, argsFields} from './helpers';
+export * from './helpers';
 export {ScalarTypes} from './types';
-export {query} from './client';
+export * as client from './client';
 export {customScalar} from './custom_scalar';

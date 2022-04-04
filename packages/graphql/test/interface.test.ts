@@ -1,4 +1,4 @@
-import { build, field } from "../src";
+import { build, query, client } from "../src";
 import { testSchema } from "./utils";
 
 interface TestInterface {
@@ -16,7 +16,7 @@ class TestWithInterface implements TestInterface, AnotherInterface {
 }
 
 const objectWithInterface =
-  field({
+  query({
     type: {
       name: 'TestWithInterface',
       fields: {

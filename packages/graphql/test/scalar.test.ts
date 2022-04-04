@@ -1,10 +1,9 @@
 import { print } from "graphql";
-import { build, field } from "../src";
-import { query, queryGQL, _ } from "../src/client";
+import { build, query, client } from "../src";
 import { QueryRoot } from "../src/schema";
 import { testSchema } from "./utils";
 
-const scalarTypeNonNull = field<QueryRoot>(
+const scalarTypeNonNull = query(
   {
     type: 'boolean',
     resolve: () => {
@@ -34,12 +33,12 @@ testSchema(
   [
     {
       name: 'scalarTypeNonNull',
-      query: print(query(scalarSchema, {scalarTypeNonNull: _})),
+      query: print(client.query(scalarSchema, {scalarTypeNonNull: client._})),
       result: {scalarTypeNonNull: true}
     },
     {
       name: 'scalarTypeArray',
-      query: queryGQL(scalarSchema, {scalarTypeArray: _}),
+      query: client.queryGQL(scalarSchema, {scalarTypeArray: client._}),
       result: {scalarTypeArray: ["Hello", null, "World!"]}
     }
   ]

@@ -1,7 +1,7 @@
-import { build, field } from "../src";
+import { build, query } from "../src";
 import { testSchema } from "./utils";
 
-const mutateScalar = field({
+const mutateScalar = query({
     type: 'string',
     argsFields: { field: 'string' },
     resolve: (args: { field: string }): string => {

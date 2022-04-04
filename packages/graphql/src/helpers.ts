@@ -12,37 +12,17 @@ export type ValidateFields<Fields, Root, Context> =
         : ValidateResolver<Fields[Key], Root, unknown, Context>
   }
 
-export function argsFields<FunctionArgs extends ValidateArgs<FunctionArgs>>(args: FunctionArgs) {
-  return args;
-}
-
 export type Decircularize<I> = {
   [Key in keyof I]: I
 }
 
-export function object<
-  For, 
-  Context = never, 
-  Obj extends HandleOutputObject<Decircularize<Obj>, For, Context> = any
->(obj: Obj) {
-  return obj;
-}
-
-export function input<For, Input extends ValidateInputRuntimeType<For>>(input: Input) {
-  return input;
-}
-
-// export function union<>(obj: Obj) {
-
-// }
-
 export function fields<
-  Fields extends ValidateFields<Fields, never, never>
+  Fields extends ValidateFields<Fields, unknown, unknown>
 >(fields: Fields) {
   return fields;
 }
 
-export function field<
+export function query<
   Fields extends ValidateResolver<Fields, unknown, unknown, unknown>
 >(resolver: Fields) {
   return resolver;
@@ -50,15 +30,41 @@ export function field<
 
 export function withContext<Context>() {
   return ({
-    fields: <Fields extends ValidateFields<Fields, unknown, Context>>(f: Fields) => f,
-    field: <Field extends ValidateResolver<Field, unknown, unknown, Context>>(f: Field) => f,
-    withRoot: <Root>() => ({
-      fields:<Fields extends ValidateFields<Fields, Root, Context>>(f: Fields) => f,
-    }),
-    withRootKey: <Root, RootKey extends keyof Root>() => ({
-      field: <Field extends ValidateResolver<Field, Root, RootKey, Context>>(f: Field) => f,
-    }),
-  })
+    fields<Fields extends ValidateFields<Fields, unknown, Context>>(f: Fields) {
+      return f
+    },
+    field<Field extends ValidateResolver<Field, unknown, unknown, Context>>(f: Field) {
+      return f
+    },
+    withType<Type>() {
+      return {
+        object<Obj extends HandleOutputObject<Decircularize<Obj>, Type, Context>>(obj: Obj) {
+          return obj
+        },
+      }
+    },
+    withRoot<Root>() {
+      return {
+        fields<Fields extends ValidateFields<Fields, Root, Context>>(f: Fields) { return f},
+      }
+    },
+    withRootKey<Root, RootKey extends keyof Root>() {
+      return {
+        field<Field extends ValidateResolver<Field, Root, RootKey, Context>>(f: Field) {return f}
+      }
+    }
+  });
+}
+
+export function typeForObject<Type>() {
+  return {
+    object<Obj extends HandleOutputObject<Decircularize<Obj>, Type, unknown>>(obj: Obj) {
+      return obj
+    },
+    input<Input extends ValidateInputRuntimeType<Type>>(input: Input) {
+      return input;
+    }
+  }
 }
 
 export function withRoot<Root>() {
@@ -75,8 +81,24 @@ export function withRoot<Root>() {
 export function withRootKey<Root, RootKey extends keyof Root>() {
   return ({
     field: <Field extends ValidateResolver<Field, Root, RootKey, unknown>>(f: Field) => f,
-    withContext: <Context>() => ({
-      field: <Field extends ValidateResolver<Field, Root, RootKey, Context>>(f: Field) => f
-    }),
   })
+}
+
+export function withContextRoot<Context, Root>() {
+  return ({
+    fields<Fields extends ValidateFields<Fields, Root, Context>>(f: Fields) {
+      return f
+    },
+    additionalField<Field extends ValidateResolver<Field, Root, unknown, Context>>(f: Field) {
+      return f
+    }
+  });
+}
+
+export function fieldContextAndKey<Context, Root, RootKey extends keyof Root>() {
+  return ({
+    field<Field extends ValidateResolver<Field, Root, RootKey, Context>>(f: Field) {
+      return f
+    }
+  });
 }
