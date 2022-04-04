@@ -1,5 +1,5 @@
 import { UniqueOperationNamesRule } from "graphql";
-import { schema } from "../src";
+import { build } from "../src";
 import { GenerateQuery, queryGQL, _ } from "../src/client";
 import { Exact } from "../src/types";
 import { OutputType, outputTypeSchema, RootType, testSchema } from "./utils";
@@ -77,7 +77,7 @@ const unionSchema =
   } as const;
 
 testSchema(
-  schema(unionSchema), 
+  build(unionSchema), 
   [
     {
       name: 'objectUnion',

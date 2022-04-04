@@ -1,10 +1,17 @@
-import express, { Express } from "express";
-import { graphqlHTTP } from "express-graphql";
-import { schema } from "../src";
-import { QueryRoot } from "../src/schema";
-import { runQuery, testSchema } from "./utils";
+import { build, field } from "../src";
+import { testSchema } from "./utils";
 
-const generatedSchema = schema(
+const mutateScalar = field({
+    type: 'string',
+    argsFields: { field: 'string' },
+    resolve: (args: { field: string }): string => {
+      return "done"
+    }
+  } as const
+);
+
+
+const generatedSchema = build(
   {
     queries: {
       asdf: {
@@ -15,14 +22,8 @@ const generatedSchema = schema(
       }
     },
     mutations: {
-      mutateScalar: {
-        type: 'string',
-        argsFields: { field: 'string' },
-        resolve: (args: { field: string }): string => {
-          return "done"
-        }
-      }
-    },
+      mutateScalar
+    }
   }
 );
 

@@ -99,7 +99,7 @@ export type ScalarOrObjectType<ReturnType, Context, Type> =
         ? HandleUnion<Type, ReturnType>
         : Type extends CustomScalar<infer CustomScalarType>
           ? HandleCustomScalar<CustomScalarType, ReturnType>
-          : HandleOutputObject<Type, ReturnType, Context>
+          : {type: HandleOutputObject<Type, ReturnType, Context>}
 
 export type ReturnTypeForRoot<ResolverFunction, RootFieldType> =
   [unknown] extends [RootFieldType]
@@ -107,12 +107,3 @@ export type ReturnTypeForRoot<ResolverFunction, RootFieldType> =
       ? RemovePromise<ReturnType>
       : "Unable to determine return type for root query"
     : RootFieldType
-
-export function resolver<
-  Context, 
-  Root, 
-  RootField, 
-  X extends ValidateResolver<X, Root, RootField, Context> = any
->(resolver: X) {
-  return resolver;
-}

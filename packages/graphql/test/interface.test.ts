@@ -1,5 +1,4 @@
-import { schema } from "../src";
-import { resolver } from "../src/resolvers";
+import { build, field } from "../src";
 import { testSchema } from "./utils";
 
 interface TestInterface {
@@ -17,9 +16,9 @@ class TestWithInterface implements TestInterface, AnotherInterface {
 }
 
 const objectWithInterface =
-  resolver({
+  field({
     type: {
-      name: TestWithInterface.name,
+      name: 'TestWithInterface',
       fields: {
         implementorField: 'int',
         interfaceField: 'string',
@@ -47,7 +46,7 @@ const objectWithInterface =
     }
   } as const);
 
-const generatedSchema = schema(
+const generatedSchema = build(
   {
     queries: {
       objectWithInterface

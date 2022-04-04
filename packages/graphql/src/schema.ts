@@ -18,6 +18,7 @@ import {
   GraphQLString, GraphQLUnionType
 } from "graphql";
 import { CustomScalar } from "./custom_scalar";
+import { ValidateFields } from "./helpers";
 import { ValidateResolver } from "./resolvers";
 import { ArrayTrilean, ScalarStrings, ScalarTypes } from "./types";
 
@@ -29,12 +30,6 @@ export class MutationRoot {
 
 }
 
-export type ValidateQueries<Queries, QueryRoot, Context> =
-  {
-    [Key in keyof Queries]:
-      ValidateResolver<Queries[Key], QueryRoot, unknown, Context>
-  }
-
 export type ValidateSchema<Schema, Context> =
   [Schema] extends [
     {
@@ -44,13 +39,13 @@ export type ValidateSchema<Schema, Context> =
   ]
   ?
     (
-      { queries: ValidateQueries<Queries, QueryRoot, Context> }
+      { queries: ValidateFields<Queries, QueryRoot, Context> }
     )
     &
     (
       [undefined] extends [Mutations]
       ? { mutations?: undefined }
-      : { mutations: ValidateQueries<Mutations, MutationRoot, Context> }
+      : { mutations: ValidateFields<Mutations, MutationRoot, Context> }
     )
   : never
 
@@ -127,7 +122,7 @@ class SchemaObjects {
   ) {}
 }
 
-export function schema<Context, Schema extends ValidateSchema<Schema, Context>>(
+export function build<Context, Schema extends ValidateSchema<Schema, Context>>(
   schema: Schema
 ) {
   const config: GraphQLSchemaConfig = {};

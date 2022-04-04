@@ -1,7 +1,7 @@
 import express, { Express } from "express";
 import { graphqlHTTP } from "express-graphql";
 import { GraphQLScalarType } from "graphql";
-import { customScalar, schema } from "../src";
+import { customScalar, build } from "../src";
 import { QueryRoot } from "../src/schema";
 import { runQuery, testSchema } from "./utils";
 
@@ -21,7 +21,7 @@ type TestCustom = {
 }
 
 const customDate = "2022-03-29T16:29:51.000Z"
-const generatedSchema = schema(
+const generatedSchema = build(
   {
     queries: {
       basicCustomScalar: {

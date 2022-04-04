@@ -1,4 +1,4 @@
-import { schema } from "../src";
+import { build } from "../src";
 
 enum TestStringEnum {
   FIRST_FIELD = "FIRST_FIELD",
@@ -10,7 +10,7 @@ enum TestNumberEnum {
   SECOND_FIElD
 }
 
-const generatedSchema = schema(
+const generatedSchema = build(
   {
     queries: {
       enumTypeArray: {

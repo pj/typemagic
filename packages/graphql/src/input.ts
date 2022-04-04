@@ -44,7 +44,3 @@ export type ValidateArgs<FunctionArgs> =
     : {
         argsFields: ValidateInputRuntimeTypes<FunctionArgs>
       }
-
-export function argsFields<FunctionArgs extends ValidateArgs<FunctionArgs>>(args: FunctionArgs) {
-  return args;
-}
