@@ -1,4 +1,4 @@
-import { ArgumentNode, DocumentNode, FieldNode, NameNode, ObjectFieldNode, print, SelectionNode, SelectionSetNode, TypeNode, ValueNode, VariableDefinitionNode, VariableNode } from "graphql";
+import { ArgumentNode, DocumentNode, FieldNode, NameNode, ObjectFieldNode, OperationTypeNode, print, SelectionNode, SelectionSetNode, TypeNode, ValueNode, VariableDefinitionNode, VariableNode } from "graphql";
 import { OutputObject, ValidateSchema } from "./schema";
 import { Exact, IsSchemaScalar, ScalarTypes } from "./types";
 import { UnionTypeNames } from "./union";
@@ -94,6 +94,11 @@ export type GenerateQuery<Query, Schema> = {
         : never
       : never
 }
+
+export type GenerateSchema<Query, Schema> = 
+  [Schema] extends [{mutations?: infer Mutations, queries?: infer Queries}]
+    ? GenerateQuery<Query, Mutations> | GenerateQuery<Query, Queries>
+    : never
 
 function getVariableType(schema: any) {
   switch (schema) {
@@ -342,19 +347,20 @@ function queryObject(
 
 type QueryVariables = Map<string, VariableDefinitionNode>;
 
-export function query<
+export function operation<
   Schema extends ValidateSchema<Schema, any>,
-  Query extends GenerateQuery<Query, Schema['queries']>>
+  Operation extends GenerateSchema<Operation, Schema>>
   (
     schema: Schema,
-    query: Query,
+    operation: Operation,
+    operationType: OperationTypeNode,
     queryName?: string
   ): DocumentNode {
   const queryNameNode: NameNode | undefined = queryName ? { kind: 'Name', value: queryName } : undefined;
   const variables: QueryVariables = new Map();
   const selections = queryFields(
-    schema['queries'], 
-    query, 
+    schema[operationType === 'query' ? 'queries' : 'mutations'], 
+    operation, 
     variables
   );
   return ({
@@ -362,7 +368,7 @@ export function query<
     definitions: [
       {
         kind: 'OperationDefinition',
-        operation: 'query',
+        operation: operationType,
         name: queryNameNode,
         selectionSet: {
           kind: 'SelectionSet',
@@ -374,14 +380,50 @@ export function query<
   });
 }
 
+export function query<
+  Schema extends ValidateSchema<Schema, any>,
+  Query extends GenerateSchema<Query, Schema>
+>
+(
+  schema: Schema,
+  query: Query,
+  queryName?: string
+): DocumentNode {
+  return operation(schema, query, 'query', queryName);
+}
+
 export function queryGQL<
   Schema extends ValidateSchema<Schema, any>,
-  Query extends GenerateQuery<Query, Schema['queries']>
+  Query extends GenerateSchema<Query, Schema>
 >(
   schema: Schema,
-  asdf: Query,
+  query: Query,
   queryName?: string
 ): string {
-  const document = query(schema, asdf, queryName);
+  const document = operation(schema, query, 'query', queryName);
+  return print(document);
+}
+
+export function mutation<
+  Schema extends ValidateSchema<Schema, any>,
+  Query extends GenerateSchema<Query, Schema>
+>
+(
+  schema: Schema,
+  query: Query,
+  queryName?: string
+): DocumentNode {
+  return operation(schema, query, 'mutation', queryName);
+}
+
+export function mutationGQL<
+  Schema extends ValidateSchema<Schema, any>,
+  Query extends GenerateSchema<Query, Schema>
+>(
+  schema: Schema,
+  query: Query,
+  queryName?: string
+): string {
+  const document = operation(schema, query, 'mutation', queryName);
   return print(document);
 }

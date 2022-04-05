@@ -1,8 +1,8 @@
 ## Client and helpers
-- [ ] Helpers/Fragments for querying
-- [ ] Dummy variable helpers.
 - [ ] Mutation client
+- [ ] Dummy variable helpers.
 - [ ] Checking of argument types in client.
+- [ ] Helpers/Fragments for querying
 
 ## Testing
 - [ ] Detailed testing of Mutli level output, input, unions, interfaces, description, deprecationReason.

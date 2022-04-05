@@ -1,5 +1,6 @@
-import { build, query } from "../src";
-import { testSchema } from "./utils";
+import { build, client, query } from "../src";
+import { mutationGQL } from "../src/client";
+import { createApp, createTest, testSchema } from "./utils";
 
 const mutateScalar = query({
     type: 'string',
@@ -9,33 +10,42 @@ const mutateScalar = query({
     }
   } as const
 );
+const schemaObject = {
+  queries: {
+    asdf: {
+      type: 'string',
+      resolve: (): string => {
+        return 'asdf'
+      }
+    }
+  },
+  mutations: {
+    mutateScalar
+  }
+} as const;
 
+const generatedSchema = build(schemaObject);
 
-const generatedSchema = build(
-  {
-    queries: {
-      asdf: {
-        type: 'string',
-        resolve: (): string => {
-          return 'asdf'
+let app = createApp(build(schemaObject));
+
+test(
+  'mutateScalar',
+  createTest(
+    app,
+    mutationGQL(
+      schemaObject, 
+      {
+        mutateScalar: {
+          $args: {
+            field: {
+              $name: 'test'
+            }
+          },
+          $fields: client._
         }
       }
-    },
-    mutations: {
-      mutateScalar
-    }
-  }
-);
-
-testSchema(
-  generatedSchema,
-  [
-    {
-      name: 'mutateScalar',
-      query: `mutation TestMutation {
-          mutateScalar(field: "asdf")
-        }`,
-      result: { mutateScalar: "done" }
-    }
-  ]
+    ),
+    { mutateScalar: "done" },
+    {test: 'test'}
+  )
 );
