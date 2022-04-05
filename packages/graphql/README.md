@@ -1,9 +1,8 @@
-## Core
-- [ ] enums for input.
-
 ## Client and helpers
 - [ ] Helpers/Fragments for querying
 - [ ] Dummy variable helpers.
+- [ ] Mutation client
+- [ ] Checking of argument types in client.
 
 ## Testing
 - [ ] Detailed testing of Mutli level output, input, unions, interfaces, description, deprecationReason.

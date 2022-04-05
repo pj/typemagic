@@ -1,12 +1,14 @@
+import { CustomScalar } from "./custom_scalar"
 import {
   CreateSchemaOptions,
+  Exact,
   GetSchemaScalar,
   GetUnderlyingType,
   IsNonNullNonArrayTypeScalar,
   IsTypeScalar
 } from "./types"
 
-export type HandleNonNullNonArrayTypeScalar<Scalar, Resolver> =
+export type HandleNonNullNonArrayTypeScalar<Scalar, ArgsRuntimeTypes, Resolver> =
   [IsNonNullNonArrayTypeScalar<Scalar>] extends [true]
     ? GetSchemaScalar<Scalar> | Resolver
     : Resolver
@@ -26,14 +28,18 @@ export type ValidateInputRuntimeType<FunctionArg, ArgsRuntimeType> =
             description?: Description,
           }
         }
-      : [IsTypeScalar<FunctionArg>] extends [true]
-        ? { type: GetSchemaScalar<FunctionArg> }
-        : {
-            type: {
-              fields: ValidateInputRuntimeTypes<GetUnderlyingType<FunctionArg>, ArgsRuntimeType>,
-              input: string
+      : ArgsRuntimeType extends {type: CustomScalar<infer CustomScalarType>}
+        ? Exact<CustomScalarType, FunctionArg> extends true
+          ? {type: CustomScalar<CustomScalarType>}
+          : "Custom scalar type doesn't match arg type"
+        : [IsTypeScalar<FunctionArg>] extends [true]
+          ? { type: GetSchemaScalar<FunctionArg> }
+          : {
+              type: {
+                fields: ValidateInputRuntimeTypes<GetUnderlyingType<FunctionArg>, ArgsRuntimeType>,
+                name: string
+              }
             }
-          }
     )
   & CreateSchemaOptions<FunctionArg>
 
@@ -42,6 +48,7 @@ export type ValidateInputRuntimeTypes<FunctionArgs, ArgsRuntimeTypes> =
     [Key in keyof FunctionArgs]:
       HandleNonNullNonArrayTypeScalar<
         FunctionArgs[Key], 
+        ArgsRuntimeTypes,
         Key extends keyof ArgsRuntimeTypes
           ? ValidateInputRuntimeType<FunctionArgs[Key], ArgsRuntimeTypes[Key]>
           : ValidateInputRuntimeType<FunctionArgs[Key], unknown>

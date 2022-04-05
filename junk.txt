@@ -1578,3 +1578,5 @@ export type ReturnTypeExtendsInterface<Interface, ReturnType, Context> =
         }
       : "Interface is incorrect"
     : "Should not happen"
+    true
+    "{\"errors\":[{\"message\":\"Variable \\\"$inputVariable\\\" got invalid value { testField: \\\"hello\\\", outputType: [[Object]] }; Field \\\"rootField\\\" of required type \\\"String!\\\" was not provided.\",\"locations\":[{\"line\":1,\"column\":8}]},{\"message\":\"Variable \\\"$inputVariable\\\" got invalid value { testField: \\\"hello\\\", outputType: [[Object]] }; Field \\\"testField\\\" is not defined by type \\\"RootType\\\". Did you mean \\\"rootField\\\"?\",\"locations\":[{\"line\":1,\"column\":8}]}]}"

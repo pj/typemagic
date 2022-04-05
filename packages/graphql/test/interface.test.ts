@@ -1,5 +1,5 @@
 import { build, query, client } from "../src";
-import { testSchema } from "./utils";
+import { createApp, createTest, testSchema } from "./utils";
 
 interface TestInterface {
   interfaceField: string
@@ -54,29 +54,30 @@ const generatedSchema = build(
   }
 );
 
-testSchema(
-  generatedSchema, [
-    {
-      name: 'objectWithInterface',
-      query: `query TestQuery {
-            objectWithInterface {
-              implementorField
+let app = createApp(generatedSchema);
 
-              ... on AnotherInterface {
-                anotherField
-              }
-              ... on TestInterface {
-                interfaceField
-              }
-            }
-          }`,
-      result: {
-        objectWithInterface: {
-          implementorField: 1234,
-          interfaceField: "hello",
-          anotherField: true
+test(
+  'objectWithInterface',
+  createTest(
+    app,
+    `query TestQuery {
+      objectWithInterface {
+        implementorField
+
+        ... on AnotherInterface {
+          anotherField
+        }
+        ... on TestInterface {
+          interfaceField
         }
       }
+    }`,
+    {
+      objectWithInterface: {
+        implementorField: 1234,
+        interfaceField: "hello",
+        anotherField: true
+      }
     }
-  ]
+  )
 );

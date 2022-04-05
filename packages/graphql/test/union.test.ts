@@ -2,7 +2,7 @@ import { UniqueOperationNamesRule } from "graphql";
 import { build } from "../src";
 import { GenerateQuery, queryGQL, _ } from "../src/client";
 import { Exact } from "../src/types";
-import { OutputType, outputTypeSchema, RootType, testSchema } from "./utils";
+import { createApp, createTest, OutputType, outputTypeSchema, RootType, testSchema } from "./utils";
 
 class UnionTypeA {
   constructor(
@@ -76,12 +76,13 @@ const unionSchema =
     }
   } as const;
 
-testSchema(
-  build(unionSchema), 
-  [
-    {
-      name: 'objectUnion',
-      query: queryGQL(
+let app = createApp(build(unionSchema));
+
+test(
+  'objectUnion',
+  createTest(
+    app,
+    queryGQL(
         unionSchema, 
         {
           objectUnion: {
@@ -96,11 +97,10 @@ testSchema(
           }
         }
       ),
-      result: {
+      {
         objectUnion: {
           typeBField: false
         }
       }
-    }
-  ]
+  )
 );

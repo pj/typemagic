@@ -59,9 +59,9 @@ export function typeForObject<Type>() {
     object<Obj extends HandleOutputObject<Decircularize<Obj>, Type, unknown>>(obj: Obj) {
       return obj
     },
-    input<Input extends ValidateInputRuntimeType<Type>>(input: Input) {
-      return input;
-    }
+    // input<Input extends ValidateInputRuntimeType<Type>>(input: Input) {
+    //   return input;
+    // }
   }
 }
 

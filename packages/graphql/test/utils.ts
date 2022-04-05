@@ -1,8 +1,9 @@
-import express from "express";
+import express, {Express} from "express";
 import { graphqlHTTP } from "express-graphql";
 import request from 'supertest';
 import { QueryRoot } from "../src/schema";
 import { print } from "graphql";
+import { ProvidedRequiredArgumentsOnDirectivesRule } from "graphql/validation/rules/ProvidedRequiredArgumentsRule";
 
 export async function runQuery(app: Express.Application, query: string, variables?: { [key: string]: any }) {
   return await request(app)
@@ -74,5 +75,32 @@ export function testSchema(schema: any, testQueries: TestQuery[]) {
       expect(response.status).toEqual(200);
       expect(response.body.data).toStrictEqual(result);
     });
+  }
+}
+
+export function createApp(schema: any) {
+  const app = express();
+  app.use('/graphql', graphqlHTTP({
+    schema: schema,
+    rootValue: new QueryRoot(),
+  }));
+  return app;
+}
+
+export function createTest(app: Express, query: string, result: any, variables?: any) {
+  return async function () {
+    const response = await request(app)
+      .post('/graphql')
+      .set('Content-Type', 'application/json')
+      .send(
+        {
+          query,
+          variables
+        }
+      );
+
+    debugger;
+    expect(response.status).toEqual(200);
+    expect(response.body.data).toStrictEqual(result);
   }
 }

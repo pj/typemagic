@@ -1,9 +1,10 @@
 import express, { Express } from "express";
 import { graphqlHTTP } from "express-graphql";
-import { GraphQLScalarType } from "graphql";
+import { GraphQLScalarType, Kind, ValueNode } from "graphql";
 import { customScalar, build } from "../src";
+import { CustomScalar } from "../src/custom_scalar";
 import { QueryRoot } from "../src/schema";
-import { runQuery, testSchema } from "./utils";
+import { createApp, createTest, runQuery, testSchema } from "./utils";
 
 const CustomDateScalar = new GraphQLScalarType({
   name: 'Date',
@@ -11,9 +12,18 @@ const CustomDateScalar = new GraphQLScalarType({
   // Serializes an internal value to include in a response.
   serialize: (source: Date): string => source.toISOString(),
   // Parses an externally provided value to use as an input.
-  parseValue: (source: string): Date => new Date(source),
+  parseValue: (source: string): Date => 
+    {
+      console.log(source);
+      return new Date(source)
+    },
   // Parses an externally provided literal value to use as an input.
-  // parseLiteral: (source: string): Date => new Date(source)
+  parseLiteral: (source: ValueNode): Date | null=> {
+    if (source.kind === Kind.STRING) {
+      return new Date(source.value);
+    }
+    return null;
+  }
 });
 
 type TestCustom = {
@@ -40,29 +50,78 @@ const generatedSchema = build(
         resolve: (): TestCustom => {
           return { dateField: new Date(customDate) };
         }
+      },
+      customScalarArgument: {
+        type: 'string',
+        argsFields: {
+          customScalar: {type: customScalar<Date>(CustomDateScalar)}
+        },
+        resolve: (args: {customScalar: Date}): string => "test" 
+      }
+    },
+    mutations: {
+      customScalarMutation: {
+        type: 'string',
+        argsFields: {
+          customScalar: {type: customScalar<Date>(CustomDateScalar)}
+        },
+        resolve: (args: {customScalar: Date}): string => "test" 
       }
     }
   }
 );
 
-testSchema(
-  generatedSchema, 
-  [
-    {
-      name: 'basicCustomScalar',
-      query: `query TestQuery {
-          basicCustomScalar
-        }`,
-      result: { basicCustomScalar: customDate },
-    },
-    {
-      name: 'objectCustomScalar',
-      query: `query TestQuery {
-          objectCustomScalar {
-            dateField
-          }
-        }`,
-      result: { objectCustomScalar: { dateField: customDate } }
+let app = createApp(generatedSchema);
+
+test(
+  'basicCustomScalar', 
+  createTest(
+    app,
+    `query TestQuery { 
+      basicCustomScalar
+    }`,
+    { 
+      basicCustomScalar: customDate 
     }
-  ]
+  )
+);
+
+test(
+  'objectCustomScalar',
+  createTest(
+    app,
+    `query TestQuery {
+        objectCustomScalar {
+          dateField
+        }
+      }
+     `,
+    { objectCustomScalar: { dateField: customDate } }
+  )
+);
+
+test(
+  'customScalarArgument',
+  createTest(
+    app,
+    `query TestQuery($customScalar: Date!) {
+      customScalarArgument(customScalar: $customScalar)
+    }
+    `,
+    { customScalarArgument: "test"},
+    {customScalar: new Date(customDate).toISOString()}
+  )
+);
+
+test(
+  'customScalarMutation',
+  createTest(
+    app,
+    `mutation TestQuery($customScalar: Date!) {
+      customScalarMutation(customScalar: $customScalar)
+    }
+    `,
+    { customScalarMutation: "test"},
+    {customScalar: new Date(customDate).toISOString()}
+  )
 );
