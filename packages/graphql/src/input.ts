@@ -11,36 +11,46 @@ export type HandleNonNullNonArrayTypeScalar<Scalar, Resolver> =
     ? GetSchemaScalar<Scalar> | Resolver
     : Resolver
 
-export type ValidateInputRuntimeType<FunctionArg> =
+export type ValidateInputRuntimeType<FunctionArg, ArgsRuntimeType> =
   {
     description?: string,
     deprecationReason?: string,
     defaultValue?: string,
   }
   & (
-      [IsTypeScalar<FunctionArg>] extends [true]
+    ArgsRuntimeType extends {enum: infer Enum, name: infer Name, description?: infer Description}
+      ? {
+          type: {
+            enum: Enum, 
+            name: Name, 
+            description?: Description,
+          }
+        }
+      : [IsTypeScalar<FunctionArg>] extends [true]
         ? { type: GetSchemaScalar<FunctionArg> }
         : {
             type: {
-              fields: ValidateInputRuntimeTypes<GetUnderlyingType<FunctionArg>>,
+              fields: ValidateInputRuntimeTypes<GetUnderlyingType<FunctionArg>, ArgsRuntimeType>,
               input: string
             }
           }
     )
   & CreateSchemaOptions<FunctionArg>
 
-export type ValidateInputRuntimeTypes<FunctionArgs> =
+export type ValidateInputRuntimeTypes<FunctionArgs, ArgsRuntimeTypes> =
   {
     [Key in keyof FunctionArgs]:
       HandleNonNullNonArrayTypeScalar<
         FunctionArgs[Key], 
-        ValidateInputRuntimeType<FunctionArgs[Key]>
+        Key extends keyof ArgsRuntimeTypes
+          ? ValidateInputRuntimeType<FunctionArgs[Key], ArgsRuntimeTypes[Key]>
+          : ValidateInputRuntimeType<FunctionArgs[Key], unknown>
       >
   }
 
-export type ValidateArgs<FunctionArgs> =
+export type ValidateArgs<FunctionArgs, ArgsRuntimeTypes> =
   [unknown] extends [FunctionArgs]
     ? { argsFields?: never }
     : {
-        argsFields: ValidateInputRuntimeTypes<FunctionArgs>
+        argsFields: ValidateInputRuntimeTypes<FunctionArgs, ArgsRuntimeTypes>
       }

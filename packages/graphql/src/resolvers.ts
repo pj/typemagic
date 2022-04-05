@@ -28,7 +28,7 @@ export type ValidateResolver<Resolver, Root, RootFieldType, Context> =
               Root, 
               ReturnTypeForRoot<ResolverFunction, RootFieldType>, 
               Context,
-              Type
+              ArgsRuntimeTypes
             >
         : IsNonNullNonArrayTypeScalar<RootFieldType> extends true
           ? GetSchemaScalar<RootFieldType>
@@ -57,7 +57,7 @@ export type ValidateAdditionalResolver<Resolver, Root, Context> =
       : "Resolve function is required on additional fields"
     : "Resolve function is required on additional fields"
 
-export type ValidateResolverFunction<ResolverFunction, Root, RootFieldType, Context, Type> =
+export type ValidateResolverFunction<ResolverFunction, Root, RootFieldType, Context, ArgsRuntimeTypes> =
   (
     [unknown] extends [ResolverFunction]
       ? { resolve?: never, argsFields?: never}
@@ -74,7 +74,7 @@ export type ValidateResolverFunction<ResolverFunction, Root, RootFieldType, Cont
                 resolve: ((root: Root, context: Context) => RootFieldType) 
                         | ((root: Root, context: Context) => Promise<RootFieldType>)
               }
-            : ValidateArgs<RootOrArgs>
+            : ValidateArgs<RootOrArgs, ArgsRuntimeTypes>
               & { 
                   resolve: ((args: RootOrArgs, root: Root, context: Context) => RootFieldType) 
                           | ((args: RootOrArgs, root: Root, context: Context) => Promise<RootFieldType>)

@@ -1,8 +1,6 @@
-import { FieldSentinel } from "./client";
-import { ValidateArgs, ValidateInputRuntimeType } from "./input";
+import { ValidateInputRuntimeType } from "./input";
 import { HandleOutputObject } from "./object";
 import { ValidateResolver } from "./resolvers";
-import { Constructor } from "./types";
 
 export type ValidateFields<Fields, Root, Context> =
   {
