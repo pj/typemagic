@@ -1,6 +1,6 @@
 import { GraphQLScalarType, Kind, ValueNode } from "graphql";
 import { build, customScalar } from "../src";
-import { createApp, createTest } from "./utils";
+import { createApp, createTest, QueryRoot } from "./utils";
 
 const CustomDateScalar = new GraphQLScalarType({
   name: 'Date',
@@ -8,11 +8,7 @@ const CustomDateScalar = new GraphQLScalarType({
   // Serializes an internal value to include in a response.
   serialize: (source: Date): string => source.toISOString(),
   // Parses an externally provided value to use as an input.
-  parseValue: (source: string): Date => 
-    {
-      console.log(source);
-      return new Date(source)
-    },
+  parseValue: (source: string): Date => new Date(source),
   // Parses an externally provided literal value to use as an input.
   parseLiteral: (source: ValueNode): Date | null=> {
     if (source.kind === Kind.STRING) {
@@ -64,7 +60,7 @@ const generatedSchema = build(
         resolve: (args: {customScalar: Date}): string => "test" 
       }
     }
-  }
+  }, {root: QueryRoot}
 );
 
 let app = createApp(generatedSchema);

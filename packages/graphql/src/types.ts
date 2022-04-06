@@ -47,9 +47,9 @@ export type IsSchemaScalar<Item> =
 export type IsNonNullNonArrayTypeScalar<Scalar> =
   [null] extends [Scalar]
     ? false
-    : [Scalar] extends [Array<infer X>]
+    : Scalar extends Array<infer X>
       ? false
-      : [IsTypeScalar<Scalar>] extends [true]
+      : IsTypeScalar<Scalar> extends true
         ? true
         : false
 

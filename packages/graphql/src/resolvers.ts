@@ -11,14 +11,14 @@ export type ValidateResolver<Resolver, Root, RootFieldType, Context> =
     ? Exact<CustomScalarType, RootFieldType> extends true
       ? CustomScalar<CustomScalarType>
       : "Incorrect custom scalar"
-    : [Resolver] extends [{
+    : Resolver extends {
         type?: infer Type,
         alias?: infer Alias,
         description?: infer Description,
         deprecationReason?: string,
         argsFields?: infer ArgsRuntimeTypes,
         resolve?: infer ResolverFunction
-      }]
+      }
         // FIXME: Have to have this here due to circular constraint problem
         ? { description?: Description, alias?: Alias, deprecationReason?: string }
           & ScalarOrObjectType<ReturnTypeForRoot<ResolverFunction, RootFieldType>, Context, Type>
@@ -43,7 +43,7 @@ export type ValidateAdditionalResolver<Resolver, Root, Context> =
     argsFields?: infer ArgsRuntimeTypes,
     resolve?: infer ResolverFunction
   }]
-    ? [ResolverFunction] extends [(...args: infer X) => infer RT]
+    ? ResolverFunction extends (...args: infer X) => infer RT
       ? { description?: Description, deprecationReason?: DeprecationReason, alias?: Alias }
         & ScalarOrObjectType<RT, Context, Type>
         & CreateSchemaOptions<RT>
@@ -52,7 +52,7 @@ export type ValidateAdditionalResolver<Resolver, Root, Context> =
             Root, 
             RT, 
             Context,
-            Type
+            ArgsRuntimeTypes
           >
       : "Resolve function is required on additional fields"
     : "Resolve function is required on additional fields"

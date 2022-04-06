@@ -1,8 +1,8 @@
-import { build, client, query } from "../src";
+import { build, client, field, query } from "../src";
 import { mutationGQL } from "../src/client";
 import { createApp, createTest, testSchema } from "./utils";
 
-const mutateScalar = query({
+const mutateScalar = field({
     type: 'string',
     argsFields: { field: 'string' },
     resolve: (args: { field: string }): string => {
@@ -10,6 +10,7 @@ const mutateScalar = query({
     }
   } as const
 );
+
 const schemaObject = {
   queries: {
     asdf: {

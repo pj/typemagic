@@ -1,5 +1,5 @@
-import { build, query } from "../src";
-import { createApp, createTest } from "./utils";
+import { build, field, query } from "../src";
+import { createApp, createTest, QueryContext, QueryRoot } from "./utils";
 
 interface TestInterface {
   interfaceField: string
@@ -16,7 +16,7 @@ class TestWithInterface implements TestInterface, AnotherInterface {
 }
 
 const objectWithInterface =
-  query({
+  field({
     type: {
       name: 'TestWithInterface',
       fields: {

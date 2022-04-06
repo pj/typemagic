@@ -1,10 +1,10 @@
 import { print } from "graphql";
-import { build, client } from "../src";
+import { build, client, field } from "../src";
 import { createApp, createTest, OutputType, RootType } from "./utils";
 
 const schemaObject = {
     queries: {
-      inputObject: {
+      inputObject: field({
         type: 'string',
         argsFields: {
           inputArgument: {
@@ -29,7 +29,7 @@ const schemaObject = {
         resolve: (args: {inputArgument: RootType}): string => {
           return 'test'
         }
-      },
+      }),
     }
   } as const;
 

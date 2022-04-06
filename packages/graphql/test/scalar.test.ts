@@ -1,20 +1,19 @@
 import { print } from "graphql";
-import { build, query, client } from "../src";
-import { createApp, createTest, testSchema } from "./utils";
-
-const scalarTypeNonNull = query(
-  {
-    type: 'boolean',
-    resolve: () => {
-      return true
-    }
-  }
-);
+import { build, query, client, field } from "../src";
+import { createApp, createTest, QueryRoot, testSchema } from "./utils";
 
 const scalarSchema = 
   {
     queries: {
-      scalarTypeNonNull: scalarTypeNonNull,
+      scalarTypeNonNull: 
+        field(
+          {
+            type: 'boolean',
+            resolve: () => {
+              return true
+            }
+          } as const, 
+        ),
       scalarTypeArray: {
         type: 'string',
         array: "nullable_items",
@@ -25,7 +24,7 @@ const scalarSchema =
     }
   } as const;
 
-const generatedSchema = build(scalarSchema);
+const generatedSchema = build(scalarSchema, {root: QueryRoot});
 
 let app = createApp(generatedSchema);
 

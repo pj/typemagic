@@ -1,5 +1,4 @@
 ## Client and helpers
-- [ ] Dummy variable helpers.
 - [ ] Checking of argument types in client.
 - [ ] Helpers/Fragments for querying
 

@@ -32,7 +32,7 @@ export type ValidateInputRuntimeType<FunctionArg, ArgsRuntimeType> =
         ? Exact<CustomScalarType, FunctionArg> extends true
           ? {type: CustomScalar<CustomScalarType>}
           : "Custom scalar type doesn't match arg type"
-        : [IsTypeScalar<FunctionArg>] extends [true]
+        : IsTypeScalar<FunctionArg> extends true
           ? { type: GetSchemaScalar<FunctionArg> }
           : {
               type: {
