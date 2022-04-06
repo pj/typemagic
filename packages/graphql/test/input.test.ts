@@ -1,7 +1,6 @@
-import { print, VariablesAreInputTypesRule } from "graphql";
-import { build, query, client } from "../src";
-import { QueryRoot } from "../src/schema";
-import { createApp, createTest, OutputType, RootType, testSchema } from "./utils";
+import { print } from "graphql";
+import { build, client } from "../src";
+import { createApp, createTest, OutputType, RootType } from "./utils";
 
 const schemaObject = {
     queries: {

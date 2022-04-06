@@ -1,9 +1,6 @@
-import express, {Express} from "express";
+import express, { Express } from "express";
 import { graphqlHTTP } from "express-graphql";
 import request from 'supertest';
-import { QueryRoot } from "../src/schema";
-import { print } from "graphql";
-import { ProvidedRequiredArgumentsOnDirectivesRule } from "graphql/validation/rules/ProvidedRequiredArgumentsRule";
 
 export async function runQuery(app: Express.Application, query: string, variables?: { [key: string]: any }) {
   return await request(app)
@@ -15,6 +12,14 @@ export async function runQuery(app: Express.Application, query: string, variable
         variables
       }
     );
+}
+
+export class QueryRoot {
+  
+}
+
+export class QueryContext {
+  
 }
 
 export class OutputType {

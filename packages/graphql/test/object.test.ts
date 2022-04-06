@@ -1,10 +1,6 @@
-import express, { Express } from "express";
-import { graphqlHTTP } from "express-graphql";
-import { GraphQLScalarType } from "graphql";
-import { customScalar, ScalarTypes, build } from "../src";
-import { FieldSentinel, GenerateQuery, queryGQL, _ } from "../src/client";
-import { QueryRoot } from "../src/schema";
-import { OutputType, outputTypeSchema, rootSchema, RootType, runQuery, testSchema } from "./utils";
+import { build } from "../src";
+import { queryGQL, _ } from "../src/client";
+import { OutputType, outputTypeSchema, QueryContext, QueryRoot, rootSchema, RootType, testSchema } from "./utils";
 
 class Args {
   constructor(
@@ -79,24 +75,57 @@ const schemaObject = {
   }
 } as const;
 
-const generatedSchema = build(schemaObject);
+const generatedSchema = build(schemaObject, {context: QueryContext, root: QueryRoot});
 
 testSchema(
   generatedSchema,
   [
     {
       name: 'objectTypeNonNull',
-      query: queryGQL(schemaObject, {objectTypeNonNull: {testField: _}}),
+      query: queryGQL(
+        schemaObject, 
+        {
+          objectTypeNonNull: {
+            testField: _
+          }
+        }, 
+        {
+          context: QueryContext, 
+          root: QueryRoot
+        }
+      ),
       result: { objectTypeNonNull: { testField: 'Hello World!' } }
     },
     {
       name: 'objectTypeNull',
-      query: queryGQL(schemaObject, {objectTypeNull: {testField: _}}),
+      query: queryGQL(
+        schemaObject, 
+        {
+          objectTypeNull: {
+            testField: _
+          }
+        }, 
+        {
+          context: QueryContext, 
+          root: QueryRoot
+        }
+      ),
       result: { objectTypeNull: null }
     },
     {
       name: 'objectTypeArray',
-      query: queryGQL(schemaObject, {objectTypeArray: {testField: _}}),
+      query: queryGQL(
+        schemaObject, 
+        {
+          objectTypeArray: {
+            testField: _
+          }
+        }, 
+        {
+          context: QueryContext, 
+          root: QueryRoot
+        }
+      ),
       result: { objectTypeArray: [{ testField: "Hello World!" }] }
     },
     {
@@ -112,6 +141,10 @@ testSchema(
               testField: _
             }
           }
+        }, 
+        {
+          context: QueryContext, 
+          root: QueryRoot
         }
       ),
       args: { test: "test" },
@@ -126,7 +159,21 @@ testSchema(
     },
     {
       name: 'rootType',
-      query: queryGQL(schemaObject, {rootType: {rootField: _, outputType: {testField: _}}}),
+      query: queryGQL(
+        schemaObject, 
+        {
+          rootType: {
+            rootField: _, 
+            outputType: {
+              testField: _
+            }
+          }
+        }, 
+        {
+          context: QueryContext, 
+          root: QueryRoot
+        }
+      ),
       result: {
         rootType: {
           rootField: "Root Type",

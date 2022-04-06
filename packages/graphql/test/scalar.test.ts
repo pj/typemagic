@@ -1,6 +1,5 @@
 import { print } from "graphql";
 import { build, query, client } from "../src";
-import { QueryRoot } from "../src/schema";
 import { createApp, createTest, testSchema } from "./utils";
 
 const scalarTypeNonNull = query(

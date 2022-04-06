@@ -1,10 +1,6 @@
-import express, { Express } from "express";
-import { graphqlHTTP } from "express-graphql";
 import { GraphQLScalarType, Kind, ValueNode } from "graphql";
-import { customScalar, build } from "../src";
-import { CustomScalar } from "../src/custom_scalar";
-import { QueryRoot } from "../src/schema";
-import { createApp, createTest, runQuery, testSchema } from "./utils";
+import { build, customScalar } from "../src";
+import { createApp, createTest } from "./utils";
 
 const CustomDateScalar = new GraphQLScalarType({
   name: 'Date',

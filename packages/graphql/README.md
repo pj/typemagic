@@ -1,5 +1,4 @@
 ## Client and helpers
-- [ ] Mutation client
 - [ ] Dummy variable helpers.
 - [ ] Checking of argument types in client.
 - [ ] Helpers/Fragments for querying

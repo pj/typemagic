@@ -1,6 +1,6 @@
 import { ArgumentNode, DocumentNode, FieldNode, NameNode, ObjectFieldNode, OperationTypeNode, print, SelectionNode, SelectionSetNode, TypeNode, ValueNode, VariableDefinitionNode, VariableNode } from "graphql";
 import { OutputObject, ValidateSchema } from "./schema";
-import { Exact, IsSchemaScalar, ScalarTypes } from "./types";
+import { Constructor, Exact, IsSchemaScalar, ScalarTypes } from "./types";
 import { UnionTypeNames } from "./union";
 
 export type FieldSentinel = {};
@@ -348,15 +348,22 @@ function queryObject(
 type QueryVariables = Map<string, VariableDefinitionNode>;
 
 export function operation<
-  Schema extends ValidateSchema<Schema, any>,
-  Operation extends GenerateSchema<Operation, Schema>>
-  (
-    schema: Schema,
-    operation: Operation,
-    operationType: OperationTypeNode,
-    queryName?: string
-  ): DocumentNode {
-  const queryNameNode: NameNode | undefined = queryName ? { kind: 'Name', value: queryName } : undefined;
+  Root, 
+  Context,
+  Schema extends ValidateSchema<Schema, Root, Context>,
+  Operation extends GenerateSchema<Operation, Schema>
+>
+(
+  schema: Schema,
+  operation: Operation,
+  operationType: OperationTypeNode,
+  options?: {
+    context?: Context | Constructor<Context>,
+    root?: Root | Constructor<Root>,
+    queryName?: string,
+  }
+): DocumentNode {
+  const queryNameNode: NameNode | undefined = options?.queryName ? { kind: 'Name', value: options.queryName } : undefined;
   const variables: QueryVariables = new Map();
   const selections = queryFields(
     schema[operationType === 'query' ? 'queries' : 'mutations'], 
@@ -381,49 +388,73 @@ export function operation<
 }
 
 export function query<
-  Schema extends ValidateSchema<Schema, any>,
+  Root, 
+  Context,
+  Schema extends ValidateSchema<Schema, Root, Context>,
   Query extends GenerateSchema<Query, Schema>
 >
 (
   schema: Schema,
   query: Query,
-  queryName?: string
+  options?: {
+    context?: Context | Constructor<Context>,
+    root?: Root | Constructor<Root>,
+    queryName?: string,
+  }
 ): DocumentNode {
-  return operation(schema, query, 'query', queryName);
+  return operation(schema, query, 'query', options);
 }
 
 export function queryGQL<
-  Schema extends ValidateSchema<Schema, any>,
+  Root, 
+  Context,
+  Schema extends ValidateSchema<Schema, Root, Context>,
   Query extends GenerateSchema<Query, Schema>
 >(
   schema: Schema,
   query: Query,
-  queryName?: string
+  options?: {
+    context?: Context | Constructor<Context>,
+    root?: Root | Constructor<Root>,
+    queryName?: string,
+  }
 ): string {
-  const document = operation(schema, query, 'query', queryName);
+  const document = operation(schema, query, 'query', options);
   return print(document);
 }
 
 export function mutation<
-  Schema extends ValidateSchema<Schema, any>,
+  Root, 
+  Context,
+  Schema extends ValidateSchema<Schema, Root, Context>,
   Query extends GenerateSchema<Query, Schema>
 >
 (
   schema: Schema,
   query: Query,
-  queryName?: string
+  options?: {
+    context?: Context | Constructor<Context>,
+    root?: Root | Constructor<Root>,
+    queryName?: string,
+  }
 ): DocumentNode {
-  return operation(schema, query, 'mutation', queryName);
+  return operation(schema, query, 'mutation', options);
 }
 
 export function mutationGQL<
-  Schema extends ValidateSchema<Schema, any>,
+  Root, 
+  Context,
+  Schema extends ValidateSchema<Schema, Root, Context>,
   Query extends GenerateSchema<Query, Schema>
 >(
   schema: Schema,
   query: Query,
-  queryName?: string
+  options?: {
+    context?: Context | Constructor<Context>,
+    root?: Root | Constructor<Root>,
+    queryName?: string,
+  }
 ): string {
-  const document = operation(schema, query, 'mutation', queryName);
+  const document = operation(schema, query, 'mutation', options);
   return print(document);
 }

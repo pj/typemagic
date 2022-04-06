@@ -1,5 +1,5 @@
-import { build, query, client } from "../src";
-import { createApp, createTest, testSchema } from "./utils";
+import { build, query } from "../src";
+import { createApp, createTest } from "./utils";
 
 interface TestInterface {
   interfaceField: string
