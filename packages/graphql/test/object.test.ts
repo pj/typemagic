@@ -1,6 +1,6 @@
 import { build } from "../src";
-import { queryGQL, _ } from "../src/client";
-import { OutputType, outputTypeSchema, QueryContext, QueryRoot, rootSchema, RootType, testSchema } from "./utils";
+import { _ } from "../src/client";
+import { createApp, OutputType, outputTypeSchema, QueryContext, QueryRoot, rootSchema, RootType, testQuery } from "./utils";
 
 class Args {
   constructor(
@@ -26,7 +26,7 @@ const testTypeSchema = {
   }
 } as const;
 
-const objectTypeWithArgs = 
+const objectTypeWithArgs =
   {
     type: outputTypeSchema,
     array: "nullable_items",
@@ -75,113 +75,119 @@ const schemaObject = {
   }
 } as const;
 
-const generatedSchema = build(schemaObject, {context: QueryContext, root: QueryRoot});
+const generatedSchema = build(schemaObject, { context: QueryContext, root: QueryRoot });
 
-testSchema(
-  generatedSchema,
-  [
+let app = createApp(generatedSchema);
+
+test(
+  'objectTypeNonNull',
+  testQuery(
+    app,
+    schemaObject,
     {
-      name: 'objectTypeNonNull',
-      query: queryGQL(
-        schemaObject, 
-        {
-          objectTypeNonNull: {
-            testField: _
-          }
-        }, 
-        {
-          context: QueryContext, 
-          root: QueryRoot
-        }
-      ),
-      result: { objectTypeNonNull: { testField: 'Hello World!' } }
-    },
-    {
-      name: 'objectTypeNull',
-      query: queryGQL(
-        schemaObject, 
-        {
-          objectTypeNull: {
-            testField: _
-          }
-        }, 
-        {
-          context: QueryContext, 
-          root: QueryRoot
-        }
-      ),
-      result: { objectTypeNull: null }
-    },
-    {
-      name: 'objectTypeArray',
-      query: queryGQL(
-        schemaObject, 
-        {
-          objectTypeArray: {
-            testField: _
-          }
-        }, 
-        {
-          context: QueryContext, 
-          root: QueryRoot
-        }
-      ),
-      result: { objectTypeArray: [{ testField: "Hello World!" }] }
-    },
-    {
-      name: 'objectTypeWithArgs',
-      query: queryGQL(
-        schemaObject, 
-        {
-          objectTypeWithArgs: {
-            $args: {
-              argField: {$name: "test"}
-            },
-            $fields: {
-              testField: _
-            }
-          }
-        }, 
-        {
-          context: QueryContext, 
-          root: QueryRoot
-        }
-      ),
-      args: { test: "test" },
-      result: {
-        objectTypeWithArgs:
-          [
-            { "testField": "test" },
-            { "testField": "Hello World!" },
-            null
-          ]
+      objectTypeNonNull: {
+        testField: _
       }
     },
+    { objectTypeNonNull: { testField: 'Hello World!' } },
     {
-      name: 'rootType',
-      query: queryGQL(
-        schemaObject, 
-        {
-          rootType: {
-            rootField: _, 
-            outputType: {
-              testField: _
-            }
-          }
-        }, 
-        {
-          context: QueryContext, 
-          root: QueryRoot
-        }
-      ),
-      result: {
-        rootType: {
-          rootField: "Root Type",
-          "outputType": [
-            { "testField": "Output Type" }
-          ]
-        }
-      }
+      context: QueryContext,
+      root: QueryRoot
     }
-  ]
+  )
+);
+
+test(
+  'objectTypeNull',
+  testQuery(
+    app,
+    schemaObject,
+    {
+      objectTypeNull: {
+        testField: _
+      }
+    },
+    { objectTypeNull: null },
+    {
+      context: QueryContext,
+      root: QueryRoot
+    }
+  ),
+);
+
+test(
+  'objectTypeArray',
+  testQuery(
+    app,
+    schemaObject,
+    {
+      objectTypeArray: {
+        testField: _
+      }
+    },
+    { objectTypeArray: [{ testField: "Hello World!" }] },
+    {
+      context: QueryContext,
+      root: QueryRoot
+    }
+  ),
+);
+
+test(
+  'objectTypeWithArgs',
+  testQuery(
+    app,
+    schemaObject,
+    {
+      objectTypeWithArgs: {
+        $args: {
+          argField: { $name: "test" }
+        },
+        $fields: {
+          testField: _
+        }
+      }
+    } as const,
+    {
+      objectTypeWithArgs:
+        [
+          { "testField": "test" },
+          { "testField": "Hello World!" },
+          null
+        ]
+    },
+    {
+      variables: { test: "test" },
+      context: QueryContext,
+      root: QueryRoot,
+    }
+  ),
+);
+
+test(
+  'rootType',
+  testQuery(
+    app,
+    schemaObject,
+    {
+      rootType: {
+        rootField: _,
+        outputType: {
+          testField: _
+        }
+      }
+    },
+    {
+      rootType: {
+        rootField: "Root Type",
+        "outputType": [
+          { "testField": "Output Type" }
+        ]
+      }
+    },
+    {
+      context: QueryContext,
+      root: QueryRoot
+    }
+  )
 );

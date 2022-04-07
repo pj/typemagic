@@ -1,6 +1,11 @@
 import express, { Express } from "express";
 import { graphqlHTTP } from "express-graphql";
+import { VariableUsage } from "graphql/validation/ValidationContext";
 import request from 'supertest';
+import { client } from "../src";
+import { GenerateSchema, GenerateVariable, queryGQL } from "../src/client";
+import { ValidateSchema } from "../src/schema";
+import { Constructor } from "../src/types";
 
 export async function runQuery(app: Express.Application, query: string, variables?: { [key: string]: any }) {
   return await request(app)
@@ -104,7 +109,41 @@ export function createTest(app: Express, query: string, result: any, variables?:
         }
       );
 
-    debugger;
+    expect(response.status).toEqual(200);
+    expect(response.body.data).toStrictEqual(result);
+  }
+}
+
+export function testQuery<
+  Root, 
+  Context,
+  Schema extends ValidateSchema<Schema, Root, Context>,
+  Query extends GenerateSchema<Query, Schema>,
+  Variables extends GenerateVariable<Query>,
+>(
+  app: Express,
+  schema: Schema,
+  query: Query,
+  result: any,
+  options?: {
+    variables?: Variables,
+    context?: Context | Constructor<Context>,
+    root?: Root | Constructor<Root>,
+    queryname?: string,
+  }
+
+){
+  return async function () {
+    const response = await request(app)
+      .post('/graphql')
+      .set('Content-Type', 'application/json')
+      .send(
+        {
+          query: queryGQL(schema, query, options),
+          variables: options?.variables
+        }
+      );
+
     expect(response.status).toEqual(200);
     expect(response.body.data).toStrictEqual(result);
   }

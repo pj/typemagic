@@ -1,6 +1,6 @@
 import { print } from "graphql";
 import { build, query, client, field } from "../src";
-import { createApp, createTest, QueryRoot, testSchema } from "./utils";
+import { createApp, createTest, QueryRoot, testQuery, testSchema } from "./utils";
 
 const scalarSchema = 
   {
@@ -30,18 +30,24 @@ let app = createApp(generatedSchema);
 
 test(
  'scalarTypeNonNull',
-  createTest(
-    app,
-    print(client.query(scalarSchema, {scalarTypeNonNull: client._})),
-    {scalarTypeNonNull: true}
+  testQuery(
+    app, 
+    scalarSchema, 
+    {
+      scalarTypeNonNull: client._
+    }, 
+    {
+      scalarTypeNonNull: true
+    }
   )
 );
 
 test(
   'scalarTypeArray',
-  createTest(
-    app,
-    client.queryGQL(scalarSchema, {scalarTypeArray: client._}),
+  testQuery(
+    app, 
+    scalarSchema, 
+    {scalarTypeArray: client._}, 
     {scalarTypeArray: ["Hello", null, "World!"]}
   )
 );

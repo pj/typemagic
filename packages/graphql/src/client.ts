@@ -1,6 +1,6 @@
 import { ArgumentNode, DocumentNode, FieldNode, NameNode, ObjectFieldNode, OperationTypeNode, print, SelectionNode, SelectionSetNode, TypeNode, ValueNode, VariableDefinitionNode, VariableNode } from "graphql";
 import { OutputObject, ValidateSchema } from "./schema";
-import { Constructor, Exact, IsSchemaScalar, ScalarTypes } from "./types";
+import { Constructor, Exact, Expand, IsSchemaScalar, ScalarTypes, UnionToIntersection } from "./types";
 import { UnionTypeNames } from "./union";
 
 export type FieldSentinel = {};
@@ -99,6 +99,16 @@ export type GenerateSchema<Query, Schema> =
   [Schema] extends [{mutations?: infer Mutations, queries?: infer Queries}]
     ? GenerateQuery<Query, Mutations> | GenerateQuery<Query, Queries>
     : never
+
+export type GenerateVariable<Query> = 
+  Query extends object
+    ? Query extends {$name: infer Name, $defaultValue?: infer Arg}
+      ? {[X in keyof Query as Name extends string ? Name : never]: Arg}
+      : {[Key in keyof Query]: GenerateVariable<Query[Key]>}[keyof Query]
+    : never
+
+export type GenerateVariables<Query> = 
+  Expand<UnionToIntersection<GenerateVariable<Query>>>
 
 function getVariableType(schema: any) {
   switch (schema) {
