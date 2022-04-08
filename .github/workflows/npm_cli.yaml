@@ -1,12 +1,12 @@
-name: Build CLI NPM packages
+name: Build npm package
 
 on:
-  # pull_request:
   push:
     branches: [ main ]
     paths:
-      - 'cli/**'
-      - 'server/schema.graphql'
+      - '**'
+
+  workflow_dispatch:
 
 jobs:
   build:
