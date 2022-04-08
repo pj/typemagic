@@ -34,5 +34,5 @@ jobs:
         run: yarn build
 
       - name: Yarn publish
-        run: yarn publish
+        run: yarn publish --access public
         working-directory: packages/graphql
