@@ -1,4 +1,5 @@
 import { ArgumentNode, DocumentNode, FieldNode, NameNode, ObjectFieldNode, OperationTypeNode, print, SelectionNode, SelectionSetNode, TypeNode, ValueNode, VariableDefinitionNode, VariableNode } from "graphql";
+import { CustomScalar } from "./custom_scalar";
 import { OutputObject, ValidateSchema } from "./schema";
 import { Constructor, Exact, Expand, IsSchemaScalar, ScalarTypes, UnionToIntersection } from "./types";
 import { UnionTypeNames } from "./union";
@@ -80,11 +81,15 @@ export type GenerateQueryField<Query, Resolver> =
               }
               : { $on: { [Key in keyof UnionTypeNames<UnionTypes>]?: {} } }
             : "Should not happen"
-          : GenerateObjectType<Query, Type, ResolverFunction, ArgsFields>
+          : Type extends CustomScalar<infer CustomScalarType>
+              ? FieldSentinel
+              : GenerateObjectType<Query, Type, ResolverFunction, ArgsFields>
     )
   : Resolver extends ScalarTypes
     ? FieldSentinel
-    : ["Invalid Resolver", Resolver]
+    : Resolver extends CustomScalar<infer CustomScalarType>
+      ? FieldSentinel
+      : "Invalid resolver"
 
 export type GenerateQuery<Query, Schema> = {
   [Key in (keyof Query | keyof Schema)]?:
@@ -108,7 +113,11 @@ export type GenerateVariable<Query> =
     : never
 
 export type GenerateVariables<Query> = 
-  Expand<UnionToIntersection<GenerateVariable<Query>>>
+  Expand<UnionToIntersection<GenerateVariable<Query>>> extends infer Variables
+    ? {} extends Variables
+      ? {variables?: undefined}
+      : {variables: Variables}
+    : never
 
 function getVariableType(schema: any) {
   switch (schema) {
@@ -395,6 +404,25 @@ export function operation<
       }
     ]
   });
+}
+
+export function operationGQL<
+  Root, 
+  Context,
+  Schema extends ValidateSchema<Schema, Root, Context>,
+  Query extends GenerateSchema<Query, Schema>
+>(
+  schema: Schema,
+  query: Query,
+  operationType: OperationTypeNode,
+  options?: {
+    context?: Context | Constructor<Context>,
+    root?: Root | Constructor<Root>,
+    queryName?: string,
+  }
+): string {
+  const document = operation(schema, query, operationType, options);
+  return print(document);
 }
 
 export function query<

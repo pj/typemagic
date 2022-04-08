@@ -82,15 +82,19 @@ let app = createApp(generatedSchema);
 test(
   'objectTypeNonNull',
   testQuery(
-    app,
-    schemaObject,
     {
-      objectTypeNonNull: {
-        testField: _
-      }
-    },
-    { objectTypeNonNull: { testField: 'Hello World!' } },
-    {
+      app,
+      schema: schemaObject,
+      query: {
+        objectTypeNonNull: {
+          testField: _
+        }
+      },
+      result: {
+        objectTypeNonNull: {
+          testField: 'Hello World!'
+        }
+      },
       context: QueryContext,
       root: QueryRoot
     }
@@ -100,15 +104,15 @@ test(
 test(
   'objectTypeNull',
   testQuery(
-    app,
-    schemaObject,
     {
-      objectTypeNull: {
-        testField: _
-      }
-    },
-    { objectTypeNull: null },
-    {
+      app,
+      schema: schemaObject,
+      query: {
+        objectTypeNull: {
+          testField: _
+        }
+      },
+      result: { objectTypeNull: null },
       context: QueryContext,
       root: QueryRoot
     }
@@ -118,15 +122,15 @@ test(
 test(
   'objectTypeArray',
   testQuery(
-    app,
-    schemaObject,
     {
-      objectTypeArray: {
-        testField: _
-      }
-    },
-    { objectTypeArray: [{ testField: "Hello World!" }] },
-    {
+      app,
+      schema: schemaObject,
+      query: {
+        objectTypeArray: {
+          testField: _
+        }
+      },
+      result: { objectTypeArray: [{ testField: "Hello World!" }] },
       context: QueryContext,
       root: QueryRoot
     }
@@ -136,27 +140,27 @@ test(
 test(
   'objectTypeWithArgs',
   testQuery(
-    app,
-    schemaObject,
     {
-      objectTypeWithArgs: {
-        $args: {
-          argField: { $name: "test" }
-        },
-        $fields: {
-          testField: _
+      app,
+      schema: schemaObject,
+      query: {
+        objectTypeWithArgs: {
+          $args: {
+            argField: { $name: "test" }
+          },
+          $fields: {
+            testField: _
+          }
         }
-      }
-    } as const,
-    {
-      objectTypeWithArgs:
-        [
-          { "testField": "test" },
-          { "testField": "Hello World!" },
-          null
-        ]
-    },
-    {
+      } as const,
+      result: {
+        objectTypeWithArgs:
+          [
+            { "testField": "test" },
+            { "testField": "Hello World!" },
+            null
+          ]
+      },
       variables: { test: "test" },
       context: QueryContext,
       root: QueryRoot,
@@ -167,25 +171,25 @@ test(
 test(
   'rootType',
   testQuery(
-    app,
-    schemaObject,
     {
-      rootType: {
-        rootField: _,
-        outputType: {
-          testField: _
+      app,
+      schema: schemaObject,
+      query: {
+        rootType: {
+          rootField: _,
+          outputType: {
+            testField: _
+          }
         }
-      }
-    },
-    {
-      rootType: {
-        rootField: "Root Type",
-        "outputType": [
-          { "testField": "Output Type" }
-        ]
-      }
-    },
-    {
+      },
+      result: {
+        rootType: {
+          rootField: "Root Type",
+          "outputType": [
+            { "testField": "Output Type" }
+          ]
+        }
+      },
       context: QueryContext,
       root: QueryRoot
     }

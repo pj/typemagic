@@ -1,9 +1,10 @@
 import express, { Express } from "express";
 import { graphqlHTTP } from "express-graphql";
+import { OperationTypeNode } from "graphql";
 import { VariableUsage } from "graphql/validation/ValidationContext";
 import request from 'supertest';
 import { client } from "../src";
-import { GenerateSchema, GenerateVariable, queryGQL } from "../src/client";
+import { GenerateSchema, GenerateVariable, GenerateVariables, operationGQL, queryGQL } from "../src/client";
 import { ValidateSchema } from "../src/schema";
 import { Constructor } from "../src/types";
 
@@ -114,37 +115,46 @@ export function createTest(app: Express, query: string, result: any, variables?:
   }
 }
 
+export type TestOptions<Variables> = 
+  unknown extends Variables 
+    ? {variables?: undefined} 
+    // : Variables extends never
+    //   ? {variables?: undefined} 
+      : undefined extends Variables 
+        ? {variables?: undefined} 
+        : {variables: Variables}
+
 export function testQuery<
   Root, 
   Context,
   Schema extends ValidateSchema<Schema, Root, Context>,
   Query extends GenerateSchema<Query, Schema>,
-  Variables extends GenerateVariable<Query>,
+  Variables extends GenerateVariables<Query>,
 >(
-  app: Express,
-  schema: Schema,
-  query: Query,
-  result: any,
-  options?: {
-    variables?: Variables,
+  options: {
+    app: Express,
+    schema: Schema,
+    result: any,
     context?: Context | Constructor<Context>,
     root?: Root | Constructor<Root>,
     queryname?: string,
-  }
+    query: Query,
+    operationType?: OperationTypeNode
+  } & Variables
 
 ){
   return async function () {
-    const response = await request(app)
+    const response = await request(options.app)
       .post('/graphql')
       .set('Content-Type', 'application/json')
       .send(
         {
-          query: queryGQL(schema, query, options),
-          variables: options?.variables
+          query: operationGQL(options.schema, options.query, options.operationType || 'query', options),
+          variables: options.variables
         }
       );
 
     expect(response.status).toEqual(200);
-    expect(response.body.data).toStrictEqual(result);
+    expect(response.body.data).toStrictEqual(options.result);
   }
 }

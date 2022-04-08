@@ -1,11 +1,16 @@
 ## Client and helpers
-- [ ] Checking of argument types in client.
 - [ ] Helpers/Fragments for querying
 
 ## Testing
-- [ ] Detailed testing of Mutli level output, input, unions, interfaces, description, deprecationReason.
-- [ ] Detailed testing of query generation.
+- [ ] Move all existing tests to testQuery.
+- [ ] Test enums
 - [ ] integration test with real server.
+
+# Go live
+- [ ] Create npm package.
+- [ ] Github actions.
+- [ ] Prettier and linting.
+- [ ] Husky.
 
 ## Documentation
 - [ ] README.md
@@ -13,12 +18,6 @@
 - [ ] Comments
 - [ ] Comments in code.
 - [ ] API docs.
-
-# Go live
-- [ ] Create npm package.
-- [ ] Github actions.
-- [ ] Prettier and linting.
-- [ ] Husky.
 
 ## Nice to haves
 - [ ] Infer all possible names of interface implementations to fix return type?
