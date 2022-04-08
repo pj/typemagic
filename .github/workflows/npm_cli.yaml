@@ -26,6 +26,8 @@ jobs:
       - name: Yarn install
         working-directory: packages/graphql
         run: yarn install
+        env:
+          TYPESHAMAN_NPM: ${{ secrets.TYPESHAMAN_NPM }}
 
       - name: Yarn build
         working-directory: packages/graphql
@@ -35,4 +37,4 @@ jobs:
         run: yarn publish
         working-directory: packages/graphql
         env:
-          NPM_TOKEN: ${{ secrets.TYPESHAMAN_NPM }}
+          TYPESHAMAN_NPM: ${{ secrets.TYPESHAMAN_NPM }}
