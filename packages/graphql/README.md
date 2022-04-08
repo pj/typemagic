@@ -1,23 +1,20 @@
 ## Client and helpers
 - [ ] Helpers/Fragments for querying
+- [ ] Hooks client
+- [ ] graphql request client.
 
 ## Testing
 - [ ] Move all existing tests to testQuery.
 - [ ] Test enums
 - [ ] integration test with real server.
 
-# Go live
-- [ ] Create npm package.
-- [ ] Github actions.
-- [ ] Prettier and linting.
-- [ ] Husky.
-
 ## Documentation
 - [ ] README.md
-- [ ] Demo video
-- [ ] Comments
+- [ ] Blog post.
+- [ ] Backend/Frontend example.
 - [ ] Comments in code.
 - [ ] API docs.
+- [ ] Demo video
 
 ## Nice to haves
 - [ ] Infer all possible names of interface implementations to fix return type?
@@ -25,6 +22,7 @@
 - [ ] check enum type is actually enum, similar or introduce separate type.
 - [ ] force union names to be narrower than strings.
 - [ ] Proper typing in client generation.
+- [ ] Better error handling
 
 ## Aditional Features
 - [ ] Subscriptions
