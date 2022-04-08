@@ -15,6 +15,8 @@ jobs:
     defaults:
       run:
         working-directory: cli
+    env:
+      TYPESHAMAN_NPM: ${{ secrets.TYPESHAMAN_NPM }}
       
     steps:
       - uses: actions/checkout@v2
@@ -26,8 +28,6 @@ jobs:
       - name: Yarn install
         working-directory: packages/graphql
         run: yarn install
-        env:
-          TYPESHAMAN_NPM: ${{ secrets.TYPESHAMAN_NPM }}
 
       - name: Yarn build
         working-directory: packages/graphql
@@ -36,5 +36,3 @@ jobs:
       - name: Yarn publish
         run: yarn publish
         working-directory: packages/graphql
-        env:
-          TYPESHAMAN_NPM: ${{ secrets.TYPESHAMAN_NPM }}
