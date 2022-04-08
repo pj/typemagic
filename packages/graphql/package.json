@@ -1,12 +1,14 @@
 {
-  "name": "@typemagic/graphql",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "@typeshaman/graphql",
+  "version": "0.0.1",
+  "description": "Typesafe graphql servers and clients.",
+  "main": "dist/index.js",
+  "types": "typings/index.d.ts",
+  "repository": "git@github.com:pj/typemagic/packages/graphql.git",
+  "author": "Paul Johnson <paul@johnson.kiwi.nz>",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc"
   },
-  "author": "",
   "license": "ISC",
   "dependencies": {
     "@types/validator": "^13.7.1",
