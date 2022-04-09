@@ -3,12 +3,15 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@scaleleap/pg-format": "^1.0.0",
-    "dedent-js": "^1.0.1"
+    "dedent-js": "^1.0.1",
+    "jest": "^27.5.1",
+    "sql-formatter": "^4.0.2",
+    "ts-jest": "^27.1.4"
   }
 }

@@ -140,6 +140,9 @@ function getVariableType(schema: any) {
         case 'boolean':
           return 'Boolean'
         default:
+          if (schema.type instanceof CustomScalar) {
+            return schema.type.scalar.name;
+          }
           return schema.type.name
       }
     }

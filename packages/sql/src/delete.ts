@@ -3,6 +3,7 @@
 //     [ WHERE condition | WHERE CURRENT OF cursor_name ]
 //     [ RETURNING * | output_expression [ [ AS ] output_name ] [, ...] ]
 import {format} from "@scaleleap/pg-format";
+import {format as syntaxFormat} from "sql-formatter";
 import { generateCondition, ValidateBoolean } from "./condition";
 import { ComputeFrom } from "./from";
 import { ValidateSchema, ValidateTableName } from "./schema";
@@ -39,8 +40,8 @@ export function remove<
   Delete extends ValidateDelete<Schema, Delete>
 >(schema: Schema, remove: Delete): string {
   const removeAny = remove as any; 
-  return dedent`
+  return syntaxFormat(`
     DELETE FROM ${removeAny.only ? "ONLY" : ""} ${generateTableName(removeAny.from)}
     WHERE ${generateCondition(removeAny.where)}
-  `;
+  `);
 }

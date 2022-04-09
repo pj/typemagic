@@ -1,6 +1,8 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`remove 1`] = `
-"DELETE FROM  test
-WHERE  NOT (TRUE)"
+"DELETE FROM
+  test
+WHERE
+  NOT (TRUE)"
 `;

@@ -137,7 +137,7 @@ export function testQuery<
     result: any,
     context?: Context | Constructor<Context>,
     root?: Root | Constructor<Root>,
-    queryname?: string,
+    queryName?: string,
     query: Query,
     operationType?: OperationTypeNode
   } & Variables
@@ -154,6 +154,8 @@ export function testQuery<
         }
       );
 
+    const cunt = operationGQL(options.schema, options.query, options.operationType || 'query', options)
+    console.log(cunt);
     expect(response.status).toEqual(200);
     expect(response.body.data).toStrictEqual(options.result);
   }
