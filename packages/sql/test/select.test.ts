@@ -1,4 +1,4 @@
-import { ArrayToUnion, DuplicatedColumns, GenerateColumnNames, select, ValidateSelect } from '../src';
+import { select } from '../src';
 
 const schema = {
   'test': [
@@ -11,33 +11,6 @@ const schema = {
     'id', 'date', 'test_id'
   ]
 } as const;
-
-type X = 
-  ValidateSelect<
-    typeof schema, 
-    ['test', 'renamed'], 
-    [
-      ['other', 'test.id', 'other.test_id']
-    ],
-    [
-      ['renamed.id', 'renamed_id'], 
-      ['other.id', 'other_id'],
-      ['other.name', 'name'],
-      'thing',
-      'description'
-    ]
-  >
-
-type D = DuplicatedColumns<
-  typeof schema, 
-  ['test', 'renamed'], 
-  [
-    ['other', 'other.test_id', 'test.id'],
-    ['another', 'another.test_id', 'test.id']
-  ]
->
-
-type C = GenerateColumnNames<'test', 'renamed', ArrayToUnion<typeof schema, 'test'>, 'id' | never>
 
 test(
   'select', 
@@ -55,7 +28,8 @@ test(
           ], 
           from: ['test', 'renamed'],
           join: [
-            ['other', 'test.id', 'other.test_id']
+            ['other', 'test.id', 'other.test_id'],
+            ['another', 'another.id', 'test.id']
           ]
         } as const
       )
