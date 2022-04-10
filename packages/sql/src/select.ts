@@ -68,10 +68,11 @@ export type DuplicateOfJoin<FromColumn, JoinColumns> =
       ? FromColumn
       : never
 
-export type DuplicateOfColumns<Join, Schema, FromColumns> =
+export type DuplicateOfColumns<Join, Schema, FromColumns, FromName> =
   GetJoinTableName<Join> extends [infer TableName, infer Alias] 
-    ? 
-      TableName extends keyof Schema
+    ? TableName extends FromName
+      ? never
+      : TableName extends keyof Schema
         ? Schema[TableName] extends Readonly<unknown[]>
           ? DuplicateOfJoin<FromColumns, Schema[TableName][number]>
           : never
@@ -86,18 +87,30 @@ export type Unionify<Item, Schema> =
         : never
     : never
 
+export type DuplicatedJoins<Join, Schema, Joins> =
+  GetJoinTableName<Join> extends [infer TableName, infer Alias] 
+    ? TableName extends keyof Schema
+      ? Schema[TableName] extends Readonly<unknown[]>
+        ? Joins extends Readonly<unknown[]> 
+          ? [TableName, Schema[TableName], DuplicateOfColumns<Joins[number], Schema, Schema[TableName][number], TableName>]
+          : never
+        : never
+      : never
+    : never
+
 export type DuplicatedColumns<Schema, From, Joins> =
     [Joins] extends [Readonly<unknown[]>]
-    ?  (Unionify<Joins[number], Schema>) 
-    | (
-        GetSourceTable<From> extends infer TableName
-          ? TableName extends keyof Schema
-            ? Schema[TableName] extends Readonly<unknown[]>
-              ? [TableName, Schema[TableName], DuplicateOfColumns<Joins[number], Schema, Schema[TableName][number]>]
+    ? (
+        DuplicatedJoins<Joins[number], Schema, Joins>
+      ) | (
+          GetSourceTable<From> extends infer TableName
+            ? TableName extends keyof Schema
+              ? Schema[TableName] extends Readonly<unknown[]>
+                ? [TableName, Schema[TableName], DuplicateOfColumns<Joins[number], Schema, Schema[TableName][number], TableName>]
+                : never
               : never
             : never
-          : never
-      )
+        )
     : "Joins must be an array"
 
 type ColumnName<TableName, Alias, ColumnName> =
