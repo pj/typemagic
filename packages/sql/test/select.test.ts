@@ -1,4 +1,4 @@
-import {ArrayToUnion, ColumnNamesForTable, DuplicatedColumns, select, Temp, ValidateSelect} from '../src';
+import { ArrayToUnion, DuplicatedColumns, GenerateColumnNames, select, ValidateSelect } from '../src';
 
 const schema = {
   'test': [
@@ -6,6 +6,9 @@ const schema = {
   ], 
   'other': [
     'id', 'name', 'thing', 'test_id'
+  ],
+  'another': [
+    'id', 'date', 'test_id'
   ]
 } as const;
 
@@ -29,15 +32,12 @@ type D = DuplicatedColumns<
   typeof schema, 
   ['test', 'renamed'], 
   [
-    ['other', 'test.id', 'other.test_id']
+    ['other', 'other.test_id', 'test.id'],
+    ['another', 'another.test_id', 'test.id']
   ]
 >
 
-type A = ArrayToUnion<typeof schema, 'test'>
-
-type C = ColumnNamesForTable<typeof schema, 'test', 'renamed', 'id' | never>
-
-type Z = Temp<'test', 'renamed', (typeof schema)['test'], 'id' | never>
+type C = GenerateColumnNames<'test', 'renamed', ArrayToUnion<typeof schema, 'test'>, 'id' | never>
 
 test(
   'select', 

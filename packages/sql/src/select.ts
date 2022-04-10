@@ -5,21 +5,21 @@ import {format as syntaxFormat} from "sql-formatter";
 import { ComputeFromAndJoins } from "./from";
 
 export type GetSourceTable<From> =
-  [From] extends [infer Name, infer Alias]
+  [From] extends [[infer Name, infer Alias]]
     ? Name
     : From extends infer Name
       ? Name
       : never
 
 export type GetTableWithAlias<From> =
-  [From] extends [infer Name, infer Alias]
+  [From] extends [[infer Name, infer Alias]]
     ? [Name, Alias]
     : From extends infer Name
       ? [Name, unknown]
       : never
 
 export type GetJoinTableName<Join> =
-  [Join] extends [infer TableName, infer LeftColumnName, infer RightColumnName]
+  [Join] extends [[infer TableName, infer LeftColumnName, infer RightColumnName]]
     ? [TableName, unknown]
     : never
 
@@ -63,25 +63,42 @@ export type GetDuplicates<Schema, TableName, From, Joins> =
       : "Table columns must be array"
     : `Unknown table name ${string & TableName}`
 
-export type DuplicatedColumns<Schema, From, Joins> =
-  [Joins] extends [Readonly<unknown[]>]
-  ? {
-      [Key in keyof Joins]: 
-        GetJoinTableName<Joins[Key]> extends keyof Schema
-          ? GetDuplicates<
-              Schema,
-              GetJoinTableName<Joins[Key]>, 
-              From,
-              Joins
-            >
-          : `Unknown table name ${GetJoinTableName<Joins[Key]>}`
-    }[number]
-    | (
-      GetSourceTable<From> extends infer TableName
-        ? GetDuplicates<Schema, TableName, From, Joins>
+export type DuplicateOfJoin<FromColumn, JoinColumns> =
+    FromColumn extends JoinColumns
+      ? FromColumn
+      : never
+
+export type DuplicateOfColumns<Join, Schema, FromColumns> =
+  GetJoinTableName<Join> extends [infer TableName, infer Alias] 
+    ? 
+      TableName extends keyof Schema
+        ? Schema[TableName] extends Readonly<unknown[]>
+          ? DuplicateOfJoin<FromColumns, Schema[TableName][number]>
+          : never
         : never
-    )
-  : "Joins must be an array"
+    : never
+  
+export type Unionify<Item, Schema> =
+  GetJoinTableName<Item> extends [infer TableName, infer Alias] 
+    ? 
+      TableName extends keyof Schema
+        ? [TableName, Schema[TableName]]
+        : never
+    : never
+
+export type DuplicatedColumns<Schema, From, Joins> =
+    [Joins] extends [Readonly<unknown[]>]
+    ?  (Unionify<Joins[number], Schema>) 
+    | (
+        GetSourceTable<From> extends infer TableName
+          ? TableName extends keyof Schema
+            ? Schema[TableName] extends Readonly<unknown[]>
+              ? [TableName, Schema[TableName], DuplicateOfColumns<Joins[number], Schema, Schema[TableName][number]>]
+              : never
+            : never
+          : never
+      )
+    : "Joins must be an array"
 
 type ColumnName<TableName, Alias, ColumnName> =
   [unknown] extends [Alias]
