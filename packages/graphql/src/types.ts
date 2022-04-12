@@ -30,11 +30,11 @@ export type GetIfArray<I> = I extends Array<infer T> ? T : I;
 export type GetSchemaScalar<Scalar> =
   [GetUnderlyingType<Scalar>] extends [infer Item]
     ? Item extends boolean
-      ? 'boolean'
+      ? 'Boolean'
       : Item extends string
-        ? 'string'
+        ? 'String'
         : Item extends number
-          ? 'int' | 'float'
+          ? 'Int' | 'Float'
           : never
     : "Should not happen"
 
@@ -56,13 +56,13 @@ export type IsNonNullNonArrayTypeScalar<Scalar> =
 
 export type GetTypeScalar<Scalar> =
   [GetUnderlyingType<Scalar>] extends [infer Item]
-    ? Item extends 'boolean'
+    ? Item extends 'Boolean'
       ? boolean
-      : Item extends 'string'
+      : Item extends 'String'
         ? string
-        : Item extends 'int'
+        : Item extends 'Int'
           ? number
-          : Item extends 'float'
+          : Item extends 'Float'
             ? number
             : "Unknown type scalar"
     : "Should not happen"

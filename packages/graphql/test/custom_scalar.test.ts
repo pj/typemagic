@@ -43,7 +43,7 @@ const schemaObject = {
       }
     },
     customScalarArgument: {
-      type: 'string',
+      type: 'String',
       argsFields: {
         customScalar: { type: customScalar<Date>(CustomDateScalar) }
       },
@@ -52,7 +52,7 @@ const schemaObject = {
   },
   mutations: {
     customScalarMutation: {
-      type: 'string',
+      type: 'String',
       argsFields: {
         customScalar: { type: customScalar<Date>(CustomDateScalar) }
       },

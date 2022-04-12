@@ -1,33 +1,29 @@
-Typeshaman Graphql is a layer over graphql-js that provides a much more typesafe way to program and is more declarative in style. It's closer to graphql nexus, but syntactically a bit different.
+Typeshaman Graphql (TSGQL) is a layer over graphql-js that provides a much more typesafe way to create a schema.
 
-TSGQL is designed to guide you to write a schema that is 
-At heart typeshaman maps a graph of types to a schema that can be used by the runtime to 
+TSGQL guides you to write a correct schema that is based on the types/classes and resolve functions. TSGQL extracts the arguments, return type, root type and related objects and creates a type that represents what the schema should be based on the typescript types. 
 
-
-Typeshaman is designed to require you to provide the correct information
-
-TypeshamanGQL extracts the arguments, return type, root type and related objects and creates a type that represents what the schema should be based on the runtime types.
-
-A client for querying based on TSGQL 
+It also includes code to help build graphql queries and validate variables based on TSGQL schemas that can be used by graphql clients.
 
 # Server
 
+The `build` function takes a schema and returns an object can be passed to `express-graphql` to serve the generated schema as usual:
 
-The `build` function 
+```typescript
 
-This can be passed to `express-graphql` to serve the generated schema.
+const graphqlSchema = 
 
 
+```
 
-## Classes and types
-
-Classes have one advantage - they can be passed into some of the helper functions 
 
 ## as const
 
-TSGQL is dependent on the 
+TSGQL is dependent on typescript narrowing types i.e. when setting a field to be a graphql `String` the type of the field has to be the string literal `String` NOT the `string` type:
 
-i.e. when setting a field to be a graphql `String` the type of the field has to be the literal `string` NOT the string type.
+```typescript
+
+
+```
 
 To ensure that you're types are narrowed properly it's worth adding `as const` after you're schema definitions. 
 
@@ -37,9 +33,25 @@ If you see an unexpected type error, check that you have `as const` after the ob
 
 Resolve functions
 
+
+
 Resolve functions can either have a
 
 The graphql type schema is defined on the `type` field
+
+Resolve functions are optional
+
+## Helpers
+
+You can base your return types off basic type definitions and classes: 
+
+Classes have one advantage - they can be passed into some of the helper functions 
+
+
+Packing you're entire schema into a single object 
+
+Breaking the schema up into separate objects , however errors will be at the place where you call build, rather than on the specific fields
+
 
 ## Null and Arrays
 
@@ -51,9 +63,18 @@ TSGQL supports the built in Scalar types `String`, `Float`, `Int`, `Boolean`, se
 
 If an object field  is a field on the root object and is non null and not an array, you can just set the field name to one of the built in scalar types.
 
+and you don't need a custom resolver you can just set the field directly 
+
+```typescript
+build({
+  queries:
+})
+```
+
 ## Objects
 
 
+Additional fields can also be defined on objects, but require a resolve function, since the field can't be automatically looked up on the root type.
 
 ## Arguments
 
@@ -63,11 +84,6 @@ TSGQL will automatically infer whether the first argument to the resolve functio
 
 ```
 
-## Helpers
-
-Packing you're entire schema into a single
-
-Breaking the schema up into separate objects , however errors will be at the place where you call build, rather than on the specific fields
 
 ## Custom scalars
 

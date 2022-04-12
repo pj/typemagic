@@ -8,14 +8,14 @@ const scalarSchema =
       scalarTypeNonNull:
         field(
           {
-            type: 'boolean',
+            type: 'Boolean',
             resolve: () => {
               return true
             }
           } as const,
         ),
       scalarTypeArray: {
-        type: 'string',
+        type: 'String',
         array: "nullable_items",
         resolve: (): (string | null)[] => {
           return ["Hello", null, "World!"]

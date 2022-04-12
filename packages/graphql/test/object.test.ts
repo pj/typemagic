@@ -10,7 +10,7 @@ class Args {
 
 const argSchema =
   {
-    argField: 'string'
+    argField: 'String'
   } as const;
 
 type TestType = {
@@ -21,8 +21,8 @@ type TestType = {
 const testTypeSchema = {
   name: "TestType",
   fields: {
-    firstField: 'string',
-    secondField: 'float'
+    firstField: 'String',
+    secondField: 'Float'
   }
 } as const;
 

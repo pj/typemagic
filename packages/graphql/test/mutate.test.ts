@@ -3,8 +3,8 @@ import { mutationGQL } from "../src/client";
 import { createApp, createTest, testSchema } from "./utils";
 
 const mutateScalar = field({
-    type: 'string',
-    argsFields: { field: 'string' },
+    type: 'String',
+    argsFields: { field: 'String' },
     resolve: (args: { field: string }): string => {
       return "done"
     }
@@ -14,7 +14,7 @@ const mutateScalar = field({
 const schemaObject = {
   queries: {
     asdf: {
-      type: 'string',
+      type: 'String',
       resolve: (): string => {
         return 'asdf'
       }

@@ -5,18 +5,18 @@ import { createApp, createTest, OutputType, RootType } from "./utils";
 const schemaObject = {
     queries: {
       inputObject: field({
-        type: 'string',
+        type: 'String',
         argsFields: {
           inputArgument: {
             type: {
               name: RootType.name,
               fields: {
-                rootField: 'string',
+                rootField: 'String',
                 outputType: {
                   type: {
                     name: OutputType.name,
                     fields: {
-                      testField: 'string'
+                      testField: 'String'
                     }
                   },
                   nullable: true,

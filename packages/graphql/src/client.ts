@@ -121,23 +121,23 @@ export type GenerateVariables<Query> =
 
 function getVariableType(schema: any) {
   switch (schema) {
-    case 'float':
+    case 'Float':
       return 'Float'
-    case 'int':
+    case 'Int':
       return 'Int'
-    case 'string':
+    case 'String':
       return 'String'
-    case 'boolean':
+    case 'Boolean':
       return 'Boolean'
     default:
       switch (schema.type) {
-        case 'float':
+        case 'Float':
           return 'Float'
-        case 'int':
+        case 'Int':
           return 'Int'
-        case 'string':
+        case 'String':
           return 'String'
-        case 'boolean':
+        case 'Boolean':
           return 'Boolean'
         default:
           if (schema.type instanceof CustomScalar) {
@@ -165,10 +165,10 @@ function queryArgValue(schema: any, arg: any, variables: QueryVariables): ValueN
 
   if (typeof arg === 'number') {
     switch (schema) {
-      case 'float':
+      case 'Float':
         value = { kind: 'FloatValue', value: arg.toString() };
         break;
-      case 'int':
+      case 'Int':
         value = { kind: 'IntValue', value: arg.toString() };
         break;
       default:

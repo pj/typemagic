@@ -20,22 +20,22 @@ const objectWithInterface =
     type: {
       name: 'TestWithInterface',
       fields: {
-        implementorField: 'int',
-        interfaceField: 'string',
-        anotherField: 'boolean'
+        implementorField: 'Int',
+        interfaceField: 'String',
+        anotherField: 'Boolean'
       },
       interfaces: [
         {
           name: "TestInterface",
           fields: {
-            interfaceField: 'string'
+            interfaceField: 'String'
           },
           resolveType: (args: TestWithInterface) => "TestWithInterface"
         },
         {
           name: "AnotherInterface",
           fields: {
-            anotherField: 'boolean'
+            anotherField: 'Boolean'
           },
           resolveType: (args: TestWithInterface) => "TestWithInterface"
         }

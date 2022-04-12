@@ -15,7 +15,7 @@ const unionTypeA =
   {
     name: 'UnionTypeA',
     fields: {
-      typeAField: 'string',
+      typeAField: 'String',
       outputType: {
         type: outputTypeSchema,
         array: true,
@@ -38,7 +38,7 @@ const unionTypeB =
   {
     name: 'UnionTypeB',
     fields: {
-      typeBField: 'boolean',
+      typeBField: 'Boolean',
       outputType: {
         type: outputTypeSchema,
         array: true,

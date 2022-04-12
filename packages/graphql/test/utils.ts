@@ -38,7 +38,7 @@ export const outputTypeSchema =
   {
     name: OutputType.name,
     fields: {
-      testField: 'string'
+      testField: 'String'
     }
   } as const;
 
@@ -53,7 +53,7 @@ export const rootSchema =
   {
     name: RootType.name,
     fields: {
-      rootField: 'string',
+      rootField: 'String',
       outputType: {
         type: outputTypeSchema,
         array: true,

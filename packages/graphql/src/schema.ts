@@ -363,13 +363,13 @@ function mapToGraphQLObjectType(type: ObjectType, schemaObjects: SchemaObjects) 
 
 function isScalar(scalar: InputObject | OutputObject | InputType | OutputType): scalar is ScalarTypes {
   switch(scalar) {
-    case 'boolean':
+    case 'Boolean':
       return true;
-    case 'string':
+    case 'String':
       return true;
-    case 'float':
+    case 'Float':
       return true;
-    case 'int':
+    case 'Int':
       return true;
   }
   return false;
@@ -377,13 +377,13 @@ function isScalar(scalar: InputObject | OutputObject | InputType | OutputType): 
 
 function scalarToGraphQL(scalar: ScalarTypes): GraphQLScalarType {
   switch(scalar) {
-    case 'boolean':
+    case 'Boolean':
       return GraphQLBoolean;
-    case 'string':
+    case 'String':
       return GraphQLString;
-    case 'float':
+    case 'Float':
       return GraphQLFloat;
-    case 'int':
+    case 'Int':
       return GraphQLInt;
   }
 }
