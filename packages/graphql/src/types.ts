@@ -14,7 +14,8 @@ export type GetUnderlyingType<A> =
       ? Exclude<T, null | undefined> 
       : Exclude<A, null | undefined>
 
-export const ScalarStrings = ['string', 'int', 'float', 'boolean'] as const;
+export const ScalarStrings = ['String', 'Int', 'Float', 'Boolean'] as const;
+
 export type ScalarTypes = (typeof ScalarStrings)[number]
 
 export type IsTypeScalar<Type> = 
