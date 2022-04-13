@@ -61,19 +61,28 @@ If you see an unexpected type error, check that you have `as const` after the ob
 
 ## Resolver
 
-Resolver
+A Resolver corresponds to a `GraphQLFieldConfig` in graphql-js and combines a graphql type and an optional resolver function.
 
- can either have a
+The graphql type defined on the `type` field
 
-The graphql type schema is defined on the `type` field
+
 
 Resolve functions are optional - if the field exists on the root type then it will be returned. If the field doesn't exist then a resolve function is required.
 
-A Resolver corresponds to a `GraphQLFieldConfig` in graphql-js.
+## Arguments
+
+TSGQL will automatically infer whether the first argument to the resolve function is not the root and require you to add a schema for the arguments option in the `argFields` field:
+
+```
+
+```
+
 
 ## Null and Arrays
 
-The nullable and array fields on the resolver
+If the return type includes null or is an array TSGQL will require some fields to be set on the Resolver. 
+
+If the type is `string | null`, the `nullable` field must be set to true. For arrays, if the items of the array are nullable, the `array` field has to be set to `nullable_items` other wise it has to be set to true.
 
 ## Scalars
 
@@ -89,21 +98,12 @@ build({
 })
 ```
 
-## Objects
+## Custom Scalars
 
+## Objects
 
 Additional fields can also be defined on objects, but require a resolve function, since the field can't be automatically looked up on the root type.
 
-## Arguments
-
-TSGQL will automatically infer whether the first argument to the resolve function is not the root and require you to add a schema for the arguments option in the `argFields` field:
-
-```
-
-```
-
-
-## Custom scalars
 
 ## Unions
 
@@ -111,6 +111,8 @@ NB: Union names must be literal strings.
 
 ## Interfaces
 
+
+## Input Objects
 
 # Client
 
