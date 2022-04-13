@@ -1,12 +1,12 @@
 Typeshaman Graphql (TSGQL) is a layer over graphql-js that provides a much more typesafe way to create a schema.
 
-TSGQL guides you to write a correct schema that is based on the types/classes and resolve functions. TSGQL extracts the arguments, return type, root type and related objects and creates a type that represents what the schema should be based on the typescript types. 
+TSGQL guides you to write a correct schema that is based on the types/classes and resolve functions. TSGQL uses the arguments and return types of resolver functions to determine what you need to pass to generate a correct graphql schema.
 
 It also includes code to help build graphql queries and validate variables based on TSGQL schemas that can be used by graphql clients.
 
 # Server
 
-The `build` function takes a schema and returns an object can be passed to `express-graphql` to serve the generated schema as usual:
+The `build` function takes a schema and returns an graphql js objects can be passed to `express-graphql` to serve the generated schema as usual:
 
 ```typescript
 
@@ -15,47 +15,65 @@ const graphqlSchema =
 
 ```
 
+Packing your entire schema into a single object makes composition hard and can be difficult to read. At first glance you might try breaking the schema up into separate objects, while this is possible errors will be highlighted at the place where you call build, rather than on the specific fields, which can make debugging issues harder.
+
+To make this easier there are a couple of helpers to build partial schemas that can be combined to create a full schema:
+
+One wrinkle of this is that the helpers can't infer the root type and context type and so you need to provide them to the helper functions.
+
+Due to the fact that typescript doesn't have partial type inference you can't pass the types in using generics, so you have to pass the type to the helpers by passing the type as a dummy variable or as a class.
 
 ## as const
 
 TSGQL is dependent on typescript narrowing types i.e. when setting a field to be a graphql `String` the type of the field has to be the string literal `String` NOT the `string` type:
 
 ```typescript
+// Type of notNarrow is `string`
+const notNarrow = 'asdf';
 
+// Type of narrow is `'asdf'`
+const narrow = 'asdf' as const;
 
+// Type of notNarrowObject is: 
+// {
+//    type: string, 
+//    resolve: () => string
+//  }
+const notNarrowObject = {
+  type: "String",
+  resolve: () => "test"
+};
+
+// Type of notNarrowObject is: 
+// {
+//    type: "String", 
+//    resolve: () => string
+//  }
+const notNarrowObject = {
+  type: "String",
+  resolve: () => "test"
+} as const;
 ```
 
 To ensure that you're types are narrowed properly it's worth adding `as const` after you're schema definitions. 
 
 If you see an unexpected type error, check that you have `as const` after the object to see if it fixes the problem.
 
-## Resolve Functions
+## Resolver
 
-Resolve functions
+Resolver
 
-
-
-Resolve functions can either have a
+ can either have a
 
 The graphql type schema is defined on the `type` field
 
-Resolve functions are optional
+Resolve functions are optional - if the field exists on the root type then it will be returned. If the field doesn't exist then a resolve function is required.
 
-## Helpers
-
-You can base your return types off basic type definitions and classes: 
-
-Classes have one advantage - they can be passed into some of the helper functions 
-
-
-Packing you're entire schema into a single object 
-
-Breaking the schema up into separate objects , however errors will be at the place where you call build, rather than on the specific fields
-
+A Resolver corresponds to a `GraphQLFieldConfig` in graphql-js.
 
 ## Null and Arrays
 
-The nullable and array fields on the resolve object 
+The nullable and array fields on the resolver
 
 ## Scalars
 
@@ -96,34 +114,3 @@ NB: Union names must be literal strings.
 
 # Client
 
-
-## Client and helpers
-- [ ] Helpers/Fragments for querying
-- [ ] Hooks client
-- [ ] graphql request client.
-
-## Testing
-- [ ] Move all existing tests to testQuery.
-- [ ] Test enums
-- [ ] integration test with real server.
-
-## Documentation
-- [ ] README.md
-- [ ] Blog post.
-- [ ] Backend/Frontend example.
-- [ ] Comments in code.
-- [ ] API docs.
-- [ ] Demo video
-
-## Nice to haves
-- [ ] Infer all possible names of interface implementations to fix return type?
-- [ ] Check all types in union for an isTypeOf and require resolve type if it doesn't exist
-- [ ] check enum type is actually enum, similar or introduce separate type.
-- [ ] force union names to be narrower than strings.
-- [ ] Proper typing in client generation.
-- [ ] Better error handling
-
-## Aditional Features
-- [ ] Subscriptions
-- [ ] Extensions?
-- [ ] Directives?
