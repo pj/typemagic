@@ -1,6 +1,6 @@
 Typeshaman Graphql (TSGQL) is a layer over graphql-js that provides a much more typesafe way to create a schema.
 
-TSGQL guides you to write a correct schema that is based on the types/classes and resolve functions. TSGQL uses the arguments and return types of resolver functions to determine what you need to pass to generate a correct graphql schema.
+TSGQL guides you to write a correct schema that is based on the types/classes and resolve functions. TSGQL uses the arguments and return types of resolver functions to determine what you need to pass to generate a correct graphql schema. 
 
 It also includes code to help build graphql queries and validate variables based on TSGQL schemas that can be used by graphql clients.
 
@@ -61,28 +61,34 @@ If you see an unexpected type error, check that you have `as const` after the ob
 
 ## Resolver
 
-A Resolver corresponds to a `GraphQLFieldConfig` in graphql-js and combines a graphql type and an optional resolver function.
-
-The graphql type defined on the `type` field
+A Resolver corresponds to a `GraphQLFieldConfig` in graphql-js and combines a graphql type and an optional resolve function. If a resolve function isn't provided it defaults to looking up the field on the root object of the resolver.
 
 
+```
 
-Resolve functions are optional - if the field exists on the root type then it will be returned. If the field doesn't exist then a resolve function is required.
+```
+
+The schema for the return type is provided in the `type` field and can be a scalar, enum, object or union.
+
+If the return type includes null or is an array TSGQL will require some fields to be set on the Resolver. If the type is `string | null`, the `nullable` field must be set to true. For arrays, if the items of the array are nullable, the `array` field has to be set to `nullable_items` other wise it has to be set to true.
+
+The return type is also checked against the root type to ensure that it matches what is expected in your data model.
+
+A root type and context can also be specified and must match what is passed to the build function or helper functions:
+
+```
+```
+
 
 ## Arguments
 
-TSGQL will automatically infer whether the first argument to the resolve function is not the root and require you to add a schema for the arguments option in the `argFields` field:
+TSGQL will automatically infer whether the first argument to the resolve function is the root or not and require you to add a schema for the arguments option in the `argFields` field:
 
 ```
 
 ```
 
-
-## Null and Arrays
-
-If the return type includes null or is an array TSGQL will require some fields to be set on the Resolver. 
-
-If the type is `string | null`, the `nullable` field must be set to true. For arrays, if the items of the array are nullable, the `array` field has to be set to `nullable_items` other wise it has to be set to true.
+This has similar options to the `type` field, but doesn't need a resolve function or support unions or interfaces.
 
 ## Scalars
 
@@ -100,19 +106,52 @@ build({
 
 ## Custom Scalars
 
+Custom scalar types can be defined using the `customScalar` helper function, which takes a `GraphQLScalarTypeConfig`. Unfortunately `GraphQLScalarType` has the input and serialized type of the scalar as any.
+
+```
+```
+
 ## Objects
 
-Additional fields can also be defined on objects, but require a resolve function, since the field can't be automatically looked up on the root type.
+Objects are defined with a required name and `fields` field with the 
 
+TSGQL doesn't have a good way of detecting that an object has been defined twice with the same name in the typesystem, so while building the schema at runtime the first time a name is seen is used as the object for that name. Right now there is no detection of whether two schema definitions differ.
+
+Not every field on the object is required to have a type definition and additional fields can also be defined, but require a resolve function, since the field can't be automatically infered from the root type.
+
+```
+```
+
+Input objects are similar, but don't support unions, interfaces or resolve functions.
+
+```
+```
 
 ## Unions
 
-NB: Union names must be literal strings.
+Unions are supported by providing a list of object types:
+
+```
+```
+
+
+GraphQL requires a resolveType function to determine the type of union member to return or that each of the union member types define an isTypeOf method. 
+
+The input type of the resolve function needs to be the same as the union members and the return type must be a union of the names of the union members.  To ensure that the correct type names are returned, union type names must be literal strings i.e. the following won't typecheck properly: 
+
+```
+```
+
+Currently there is no detection of whether the member types all define an `isTypeOf` method, so the resolveType field is currently optional and can cause a runtime error if graphql-js detects that the types don't define `isTypeOf`
 
 ## Interfaces
 
 
-## Input Objects
+Currently it's required to define fields in both the 
+
+Currently there is no detection of whether you have defined a field
 
 # Client
+
+The client provides functions to generate a graphql-js document and graphql query strings. It also provides 
 

@@ -81,13 +81,13 @@ export type GenerateQueryField<Query, Resolver> =
               }
               : { $on: { [Key in keyof UnionTypeNames<UnionTypes>]?: {} } }
             : "Should not happen"
-          : Type extends CustomScalar<infer CustomScalarType>
+          : Type extends CustomScalar<infer Input, infer Serialized>
               ? FieldSentinel
               : GenerateObjectType<Query, Type, ResolverFunction, ArgsFields>
     )
   : Resolver extends ScalarTypes
     ? FieldSentinel
-    : Resolver extends CustomScalar<infer CustomScalarType>
+    : Resolver extends CustomScalar<infer Input, infer Serialized>
       ? FieldSentinel
       : "Invalid resolver"
 

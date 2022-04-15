@@ -2,7 +2,7 @@ import { GraphQLScalarType, Kind, ValueNode } from "graphql";
 import { build, client, customScalar } from "../src";
 import { createApp, QueryRoot, testQuery } from "./utils";
 
-const CustomDateScalar = new GraphQLScalarType({
+const CustomDateScalar = {
   name: 'Date',
   description: "Custom Date scalar",
   // Serializes an internal value to include in a response.
@@ -16,7 +16,7 @@ const CustomDateScalar = new GraphQLScalarType({
     }
     return null;
   }
-});
+};
 
 type TestCustom = {
   dateField: Date
@@ -26,7 +26,7 @@ const customDate = "2022-03-29T16:29:51.000Z"
 const schemaObject = {
   queries: {
     basicCustomScalar: {
-      type: customScalar<Date>(CustomDateScalar),
+      type: customScalar(CustomDateScalar),
       resolve: (): Date => {
         return new Date(customDate);
       }
@@ -35,7 +35,7 @@ const schemaObject = {
       type: {
         name: "TestCustom",
         fields: {
-          dateField: customScalar<Date>(CustomDateScalar),
+          dateField: customScalar(CustomDateScalar),
         }
       },
       resolve: (): TestCustom => {
@@ -45,7 +45,7 @@ const schemaObject = {
     customScalarArgument: {
       type: 'String',
       argsFields: {
-        customScalar: { type: customScalar<Date>(CustomDateScalar) }
+        customScalar: { type: customScalar(CustomDateScalar) }
       },
       resolve: (args: { customScalar: Date }): string => "test"
     }
@@ -54,7 +54,7 @@ const schemaObject = {
     customScalarMutation: {
       type: 'String',
       argsFields: {
-        customScalar: { type: customScalar<Date>(CustomDateScalar) }
+        customScalar: { type: customScalar(CustomDateScalar) }
       },
       resolve: (args: { customScalar: Date }): string => "test"
     }

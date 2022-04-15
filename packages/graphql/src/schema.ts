@@ -50,7 +50,7 @@ type InputType =
   } | {
     name: string, 
     description?: string,
-    scalar: CustomScalar<any>
+    scalar: CustomScalar<any, any>
   } | {
     fields: {[key: string]: InputObject},
     name: string 
@@ -79,13 +79,13 @@ type ObjectType = {
 
 export type OutputType = 
   ScalarTypes |
-  CustomScalar<any> |
+  CustomScalar<any, any> |
   {
     enum: any,
     description?: string,
     name: string
   } | {
-    scalar: CustomScalar<any>,
+    scalar: CustomScalar<any, any>,
     description?: string,
   } | {
     name: string,
@@ -94,7 +94,7 @@ export type OutputType =
     resolveType?: any
   } | ObjectType;
 
-export type OutputObject = CustomScalar<any> | ScalarTypes | {
+export type OutputObject = CustomScalar<any, any> | ScalarTypes | {
   alias?: string,
   description?: string,
   deprecationReason?: string,
@@ -247,7 +247,7 @@ function mapToGraphQLOutputField(
       }
     }
   } else {
-    config = {type: field.scalar}
+    config = {type: new GraphQLScalarType(field.scalar)};
   }
   return config;
 }
@@ -260,7 +260,7 @@ function mapToGraphQLOutputType(
   if (isScalar(object)) {
     output = scalarToGraphQL(object);
   } else if (object instanceof CustomScalar) {
-    output = object.scalar;
+    output = new GraphQLScalarType(object.scalar);
   } else if (schemaObjects.outputObjects.has(object.type)) {
     output = schemaObjects.outputObjects.get(object.type);
   } else if (schemaObjects.unions.has(object.type)) {
@@ -268,7 +268,7 @@ function mapToGraphQLOutputType(
   } else if (isScalar(object.type)) {
     output = scalarToGraphQL(object.type);
   } else if (object.type instanceof CustomScalar) {
-    output = object.type.scalar;
+    output = new GraphQLScalarType(object.type.scalar);
   } else if ('union' in object.type) {
     const types: GraphQLObjectType[] = [];
 
@@ -395,7 +395,7 @@ function mapToGraphQLInputType(input: InputObject, schemaObjects: SchemaObjects)
   } else if (isScalar(input.type)) {
     return mapInputToNullableAndArray(scalarToGraphQL(input.type), input);
   } else if (input.type instanceof CustomScalar) {
-    graphqlInput = input.type.scalar;
+    graphqlInput = new GraphQLScalarType(input.type.scalar);
   } else if (schemaObjects.inputObjects.has(input.type)) {
     graphqlInput = schemaObjects.inputObjects.get(input.type);
   } else if ('fields' in input.type) {

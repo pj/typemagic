@@ -1,17 +1,17 @@
-import { GraphQLScalarType } from "graphql";
+import { GraphQLScalarType, GraphQLScalarTypeConfig } from "graphql";
 import { Exact } from "./types";
 
-export class CustomScalar<Type> {
+export class CustomScalar<Input, Serialized> {
   constructor(
-    public scalar: GraphQLScalarType,
+    public scalar: GraphQLScalarTypeConfig<Input, Serialized>,
   ) {}
 }
 
-export function customScalar<Type = never>(scalar: GraphQLScalarType) {
-  return new CustomScalar<Type>(scalar);
+export function customScalar<Input, Serialized>(scalar: GraphQLScalarTypeConfig<Input, Serialized>) {
+  return new CustomScalar<Input, Serialized>(scalar);
 }
 
-export type HandleCustomScalar<ScalarType, ReturnType> =
+export type HandleCustomScalar<ScalarType, ReturnType, ScalarSerialized> =
   [Exact<ScalarType, ReturnType>] extends [true]
-    ? {type: CustomScalar<ReturnType>}
+    ? {type: CustomScalar<ReturnType, ScalarSerialized>}
     : "Scalar must have a type specified equal to the return type"

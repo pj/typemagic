@@ -7,9 +7,9 @@ import {
 import { HandleUnion } from "./union";
 
 export type ValidateResolver<Resolver, Root, RootFieldType, Context> =
-  [Resolver] extends [CustomScalar<infer CustomScalarType>]
-    ? Exact<CustomScalarType, RootFieldType> extends true
-      ? CustomScalar<CustomScalarType>
+  [Resolver] extends [CustomScalar<infer ScalarInput, infer ScalarSerialized>]
+    ? Exact<ScalarInput, RootFieldType> extends true
+      ? CustomScalar<ScalarInput, ScalarSerialized>
       : "Incorrect custom scalar"
     : Resolver extends {
         type?: infer Type,
@@ -97,8 +97,8 @@ export type ScalarOrObjectType<ReturnType, Context, Type> =
         }
       : Type extends {union: infer Union} 
         ? HandleUnion<Type, ReturnType>
-        : Type extends CustomScalar<infer CustomScalarType>
-          ? HandleCustomScalar<CustomScalarType, ReturnType>
+        : Type extends CustomScalar<infer ScalarInput, infer ScalarSerialized>
+          ? HandleCustomScalar<ScalarInput, ReturnType, ScalarSerialized>
           : {type: HandleOutputObject<Type, ReturnType, Context>}
 
 export type ReturnTypeForRoot<ResolverFunction, RootFieldType> =

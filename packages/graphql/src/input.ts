@@ -28,9 +28,9 @@ export type ValidateInputRuntimeType<FunctionArg, ArgsRuntimeType> =
             description?: Description,
           }
         }
-      : ArgsRuntimeType extends {type: CustomScalar<infer CustomScalarType>}
-        ? Exact<CustomScalarType, FunctionArg> extends true
-          ? {type: CustomScalar<CustomScalarType>}
+      : ArgsRuntimeType extends {type: CustomScalar<infer ScalarInput, infer ScalarSerialized>}
+        ? Exact<ScalarInput, FunctionArg> extends true
+          ? {type: CustomScalar<ScalarInput, ScalarSerialized>}
           : "Custom scalar type doesn't match arg type"
         : IsTypeScalar<FunctionArg> extends true
           ? { type: GetSchemaScalar<FunctionArg> }
