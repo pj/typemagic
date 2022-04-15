@@ -2,7 +2,7 @@ import express from "express";
 import { graphqlHTTP } from "express-graphql";
 import { GraphQLError } from "graphql";
 import util from "util";
-import tsgql from "@typeshaman/graphql";
+import {build} from "@typeshaman/graphql"
 
 function graphQLErrors(error: GraphQLError) {
   const errorMessage = ({
@@ -26,6 +26,12 @@ function graphQLErrors(error: GraphQLError) {
 }
 
 (async () => {
+  const schema = build({queries: {
+    test: {
+      type: "String",
+      resolve: () => "test"
+    }
+  }})
   const app = express();
   app.use(
     "/graphql",

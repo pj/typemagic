@@ -6,6 +6,9 @@
   "license": "ISC",
   "private": true,
   "workspaces": [
-    "./packages/*"
-  ]
+    "packages/graphql",
+    "packages/graphql-example",
+    "packages/sql"
+  ],
+  "packageManager": "yarn@3.2.0"
 }

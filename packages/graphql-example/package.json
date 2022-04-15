@@ -9,12 +9,13 @@
   "author": "Paul Johnson <paul@johnson.kiwi.nz>",
   "scripts": {
     "build": "tsc",
+    "start": "ts-node src/index.ts",
     "test": "jest"
   },
   "license": "ISC",
   "dependencies": {
     "@types/express": "^4.17.13",
-    "@typeshaman/graphql": "0.0.1",
+    "@typeshaman/graphql": "^0.0.1",
     "express": "^4.17.3",
     "express-graphql": "^0.12.0",
     "graphql": "15"
@@ -25,6 +26,7 @@
     "jest": "^27.5.1",
     "supertest": "^6.2.2",
     "ts-jest": "^27.1.3",
+    "ts-node": "^10.7.0",
     "typescript": "^4.6.2"
   }
 }
