@@ -1613,3 +1613,7 @@ export type GetDuplicates<Schema, TableName, Joins> =
                     ? never
                     : [FromIdx, Schema[TableName][FromIdx], DuplicateColumnNames]
                 ) 
+
+
+                Type 'readonly ["other", "other.test_id", "test.id"]' is not assignable to type '
+                  GenerateTargetColumnNames<readonly [readonly ["other", "other.test_id", "test.id"], readonly ["another", "another.id", "test.id"]], { readonly test: readonly ["id", "name", "description"]; readonly other: readonly ["id", "name", "thing", "test_id"]; readonly another: readonly ["id", "date", "test_id"]; }, "test", "renamed">'.

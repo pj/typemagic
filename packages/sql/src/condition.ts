@@ -23,17 +23,17 @@ type ValidateComparators =
 
 type ValidateEqualityOperators<Schema, Condition> =
   {
-      [Key in keyof Condition]: 
-        [Key] extends ValidateComparators
-          ? Condition[Key] extends [infer Left, infer Right]
-            ? [ValidateExpression<Schema, Left>, ValidateExpression<Schema, Right>]
-            : ["Must be two element tuple", "Must be two element tuple"]
-          : never
-    } extends infer Validated
-      ? Validated extends {[Key in keyof Condition]: never}
-        ? never
-        : Validated
-      : never
+    [Key in keyof Condition]: 
+      [Key] extends ValidateComparators
+        ? Condition[Key] extends [infer Left, infer Right]
+          ? [ValidateExpression<Schema, Left>, ValidateExpression<Schema, Right>]
+          : ["Must be two element tuple", "Must be two element tuple"]
+        : never
+  } extends infer Validated
+    ? Validated extends {[Key in keyof Condition]: never}
+      ? never
+      : Validated
+    : never
 
 export type ValidateBoolean<Schema, Identifiers, Condition> =
   // Literals

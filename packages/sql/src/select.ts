@@ -3,6 +3,7 @@ import { ValidateSchema } from "./schema";
 import {format} from "@scaleleap/pg-format";
 import {format as syntaxFormat} from "sql-formatter";
 import { ComputeFromAndJoins } from "./from";
+import { Expand } from "./types";
 
 export type GetSourceTable<From> =
   [From] extends [[infer Name, infer Alias]]
@@ -77,15 +78,15 @@ type ColumnName<TableName, Alias, ColumnName> =
 
 export type ArrayToUnion<Schema, TableName> =
   [TableName] extends [keyof Schema]
-    ?  [Schema[TableName]] extends [Readonly<unknown[]>]
+    ? [Schema[TableName]] extends [Readonly<unknown[]>]
       ? Schema[TableName][number]
       : never
     : never
 
 export type GenerateColumnNames<TableName, Alias, Name, DuplicateColumnNames> =
-    Name extends DuplicateColumnNames
-      ?  [ColumnName<TableName, Alias, Name>, string]
-      : [Name, string] | Name
+  Name extends DuplicateColumnNames
+    ? [ColumnName<TableName, Alias, Name>, string]
+    : [Name, string] | Name
 
 export type RemoveReadOnly<Value> =
   {-readonly [K in keyof Value]: Value[K]}
@@ -99,21 +100,23 @@ export type GetColumnNamesForJoins<Schema, Joins, DuplicateColumnNames> =
               ? GenerateColumnNames<TableName, Alias, ArrayToUnion<Schema, TableName>, DuplicateColumnNames>
               : never
         }[number]
-      : "Joins must be an array" // [RemoveReadOnly<Joins>, X, "Joins must be an array"]
+      : "Joins must be an array"
     : "Joins must be an array"
 
 export type GetValidColumnTypes<Schema, FromTable, Joins> =
   [GetTableWithAlias<FromTable>] extends [[infer From, infer Alias]]
     ? GetDuplicateColumnNames<Schema, From, Joins> extends infer DuplicateColumnNames
-      ? GenerateColumnNames<From, Alias, ArrayToUnion<Schema, From>, DuplicateColumnNames>
-        | GetColumnNamesForJoins<Schema, Joins, DuplicateColumnNames>
+      ? [
+          GenerateColumnNames<From, Alias, ArrayToUnion<Schema, From>, DuplicateColumnNames>
+          | GetColumnNamesForJoins<Schema, Joins, DuplicateColumnNames>,
+          DuplicateColumnNames
+        ]
       : never
     : "Invalid table name"
 
 export type ValidateSelect<Schema, From, Joins, Select> =
-  [GetValidColumnTypes<Schema, From, Joins>] extends [infer Names]
-    ? // Names
-    {
+  [GetValidColumnTypes<Schema, From, Joins>] extends [[infer Names, infer DuplicateColumnNames]]
+    ? {
         [Key in keyof Select]: 
           RemoveReadOnly<Select[Key]> extends Names
             ? Select[Key]
@@ -128,8 +131,61 @@ export type ValidateFrom<Schema, From> =
       : "Uknown table name"
     : never
 
-export type ValidateJoins<Schema, Joins> =
-  Joins
+export type GenerateJoinColumnNames<Joins, Schema> =
+  [RemoveReadOnly<Joins>] extends [infer X]
+    ? X extends unknown[]
+      ? {
+          [Key in keyof X]: 
+            GetJoinTableName<X[Key]> extends [infer TableName, infer Alias]
+              ? ColumnName<TableName, Alias, ArrayToUnion<Schema, TableName>>
+              : never
+        }[number]
+      : "Join must be an array"
+    : "Can't remove readonly"
+
+export type GenerateTargetColumnNames<Joins, Schema, FromName, FromAlias> =
+  GenerateJoinColumnNames<Joins, Schema> | 
+  ColumnName<FromName, FromAlias, ArrayToUnion<Schema, FromName>>
+
+export type JoinDetails<Join> = 
+  [Join] extends [[infer TableName, infer AliasName, infer LeftColumnName, infer RightColumnName]]
+    ? [TableName, AliasName, LeftColumnName, RightColumnName]
+    : Join extends Readonly<[infer TableName, infer AliasName, infer LeftColumnName, infer RightColumnName]>
+      ? [TableName, AliasName, LeftColumnName, RightColumnName]
+      : Join extends [infer TableName, infer LeftColumnName, infer RightColumnName]
+        ? [TableName, unknown, LeftColumnName, RightColumnName]
+        : Join extends Readonly<[infer TableName, infer LeftColumnName, infer RightColumnName]>
+          ? [TableName, unknown, LeftColumnName, RightColumnName]
+          : never
+
+export type ValidateJoins<Schema, From, Joins> =
+  [GetTableWithAlias<From>] extends [[infer FromName, infer FromAlias]]
+    ? {
+        [Key in keyof Joins]: 
+          JoinDetails<Joins[Key]> extends [infer JoinName, infer JoinAlias, infer LeftColumnName, infer RightColumnName]
+            ? LeftColumnName extends ColumnName<JoinName, JoinAlias, ArrayToUnion<Schema, JoinName>>
+              ? RightColumnName extends GenerateTargetColumnNames<Joins, Schema, FromName, FromAlias>
+                ? Joins[Key]
+                : 
+                Expand<GenerateTargetColumnNames<Joins, Schema, FromName, FromAlias>>
+                // "Invalid target column"
+              : "Invalid source column"
+            : "Invalid Join"
+            
+          //   [
+          //         JoinName, 
+          //       ]
+          //   : "Should not happen"
+          // GetJoinTableName<Joins[Key]> extends [infer JoinName, infer AliasName]
+          //   ? [
+          //       JoinName, 
+          //       ColumnName<JoinName, AliasName, ArrayToUnion<Schema, JoinName>>,
+          //       GenerateTargetColumnNames<Joins, Schema> 
+          //         | ColumnName<FromName, FromAlias, ArrayToUnion<Schema, FromName>>
+          //     ]
+          //   : "here"
+      }
+    : "Can't get column types for joins"
 
 export type ValidateSelectStatement<Schema, SelectStatement> =
   [SelectStatement] extends [{
@@ -146,9 +202,9 @@ export type ValidateSelectStatement<Schema, SelectStatement> =
           : { from: ValidateFrom<Schema, From>}
       )
       & (
-        unknown extends Joins
-          ? {}
-          : { join: ValidateJoins<Schema, Joins>}
+          unknown extends Joins
+            ? {}
+            : { join: ValidateJoins<Schema, From, Joins>}
       )
     : "Invalid select format"
 

@@ -1,4 +1,4 @@
-import { select } from '../src';
+import { select, ValidateJoins } from '../src';
 
 const schema = {
   'test': [
@@ -11,6 +11,15 @@ const schema = {
     'id', 'date', 'test_id'
   ]
 } as const;
+
+type X = ValidateJoins<
+  typeof schema,
+  ['test', 'renamed'],
+  [
+    ['other', 'test.id', 'other.test_id'],
+    ['another', 'another.id', 'test.id']
+  ]
+>
 
 test(
   'select', 
@@ -28,8 +37,8 @@ test(
           ], 
           from: ['test', 'renamed'],
           join: [
-            ['other', 'test.id', 'other.test_id'],
-            ['another', 'another.id', 'test.id']
+            ['other', 'other.test_id', 'renamed.id'],
+            ['another', 'another.id', 'renamed.id']
           ]
         } as const
       )
