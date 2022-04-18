@@ -2,8 +2,9 @@ import { generateTableName } from "./delete";
 import { ValidateSchema } from "./schema";
 import {format} from "@scaleleap/pg-format";
 import {format as syntaxFormat} from "sql-formatter";
-import { ComputeFromAndJoins } from "./from";
+import { ComputeFrom, ComputeFromAndJoins } from "./from";
 import { Expand } from "./types";
+import { generateCondition, ValidateWhere } from "./condition";
 
 export type GetSourceTable<From> =
   [From] extends [[infer Name, infer Alias]]
@@ -191,7 +192,8 @@ export type ValidateSelectStatement<Schema, SelectStatement> =
   [SelectStatement] extends [{
     select: infer Select,
     from?: infer From,
-    join?: infer Joins
+    join?: infer Joins,
+    where?: infer Where
   }] 
     ? {
         select: ValidateSelect<Schema, From, Joins, Select>
@@ -200,21 +202,39 @@ export type ValidateSelectStatement<Schema, SelectStatement> =
         unknown extends From
           ? {}
           : { from: ValidateFrom<Schema, From>}
-      )
+        )
       & (
           unknown extends Joins
             ? {}
             : { join: ValidateJoins<Schema, From, Joins>}
-      )
+        )
+      & ValidateWhere<Schema, ComputeFrom<Schema, From>, Where>
     : "Invalid select format"
-
+    
+function projection(select: any) {
+  const columns: string[] = [];
+  for (let column of select) {
+    if (Array.isArray(column)) {
+      columns.push(
+        `${format("%I", column[0])} AS ${format("%I", column[1])}`
+      );
+    } else {
+      columns.push(
+        `${format("%I", column)}`
+      );
+    }
+  }
+  return columns.join(", ");
+}
 
 export function select<
-  Schema, //extends ValidateSchema<Schema>, 
+  Schema,
   Select extends ValidateSelectStatement<Schema, Select>
 >(schema: Schema, select: Select): string {
-  const removeAny = select as any; 
+  const selectAny = select as any; 
   return syntaxFormat(`
-    SELECT FROM ${generateTableName(removeAny.from)}
+    SELECT ${projection(selectAny.select)}
+    FROM ${generateTableName(selectAny.from)}
+    WHERE ${generateCondition(selectAny.where)}
   `);
 }

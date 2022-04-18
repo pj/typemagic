@@ -57,6 +57,11 @@ export type ValidateBoolean<Schema, Identifiers, Condition> =
       
     // TODO: Boolean functions
 
+export type ValidateWhere<Schema, Identifiers, Where> =
+  [unknown] extends [Where]
+    ? {}
+    : {where: ValidateBoolean<Schema, Identifiers,  Where>}
+
 export function generateCondition(where: any): string {
   if (Array.isArray(where)) {
     return where.map(w => generateCondition(w)).join(" AND ");

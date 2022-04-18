@@ -4,15 +4,10 @@
 //     [ RETURNING * | output_expression [ [ AS ] output_name ] [, ...] ]
 import {format} from "@scaleleap/pg-format";
 import {format as syntaxFormat} from "sql-formatter";
-import { generateCondition, ValidateBoolean } from "./condition";
+import { generateCondition, ValidateBoolean, ValidateWhere } from "./condition";
 import { ComputeFrom } from "./from";
 import { ValidateSchema, ValidateTableName } from "./schema";
 import dedent from 'dedent-js'
-
-export type ValidateWhere<Schema, Identifiers, Where> =
-  [unknown] extends [Where]
-    ? {}
-    : {where: ValidateBoolean<Schema, Identifiers,  Where>}
 
 export type ValidateDelete<Schema, Delete> = 
   [Delete] extends [{
@@ -21,8 +16,7 @@ export type ValidateDelete<Schema, Delete> =
     where?: infer Where,
     returning?: infer Returning
   }]
-    ?  ValidateTableName<Schema, TableName> 
-    //   // & unknown extends Only ? {} : {only: boolean}
+    ? ValidateTableName<Schema, TableName> 
       & ValidateWhere<Schema, ComputeFrom<Schema, TableName>, Where>
     : "Unable to validate delete"
 
