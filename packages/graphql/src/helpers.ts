@@ -1,4 +1,4 @@
-import { ValidateInputRuntimeType } from "./input";
+import { ValidateArgs, ValidateInputRuntimeType, ValidateInputRuntimeTypes } from "./input";
 import { HandleOutputObject } from "./object";
 import { ValidateAdditionalResolver, ValidateResolver } from "./resolvers";
 import { Constructor } from "./types";
@@ -66,4 +66,14 @@ export function object<
   context?: Context | Constructor<Context>
 ) {
   return obj
+}
+
+export function resolverArgs<
+  FunctionArgs,
+  Fields extends ValidateInputRuntimeTypes<FunctionArgs, Fields>
+>(
+  fields: Fields, 
+  functionArgs: FunctionArgs | Constructor<FunctionArgs>, 
+) {
+  return fields;
 }

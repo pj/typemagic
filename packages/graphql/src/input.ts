@@ -9,9 +9,11 @@ import {
 } from "./types"
 
 export type HandleNonNullNonArrayTypeScalar<Scalar, ArgsFields, Resolver> =
-  [IsNonNullNonArrayTypeScalar<Scalar>] extends [true]
-    ? GetSchemaScalar<Scalar> | Resolver
-    : Resolver
+  [ArgsFields] extends [{type: {enum: infer Enum, name: infer Name, description?: infer Description}}]
+    ? Resolver
+    : IsNonNullNonArrayTypeScalar<Scalar> extends true
+      ? GetSchemaScalar<Scalar> | Resolver
+      : Resolver
 
 export type ValidateInputRuntimeType<FunctionArg, ArgsRuntimeType> =
   {
@@ -20,7 +22,7 @@ export type ValidateInputRuntimeType<FunctionArg, ArgsRuntimeType> =
     defaultValue?: string,
   }
   & (
-      ArgsRuntimeType extends {enum: infer Enum, name: infer Name, description?: infer Description}
+      ArgsRuntimeType extends {type: {enum: infer Enum, name: infer Name, description?: infer Description}}
         ? {
             type: {
               enum: Enum, 

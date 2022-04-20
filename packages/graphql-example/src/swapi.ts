@@ -1,4 +1,4 @@
-import { build, object } from "@typeshaman/graphql";
+import { build, object, resolverArgs } from "@typeshaman/graphql";
 
 const schemaString = `
 schema {
@@ -41,6 +41,13 @@ const characterSchema = object(
   null! as Character
 );
 
+const episodeArgs = resolverArgs(
+  {
+    episode: { type: {enum: Episode, name: 'Episode'}}
+  }, 
+  null! as {episode: Episode}
+);
+
 const schema = build(
   {
     queries: {
@@ -48,9 +55,7 @@ const schema = build(
         type: {
           
         },
-        argsFields: {
-          episode: { type: {enum: Episode, name: 'Episode'}}
-        },
+        argsFields: episodeArgs,
         nullable: true,
         resolve: async (args: {episode: Episode}): Promise<Character | null> => {
           return null;
