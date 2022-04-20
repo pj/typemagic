@@ -16,7 +16,7 @@ export type ValidateResolver<Resolver, Root, RootFieldType, Context> =
         alias?: infer Alias,
         description?: infer Description,
         deprecationReason?: string,
-        argsFields?: infer ArgsRuntimeTypes,
+        argsFields?: infer ArgsFields,
         resolve?: infer ResolverFunction
       }
         // FIXME: Have to have this here due to circular constraint problem
@@ -28,7 +28,7 @@ export type ValidateResolver<Resolver, Root, RootFieldType, Context> =
               Root, 
               ReturnTypeForRoot<ResolverFunction, RootFieldType>, 
               Context,
-              ArgsRuntimeTypes
+              ArgsFields
             >
         : IsNonNullNonArrayTypeScalar<RootFieldType> extends true
           ? GetSchemaScalar<RootFieldType>
@@ -40,7 +40,7 @@ export type ValidateAdditionalResolver<Resolver, Root, Context> =
     alias?: infer Alias,
     description?: infer Description,
     deprecationReason?: infer DeprecationReason,
-    argsFields?: infer ArgsRuntimeTypes,
+    argsFields?: infer ArgsFields,
     resolve?: infer ResolverFunction
   }]
     ? ResolverFunction extends (...args: infer X) => infer RT
@@ -52,29 +52,29 @@ export type ValidateAdditionalResolver<Resolver, Root, Context> =
             Root, 
             RT, 
             Context,
-            ArgsRuntimeTypes
+            ArgsFields
           >
       : "Resolve function is required on additional fields"
     : "Resolve function is required on additional fields"
 
-export type ValidateResolverFunction<ResolverFunction, Root, RootFieldType, Context, ArgsRuntimeTypes> =
+export type ValidateResolverFunction<ResolverFunction, Root, RootFieldType, Context, ArgsFields> =
   (
     [unknown] extends [ResolverFunction]
       ? { resolve?: never, argsFields?: never}
-      : [ResolverFunction] extends [(rootOrArgs: infer RootOrArgs, rootOrContext: infer RootOrContext, context: infer X) => infer ReturnType]
-        ? [unknown] extends [RootOrArgs]
+      : ResolverFunction extends (rootOrArgs: infer RootOrArgs, rootOrContext: infer RootOrContext, context: infer X) => infer ReturnType
+        ? unknown extends RootOrArgs
           ? { 
               argsFields?: never,
               resolve: ((root: Root, context: Context) => RootFieldType) 
                       | ((root: Root, context: Context) => Promise<RootFieldType>)
             }
-          : [Exact<RootOrArgs, Root>] extends [true]
+          : Exact<RootOrArgs, Root> extends true
             ? { 
                 argsFields?: never,
                 resolve: ((root: Root, context: Context) => RootFieldType) 
                         | ((root: Root, context: Context) => Promise<RootFieldType>)
               }
-            : ValidateArgs<RootOrArgs, ArgsRuntimeTypes>
+            : ValidateArgs<RootOrArgs, ArgsFields>
               & { 
                   resolve: ((args: RootOrArgs, root: Root, context: Context) => RootFieldType) 
                           | ((args: RootOrArgs, root: Root, context: Context) => Promise<RootFieldType>)

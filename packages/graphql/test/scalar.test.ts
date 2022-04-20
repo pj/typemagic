@@ -21,6 +21,13 @@ const scalarSchema =
           return ["Hello", null, "World!"]
         }
       },
+      scalarTypePromise: {
+        type: 'String',
+        nullable: true,
+        resolve: async (): Promise<string | null> => {
+          return null;
+        }
+      },
     }
   } as const;
 
@@ -53,6 +60,19 @@ test(
       schema: scalarSchema,
       query: { scalarTypeArray: client._ },
       result: { scalarTypeArray: ["Hello", null, "World!"] },
+      root: QueryRoot
+    }
+  )
+);
+
+test(
+  'scalarTypePromise',
+  testQuery(
+    {
+      app,
+      schema: scalarSchema,
+      query: { scalarTypePromise: client._ },
+      result: { scalarTypePromise: null },
       root: QueryRoot
     }
   )

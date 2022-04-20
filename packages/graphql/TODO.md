@@ -1,3 +1,7 @@
+## Core
+[ ] - nullable on promises
+[ ] - resolvers that return interfaces.
+
 ## Client and helpers
 - [ ] Helpers/Fragments for querying
 - [ ] Hooks client

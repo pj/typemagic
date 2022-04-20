@@ -1,27 +1,4 @@
-/**
- * Copyright (c) 2015, Facebook, Inc.
- * All rights reserved.
- *
- * This source code is licensed under the license found in the
- * LICENSE file in the root directory of this source tree.
- */
-
- import {
-  GraphQLSchema,
-  GraphQLObjectType,
-  GraphQLInterfaceType,
-  GraphQLEnumType,
-  GraphQLList,
-  GraphQLNonNull,
-  GraphQLString
-} from 'graphql';
-
-import { makeExecutableSchema } from 'graphql-tools';
-
-import { PubSub, SubscriptionManager, withFilter } from 'graphql-subscriptions';
-
-const pubsub = new PubSub();
-const ADDED_REVIEW_TOPIC = 'new_review';
+import { build, object } from "@typeshaman/graphql";
 
 const schemaString = `
 schema {
@@ -41,7 +18,52 @@ type Query {
   starship(id: ID!): Starship
   starshipCoordinates(coordinates: [[Float!]!]): Starship
 }
+`;
 
+enum Episode {
+  NEWHOPE,
+  EMPIRE,
+  JEDI
+}
+
+interface Character {
+
+}
+
+const characterSchema = object(
+  {
+    name: 'Character',
+    fields: {}
+    interfaces: [
+      {}
+    ]
+  }, 
+  null! as Character
+);
+
+const schema = build(
+  {
+    queries: {
+      hero: {
+        type: {
+          
+        },
+        argsFields: {
+          episode: { type: {enum: Episode, name: 'Episode'}}
+        },
+        nullable: true,
+        resolve: async (args: {episode: Episode}): Promise<Character | null> => {
+          return null;
+        }
+      },
+      
+    }, 
+    mutations: {
+    }
+  }
+);
+
+`
 # The mutation type, represents all updates we can make to our data
 type Mutation {
   createReview(episode: Episode, review: ReviewInput!): Review
@@ -51,7 +73,9 @@ type Mutation {
 type Subscription {
   reviewAdded(episode: Episode): Review
 }
+`;
 
+`
 # The episodes in the Star Wars trilogy
 enum Episode {
   # Star Wars Episode IV: A New Hope, released in 1977.
@@ -63,6 +87,9 @@ enum Episode {
   # Star Wars Episode VI: Return of the Jedi, released in 1983.
   JEDI
 }
+`;
+
+`
 
 # A character from the Star Wars universe
 interface Character {
@@ -81,6 +108,8 @@ interface Character {
   # The movies this character appears in
   appearsIn: [Episode]!
 }
+`
+`
 
 # Units of height
 enum LengthUnit {
@@ -90,6 +119,9 @@ enum LengthUnit {
   # Primarily used in the United States
   FOOT
 }
+`
+
+`
 
 # A humanoid creature from the Star Wars universe
 type Human implements Character {
@@ -120,7 +152,9 @@ type Human implements Character {
   # A list of starships this person has piloted, or an empty list if none
   starships: [Starship]
 }
+`
 
+`
 # An autonomous mechanical character in the Star Wars universe
 type Droid implements Character {
   # The ID of the droid
@@ -142,6 +176,9 @@ type Droid implements Character {
   primaryFunction: String
 }
 
+`
+
+`
 # A connection object for a character's friends
 type FriendsConnection {
   # The total number of friends
@@ -157,6 +194,9 @@ type FriendsConnection {
   pageInfo: PageInfo!
 }
 
+`
+
+`
 # An edge object for a character's friends
 type FriendsEdge {
   # A cursor used for pagination
@@ -165,13 +205,19 @@ type FriendsEdge {
   # The character represented by this friendship edge
   node: Character
 }
+`
 
+`
 # Information for paginating this connection
 type PageInfo {
   startCursor: ID
   endCursor: ID
   hasNextPage: Boolean!
 }
+
+`
+
+`
 
 # Represents a review for a movie
 type Review {
@@ -184,7 +230,9 @@ type Review {
   # Comment about the movie
   commentary: String
 }
+`
 
+`
 # The input object sent when someone is creating a new review
 input ReviewInput {
   # 0-5 stars
@@ -197,12 +245,20 @@ input ReviewInput {
   favorite_color: ColorInput
 }
 
+`
+
+`
+
 # The input object sent when passing in a color
 input ColorInput {
   red: Int!
   green: Int!
   blue: Int!
 }
+
+`
+
+`
 
 type Starship {
   # The ID of the starship
@@ -217,6 +273,9 @@ type Starship {
   coordinates: [[Float!]!]
 }
 
+`
+
+`
 union SearchResult = Human | Droid | Starship
 `;
 

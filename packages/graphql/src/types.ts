@@ -70,19 +70,23 @@ export type GetTypeScalar<Scalar> =
 export type ArrayTrilean = boolean | "nullable_items" | undefined;
 export type CreateSchemaOptions<Item> = 
   [Item] extends [unknown]
-    ? [unknown] extends [Item]
+    ? unknown extends Item
       ? {nullable?: unknown, array?: unknown}
       : 
         (
-          [null] extends [Item]
+          null extends Item
             ? { nullable: true }
-            : { nullable?: false }
+            : Item extends Promise<infer T>
+              ? null extends T
+                ? { nullable: true}
+                : { nullable?: false }
+              : { nullable?: false }
         )
         & 
         (
-          [GenerateArrayTrilean<Item>] extends [false]
+          GenerateArrayTrilean<Item> extends false
             ? { array?: false }
-            : [GenerateArrayTrilean<Item>] extends ["nullable_items"]
+            : GenerateArrayTrilean<Item> extends "nullable_items"
               ? {array: "nullable_items"}
               : {array: true}
         )
