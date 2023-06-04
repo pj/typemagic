@@ -1,8 +1,8 @@
 import { ArgumentNode, DocumentNode, FieldNode, NameNode, ObjectFieldNode, OperationTypeNode, print, SelectionNode, SelectionSetNode, TypeNode, ValueNode, VariableDefinitionNode, VariableNode } from "graphql";
-import { CustomScalar } from "./custom_scalar";
-import { OutputObject, ValidateSchema } from "./schema";
-import { Constructor, Exact, Expand, IsSchemaScalar, ScalarTypes, UnionToIntersection } from "./types";
-import { UnionTypeNames } from "./union";
+import { CustomScalar } from "../server/custom_scalar.js";
+import { OutputObject, ValidateSchema } from "../server/schema.js";
+import { Constructor, Exact, Expand, IsSchemaScalar, ScalarTypes, UnionToIntersection } from "../server/types.js";
+import { UnionTypeNames } from "../server/union.js";
 
 export type FieldSentinel = {};
 export const _: FieldSentinel = {};

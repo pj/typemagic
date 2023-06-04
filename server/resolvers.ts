@@ -1,10 +1,10 @@
-import { CustomScalar, HandleCustomScalar } from "./custom_scalar";
-import { ValidateArgs } from "./input";
-import { HandleOutputObject } from "./object";
+import { CustomScalar, HandleCustomScalar } from "./custom_scalar.js";
+import { ValidateArgs } from "./input.js";
+import { HandleOutputObject } from "./object.js";
 import {
   CreateSchemaOptions, Exact, GetSchemaScalar, IsNonNullNonArrayTypeScalar, IsTypeScalar, RemovePromise
-} from "./types";
-import { HandleUnion } from "./union";
+} from "./types.js";
+import { HandleUnion } from "./union.js";
 
 export type ValidateResolver<Resolver, Root, RootFieldType, Context> =
   [Resolver] extends [CustomScalar<infer ScalarInput, infer ScalarSerialized>]

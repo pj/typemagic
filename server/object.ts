@@ -1,5 +1,5 @@
-import { ValidateAdditionalResolver, ValidateResolver } from "./resolvers"
-import { GetUnderlyingType, ScalarTypes } from "./types"
+import { ValidateAdditionalResolver, ValidateResolver } from "./resolvers.js"
+import { GetUnderlyingType, ScalarTypes } from "./types.js"
 
 export type HandleOutputObject<Type, ReturnType, Context> =
   Type extends {

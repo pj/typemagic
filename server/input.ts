@@ -1,4 +1,4 @@
-import { CustomScalar } from "./custom_scalar"
+import { CustomScalar } from "./custom_scalar.js"
 import {
   CreateSchemaOptions,
   Exact,
@@ -6,7 +6,7 @@ import {
   GetUnderlyingType,
   IsNonNullNonArrayTypeScalar,
   IsTypeScalar
-} from "./types"
+} from "./types.js"
 
 export type HandleNonNullNonArrayTypeScalar<Scalar, ArgsRuntimeTypes, Resolver> =
   [IsNonNullNonArrayTypeScalar<Scalar>] extends [true]

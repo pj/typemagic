@@ -5,10 +5,9 @@
   "author": "",
   "license": "ISC",
   "private": true,
-  "workspaces": [
-    "packages/graphql",
-    "packages/graphql-example",
-    "packages/sql"
-  ],
-  "packageManager": "yarn@3.2.0"
+  "type": "module",
+  "dependencies": {
+    "graphql": "^16.6.0",
+    "typescript": "^5.1.3"
+  }
 }

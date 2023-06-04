@@ -1,7 +1,6 @@
-import { ValidateInputRuntimeType } from "./input";
-import { HandleOutputObject } from "./object";
-import { ValidateAdditionalResolver, ValidateResolver } from "./resolvers";
-import { Constructor } from "./types";
+import { HandleOutputObject } from "./object.js";
+import { ValidateAdditionalResolver, ValidateResolver } from "./resolvers.js";
+import { Constructor } from "./types.js";
 
 export type ValidateFields<Fields, Root, Context> =
   {

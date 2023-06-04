@@ -1,7 +1,0 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
-
-exports[`select 1`] = `
-"SELECT
-FROM
-  test AS renamed"
-`;

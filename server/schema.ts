@@ -8,19 +8,40 @@ import {
   GraphQLInputObjectType,
   GraphQLInputType,
   GraphQLInt,
-  GraphQLInterfaceType,
-  GraphQLInterfaceTypeConfig,
-  GraphQLList,
+  GraphQLInterfaceType, GraphQLList,
   GraphQLNonNull,
   GraphQLObjectType,
   GraphQLOutputType, GraphQLScalarType, GraphQLSchema,
   GraphQLSchemaConfig,
   GraphQLString, GraphQLUnionType
 } from "graphql";
-import { CustomScalar } from "./custom_scalar";
-import { ValidateFields } from "./helpers";
-import { ValidateResolver } from "./resolvers";
-import { ArrayTrilean, Constructor, ScalarStrings, ScalarTypes } from "./types";
+import { CustomScalar } from "./custom_scalar.js";
+import { ValidateFields } from "./helpers.js";
+import { ArrayTrilean, Constructor, ScalarTypes } from "./types.js";
+
+type TestFuncType = (root: string, context: number) => string
+
+
+type ValidateSchemaResolverFunction<ResolverFunc, Schema> = 
+  [ResolverFunc] extends [(rootOrArgs: infer RootOrArgs, rootOrContext: infer RootOrContext, context: infer X) => infer ReturnType]
+    ?
+
+
+
+export class Schema<Root, Context> {
+
+  constructor() {
+
+  }
+
+  mutation<MutationFunc, Schema extends ValidateFields<Schema, Root, Context>>(func: MutationFunc, schema: Schema): null {
+    return null;
+  }
+
+  query<QueryFunc, Schema extends ValidateFields<Schema, Root, Context>>(func: QueryFunc, schema: Schema): null {
+    return null;
+  }
+}
 
 export type ValidateSchema<Schema, Context, Root> =
   [Schema] extends [

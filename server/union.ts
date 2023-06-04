@@ -1,4 +1,4 @@
-import { Exact, GetUnderlyingType, TransformObjectSchemaToType, UnionToIntersection } from "./types"
+import { Exact, GetUnderlyingType, TransformObjectSchemaToType, UnionToIntersection } from "./types.js"
 
 export type HandleUnion<Type, ReturnType> =
   Type extends {name: infer UnionName, union: infer UnionTypes}

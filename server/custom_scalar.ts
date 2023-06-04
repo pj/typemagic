@@ -1,5 +1,5 @@
 import { GraphQLScalarType, GraphQLScalarTypeConfig } from "graphql";
-import { Exact } from "./types";
+import { Exact } from "./types.js";
 
 export class CustomScalar<Input, Serialized> {
   constructor(

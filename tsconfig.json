@@ -1,0 +1,20 @@
+{
+    "compilerOptions": {
+      "lib": [
+        "es2018"
+      ],
+      "target": "es2018",
+      "moduleResolution": "nodenext",
+      "outDir": "./dist",
+      "rootDir": "server",
+      "sourceMap": true,
+      "esModuleInterop": true,
+      "declaration": true,
+      "declarationDir": "./typings",
+      "strict": true
+    },
+    "include": [
+      "server/**/*.tsx",
+      "server/**/*.ts"
+, "client/client.ts"    ],
+}
